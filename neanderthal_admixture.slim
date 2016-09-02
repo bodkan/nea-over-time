@@ -1,0 +1,100 @@
+// initialize the parameters of the simulated segment
+initialize() {
+    // total length of the simulated segment
+    defineConstant("segment_length", $segment_length);
+
+    // distance separating the fixed differences
+    defineConstant("spacing", $spacing);
+
+    // positions of deleterious and neutral Neanderthal loci
+    defineConstant("neutral_pos", $neutral_pos);
+}
+
+
+// general simulation parameters
+initialize() {
+    initializeMutationRate(1e-8);
+    initializeRecombinationRate(1e-8);
+
+    // neutral mutation types (identifiers are equal to positions)
+    for (pos in neutral_pos) {
+        initializeMutationType(pos, 0.5, "f", 0.0);
+    }
+    
+    // deleterious mutation type that will be driving purifying selection
+    initializeMutationType("m1", $dominance_coef, "g", -0.043, 0.23);
+    
+    initializeGenomicElementType("g1", m1, 1.0);
+    initializeGenomicElement(g1, 0, segment_length - 1);
+}
+
+
+// initialize the population parameters
+initialize() {
+    // size of the founding population
+    defineConstant("founder_size", $founder_size);
+
+    // total length of the simulation (time since the out of Africa bottleneck)
+    defineConstant("sim_lenght", $sim_length);
+}
+
+// create the ancestral human-Neanderthal population
+1 {
+    sim.addSubpop("p1", $afr_size);
+}
+
+// split between ancestors of modern humans from Neanderthals
+// after a period of burnin
+$burnin {
+    sim.addSubpopSplit("p2", $nea_size, p1);
+    p1.setSubpopulationSize($afr_size);
+}
+
+// split non-Africans from Africans
+$out_of_africa {
+    sim.addSubpopSplit("p3", founder_size, p1);
+}
+
+// place neutral markers on all Neanderthal haplotypes
+$admixture_start {
+    // extract the Neanderthal haplotypes
+    nea_haps = p2.genomes;
+
+    // place neutral markers on the first Neanderthal haplotype
+    neutral_muts = apply(neutral_pos, "nea_haps[0].addNewDrawnMutation(applyValue, applyValue);");
+
+    // copy the mutations to the remaining Neanderthal haplotypes
+    nea_haps[1:(size(nea_haps) - 1)].addMutations(neutral_muts);
+}
+
+// start of Neanderthal admixture
+$admixture_start {
+    p3.setMigrationRates(p2, $admixture_rate);
+}
+
+// end of the Neanderthal admixture
+$admixture_end {
+    p3.setMigrationRates(p2, 0);
+}
+
+// extinction of Neanderthals
+$admixture_end {
+    p2.setSubpopulationSize(0);
+}
+
+// exponentially grow the European population
+$eur_growth:$sim_length {
+    t_i = sim.generation - $eur_growth;
+    p3.setSubpopulationSize(asInteger(founder_size * exp(t_i * 0.0038)));
+}
+
+// output frequencies of neutral mutations
+$sim_length late() {
+    // print allele frequencies of neutral mutations at this generation
+    cat("#OUT Frequencies:");
+    for (m in neutral_pos) {
+        cat("\t" + sum(p3.genomes.countOfMutationsOfType(m)) / (2 * p3.individualCount));
+    }
+    cat("\n");
+    sim.simulationFinished();
+}
