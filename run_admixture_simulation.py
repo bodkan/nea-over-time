@@ -27,8 +27,13 @@ def count_finished_simulations(path):
     """Parse the table with SLiM desert simulation results and
     return the number of simulation results it already contains.
     """
-    with open(path, 'r') as output_file:
-        return sum(1 for _ in output_file)
+    already_finished = 0
+
+    if os.path.isfile(path):
+        with open(path, 'r') as output_file:
+            already_finished = sum(1 for _ in output_file)
+
+    return already_finished
 
 
 if __name__ == '__main__':
@@ -116,11 +121,8 @@ if __name__ == '__main__':
         'sim_length' : burnin + hum_nea_split,
     }
                 
-    # test if a given output file already contains some simulation
-    # results and if it does, count how many
-    already_finished = 0
-    if os.path.isfile(args.output_file):
-        already_finished = count_finished_simulations(args.output_file)
+    # count the number of already finished simulations
+    already_finished = count_finished_simulations(args.output_file)
 
     with open(args.output_file, 'a') as output_file:
         # run the given number of SLiM iterations
