@@ -1,0 +1,15 @@
+initialize() {
+    initializeRecombinationRate($recomb_rate);
+    initializeMutationRate(1e-8);
+
+    // deleterious mutation type
+    initializeMutationType("m0", $dominance_coef, "g", -0.043, 0.23);
+
+    // mutation type of neutral markers
+    initializeMutationType("m1", 0.5, "f", 0.0);
+    m1.convertToSubstitution = F;
+
+    initializeGenomicElementType("g1", m0, 1.0);
+    initializeGenomicElement(g1, 0, $segment_length - 1);
+}
+

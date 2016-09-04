@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 
 import os
-import random
 import argparse
 from string import Template
 from tempfile import NamedTemporaryFile
 import subprocess
+import logging
 
-import numpy as np
+logging.basicConfig(level=logging.INFO, format='%(asctime)s :: %(levelname)s :: %(message)s',
+                    datefmt="%Y-%m-%d %H:%M:%S")
+logger = logging.getLogger()
 
 
 def years_to_gen(years, years_per_gen=25):
@@ -41,6 +43,8 @@ if __name__ == '__main__':
 
     parser.add_argument('--num-iters', type=int, required=True,
                         help='Number of iterations of the simulation')
+    parser.add_argument('--population-file', required=True,
+                        help='File with simulated AMH and Neanderthal populations')
 
     parser.add_argument('--segment-length', required=True,
                         help='Length of the simulated segment')
@@ -54,23 +58,16 @@ if __name__ == '__main__':
 
     parser.add_argument('--admixture-rate', type=float, default=0.1,
                         help='Neanderthal migration rate')
+
     parser.add_argument('--founder-size', type=int, default=1861,
                         help='Effective population size of the founding population')
-    parser.add_argument('--afr-size', type=int, default=10000,
-                        help='Effective population size of the African population')
-    parser.add_argument('--nea-size', type=int, default=1000,
-                        help='Effective population size of the Neanderthal population')
 
-    parser.add_argument('--burnin', type=int, default=1000000,
-                        help='Length of initial burnin [years]')
-    parser.add_argument('--hum-nea-split', type=int, default=500000,
-                        help='Split time of Neanderthals [years ago]')
     parser.add_argument('--out-of-africa', type=int, default=55000,
-                        help='Out of Africa migration [years ago]')
+                        help='Out of Africa migration [years ago] (start of the simulation)')
     parser.add_argument('--admixture-start', type=int, default=55000,
                         help='Start of Neanderthal admixture [years ago]')
-    parser.add_argument('--admixture-end', type=int,
-                        help='End of Neanderthal admixture [years ago]')
+    parser.add_argument('--admixture-length', type=int,
+                        help='Duration of Neanderthal admixture [years]')
     parser.add_argument('--eur-growth', type=int, default=23000,
                         help='Start of European growth after the split with Asians [years ago]')
 
@@ -79,7 +76,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    slim_template = Template(open('neanderthal_admixture.slim', 'r').read())
+    slim_template = Template(open('slim/init.slim', 'r').read() +
+                             open('slim/admix.slim', 'r').read())
 
     args.segment_length = int(float(args.segment_length))
 
@@ -90,18 +88,17 @@ if __name__ == '__main__':
 
     # convert arguments specified in years BP to generations since the
     # start of the simulation
-    burnin          = years_to_gen(args.burnin)
-    hum_nea_split   = years_to_gen(args.hum_nea_split) 
-    out_of_africa   = burnin + hum_nea_split - years_to_gen(args.out_of_africa)
-    admixture_start = burnin + hum_nea_split - years_to_gen(args.admixture_start)
-    if args.admixture_end:
-        admixture_end   = burnin + hum_nea_split - years_to_gen(args.admixture_end)
+    out_of_africa   = years_to_gen(args.out_of_africa)
+    admixture_start = out_of_africa - years_to_gen(args.admixture_start) + 1
+    if args.admixture_length:
+        admixture_end = admixture_start + years_to_gen(args.admixture_length)
     else:
         admixture_end = admixture_start + 1
-    eur_growth      = burnin + hum_nea_split - years_to_gen(args.eur_growth)
+    eur_growth      = out_of_africa - years_to_gen(args.eur_growth)
 
     # values to fill in the SLiM template file
     mapping = {
+        'population_file' : args.population_file,
         'segment_length' : args.segment_length,
         'spacing' : args.spacing,
         'neutral_pos' : 'c(' + ','.join(str(pos) for pos in neutral_pos) + ')',
@@ -109,16 +106,12 @@ if __name__ == '__main__':
         'dominance_coef' : args.dominance_coef,
         'recomb_rate' : args.recomb_rate,
         'founder_size' : args.founder_size,
-        'afr_size' :  args.afr_size,
-        'nea_size' : args.nea_size,
         'admixture_rate' : args.admixture_rate,
-        'burnin' : burnin,
         'out_of_africa' : out_of_africa,
-        'place_neutral' : admixture_start - 1,
         'admixture_start': admixture_start,
         'admixture_end' : admixture_end,
         'eur_growth' : eur_growth,
-        'sim_length' : burnin + hum_nea_split,
+        'sim_length' : out_of_africa,
     }
                 
     # count the number of already finished simulations
@@ -132,7 +125,7 @@ if __name__ == '__main__':
             with NamedTemporaryFile('w') as slim_file:
                 print(slim_template.substitute(mapping),
                       file=slim_file, flush=True)
-                print('Simulation #{} (SLiM input file "{}")'.format(i, slim_file.name))
+                logger.info('Simulation #{} (SLiM input file "{}")'.format(i, slim_file.name))
 
                 slim_output = subprocess.run(['slim', slim_file.name],
                                              stdout=subprocess.PIPE,

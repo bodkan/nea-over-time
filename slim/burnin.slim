@@ -1,0 +1,21 @@
+// create the population of AMH and Neanderthal ancestors
+1 {
+    sim.addSubpop("p1", $afr_size);
+}
+
+
+// split between AMH and Neanderthals after a period of burnin
+$burnin {
+    sim.addSubpopSplit("p2", $nea_size, p1);
+    p1.setSubpopulationSize($afr_size);
+}
+
+
+// split between non-Africans and Africans
+$out_of_africa {
+    sim.addSubpopSplit("p3", $founder_size, p1);
+
+    sim.outputFull("$output_prefix" + getSeed() + ".txt");
+    sim.simulationFinished();
+}
+
