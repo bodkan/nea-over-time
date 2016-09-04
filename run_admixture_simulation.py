@@ -124,12 +124,6 @@ if __name__ == '__main__':
         already_finished = count_finished_simulations(args.output_file)
 
     with open(args.output_file, 'a') as output_file:
-        # print the header line with positions of neutral markers
-        # if no simulations have been finished yet
-        if already_finished == 0:
-            print('\t'.join(str(pos) for pos in neutral_pos),
-                  file=output_file, flush=True)
-
         # run the given number of SLiM iterations
         for i in range(1, args.num_iters - already_finished + 1):
             # fill in the SLiM template with simulation parameter values and
