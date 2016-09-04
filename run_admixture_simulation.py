@@ -17,7 +17,7 @@ def years_to_gen(years, years_per_gen=25):
 
 def parse_and_save(slim_input, output_file):
     '''Parse the list of neutral allele frequencies simulated by SLiM.'''
-    prefix = '#OUT Frequencies:\t'
+    prefix = '#OUT:\t'
     for line in slim_input.split('\n'):
         if line.startswith(prefix):
             print(line[len(prefix):], file=output_file, flush=True)

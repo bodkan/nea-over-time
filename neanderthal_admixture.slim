@@ -50,6 +50,8 @@ $place_neutral late() {
 
     // copy the mutations to the remaining Neanderthal haplotypes
     nea_haps[1:(size(nea_haps) - 1)].addMutations(neutral_muts);
+
+    cat("#OUT:");
 }
 
 // split non-Africans from Africans
@@ -75,7 +77,7 @@ $admixture_end {
 // output frequencies of neutral mutations
 $admixture_start:$sim_length {
     // print average Neanderthal ancestry in this generation
-    cat(sim.generation + "\t" + sum(p3.genomes.countOfMutationsOfType(m1)) / (2 * p3.individualCount) / $neutral_count + "\n");
+    cat("\t" + sum(p3.genomes.countOfMutationsOfType(m1)) / (2 * p3.individualCount) / $neutral_count);
 }
 
 // exponentially grow the European population
