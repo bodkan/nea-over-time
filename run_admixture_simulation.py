@@ -52,9 +52,9 @@ if __name__ == '__main__':
                         help='Neanderthal migration rate')
     parser.add_argument('--founder-size', type=int, default=1861,
                         help='Effective population size of the founding population')
-    parser.add_argument('--afr-size', type=int, default=1861,
+    parser.add_argument('--afr-size', type=int, default=10000,
                         help='Effective population size of the African population')
-    parser.add_argument('--nea-size', type=int, default=1861,
+    parser.add_argument('--nea-size', type=int, default=1000,
                         help='Effective population size of the Neanderthal population')
 
     parser.add_argument('--burnin', type=int, default=1000000,
@@ -101,6 +101,7 @@ if __name__ == '__main__':
         'segment_length' : args.segment_length,
         'spacing' : args.spacing,
         'neutral_pos' : 'c(' + ','.join(str(pos) for pos in neutral_pos) + ')',
+        'neutral_count': len(neutral_pos),
         'dominance_coef' : args.dominance_coef,
         'recomb_rate' : args.recomb_rate,
         'founder_size' : args.founder_size,
@@ -109,6 +110,7 @@ if __name__ == '__main__':
         'admixture_rate' : args.admixture_rate,
         'burnin' : burnin,
         'out_of_africa' : out_of_africa,
+        'place_neutral' : admixture_start - 1,
         'admixture_start': admixture_start,
         'admixture_end' : admixture_end,
         'eur_growth' : eur_growth,
