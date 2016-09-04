@@ -28,7 +28,6 @@ def count_finished_simulations(path):
     return the number of simulation results it already contains.
     """
     with open(path, 'r') as output_file:
-        output_file.readline()
         return sum(1 for _ in output_file)
 
 
