@@ -119,13 +119,13 @@ if __name__ == '__main__':
 
     with open(args.output_file, 'a') as output_file:
         # run the given number of SLiM iterations
-        for i in range(1, args.num_iters - already_finished + 1):
+        for i in range(already_finished, args.num_iters):
             # fill in the SLiM template with simulation parameter values and
             # run SLiM with it as an input file
             with NamedTemporaryFile('w') as slim_file:
                 print(slim_template.substitute(mapping),
                       file=slim_file, flush=True)
-                logger.info('Simulation #{} (SLiM input file "{}")'.format(i, slim_file.name))
+                logger.info('Simulation #{} (SLiM input file "{}")'.format(i + 1, slim_file.name))
 
                 slim_output = subprocess.run(['slim', slim_file.name],
                                              stdout=subprocess.PIPE,
