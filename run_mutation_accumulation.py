@@ -27,8 +27,7 @@ if __name__ == '__main__':
                         help='Number of bases between neutral markers')
 
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--recomb-rate', type=float, default=1e-8,
-                       help='Recombination rate')
+    group.add_argument('--recomb-rate', type=float, help='Recombination rate')
     group.add_argument('--recomb-map', metavar='FILE', help='Recombination map file')
 
     parser.add_argument('--dominance-coef', type=float, required=True,

@@ -54,8 +54,7 @@ if __name__ == '__main__':
                         help='Number of bases between neutral markers')
 
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--recomb-rate', type=float, default=1e-8,
-                        help='Recombination rate')
+    group.add_argument('--recomb-rate', type=float, help='Recombination rate')
     group.add_argument('--recomb-map', metavar='FILE', help='Recombination map file')
 
     parser.add_argument('--dominance-coef', type=float, required=True,
@@ -84,11 +83,6 @@ if __name__ == '__main__':
     slim_template = Template(open('slim/init.slim', 'r').read() +
                              open('slim/admix.slim', 'r').read())
 
-    # place neutral mutations at regular intervals
-    neutral_pos = [pos for pos in range(int(args.spacing / 2),
-                                        args.segment_length,
-                                        args.spacing)]
-
     # convert arguments specified in years BP to generations since the
     # start of the simulation
     out_of_africa   = years_to_gen(args.out_of_africa)
@@ -114,6 +108,11 @@ if __name__ == '__main__':
     if not args.segment_length:
         parser.error('Segment length has to be specified'
                      '(or taken from the recombination map)!')
+
+    # place neutral mutations at regular intervals
+    neutral_pos = [pos for pos in range(int(args.spacing / 2),
+                                        int(float(args.segment_length)),
+                                        args.spacing)]
 
     # values to fill in the SLiM template file
     mapping = {
