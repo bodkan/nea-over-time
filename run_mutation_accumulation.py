@@ -6,6 +6,8 @@ from tempfile import NamedTemporaryFile
 import subprocess
 import logging
 
+import pandas as pd
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s :: %(levelname)s :: %(message)s',
                     datefmt="%Y-%m-%d %H:%M:%S")
 logger = logging.getLogger()
@@ -19,12 +21,15 @@ def years_to_gen(years, years_per_gen=25):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Simulate mutations in AMH and Neanderthals')
 
-    parser.add_argument('--segment-length', required=True,
+    parser.add_argument('--segment-length',
                         help='Length of the simulated segment')
     parser.add_argument('--spacing', type=int, default=10000,
                         help='Number of bases between neutral markers')
-    parser.add_argument('--recomb-rate', type=float, default=1e-8,
-                        help='Recombination rate')
+
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('--recomb-rate', type=float, default=1e-8,
+                       help='Recombination rate')
+    group.add_argument('--recomb-map', metavar='FILE', help='Recombination map file')
 
     parser.add_argument('--dominance-coef', type=float, required=True,
                         help='Dominance coefficient of deleterious mutations')
@@ -51,17 +56,31 @@ if __name__ == '__main__':
     slim_template = Template(open('slim/init.slim', 'r').read() +
                              open('slim/burnin.slim', 'r').read())
 
-    args.segment_length = int(float(args.segment_length))
-
     # convert arguments specified in years BP to generations since the
     # start of the simulation
     burnin          = years_to_gen(args.burnin)
     hum_nea_split   = years_to_gen(args.hum_nea_split) 
     out_of_africa   = burnin + hum_nea_split - years_to_gen(args.out_of_africa)
 
+    # specify recombination rate either as a fixed value or as
+    # a pair of coordinates and recombination rates as required
+    # by SLiM
+    if args.recomb_map:
+        recomb_map = pd.read_table(args.recomb_map,
+                                   names=['interval_end', 'recomb_rate'])
+        ends  = 'c(' + ','.join(str(i) for i in recomb_map.interval_end) + ')'
+        rates = 'c(' + ','.join(str(i) for i in recomb_map.recomb_rate) + ')'
+
+        args.recomb_rate = ends + ',\n' + rates
+        args.segment_length = max(recomb_map.interval_end)
+
+    if not args.segment_length:
+        parser.error('Segment length has to be specified'
+                     '(or taken from the recombination map)!')
+
     # values to fill in the SLiM template file
     mapping = {
-        'segment_length' : args.segment_length,
+        'segment_length' : int(float(args.segment_length)),
         'spacing' : args.spacing,
         'dominance_coef' : args.dominance_coef,
         'recomb_rate' : args.recomb_rate,
@@ -78,6 +97,7 @@ if __name__ == '__main__':
     with NamedTemporaryFile('w') as slim_file:
         print(slim_template.substitute(mapping),
               file=slim_file, flush=True)
+
         logger.info('Simulating populations (SLiM input {})'.format(slim_file.name))
         slim_output = subprocess.run(['slim', slim_file.name],
                                      stdout=subprocess.PIPE)

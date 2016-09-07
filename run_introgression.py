@@ -7,6 +7,8 @@ from tempfile import NamedTemporaryFile
 import subprocess
 import logging
 
+import pandas
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s :: %(levelname)s :: %(message)s',
                     datefmt="%Y-%m-%d %H:%M:%S")
 logger = logging.getLogger()
@@ -46,12 +48,18 @@ if __name__ == '__main__':
     parser.add_argument('--population-file', required=True,
                         help='File with simulated AMH and Neanderthal populations')
 
-    parser.add_argument('--segment-length', required=True,
+    parser.add_argument('--segment-length',
                         help='Length of the simulated segment')
     parser.add_argument('--spacing', type=int, default=10000,
                         help='Number of bases between neutral markers')
-    parser.add_argument('--recomb-rate', type=float, default=1e-8,
+
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('--recomb-rate', type=float, default=1e-8,
                         help='Recombination rate')
+    group.add_argument('--recomb-map', metavar='FILE', help='Recombination map file')
+
+    parser.add_argument('--dominance-coef', type=float, required=True,
+                        help='Dominance coefficient of deleterious mutations')
 
     parser.add_argument('--dominance-coef', type=float, required=True,
                         help='Dominance coefficient of deleterious mutations')
@@ -79,8 +87,6 @@ if __name__ == '__main__':
     slim_template = Template(open('slim/init.slim', 'r').read() +
                              open('slim/admix.slim', 'r').read())
 
-    args.segment_length = int(float(args.segment_length))
-
     # place neutral mutations at regular intervals
     neutral_pos = [pos for pos in range(int(args.spacing / 2),
                                         args.segment_length,
@@ -96,10 +102,26 @@ if __name__ == '__main__':
         admixture_end = admixture_start + 1
     eur_growth      = out_of_africa - years_to_gen(args.eur_growth)
 
+    # specify recombination rate either as a fixed value or as
+    # a pair of coordinates and recombination rates as required
+    # by SLiM
+    if args.recomb_map:
+        recomb_map = pd.read_table(args.recomb_map,
+                                   names=['interval_end', 'recomb_rate'])
+        ends  = 'c(' + ','.join(str(i) for i in recomb_map.interval_end) + ')'
+        rates = 'c(' + ','.join(str(i) for i in recomb_map.recomb_rate) + ')'
+
+        args.recomb_rate = ends + ',\n' + rates
+        args.segment_length = max(recomb_map.interval_end)
+
+    if not args.segment_length:
+        parser.error('Segment length has to be specified'
+                     '(or taken from the recombination map)!')
+
     # values to fill in the SLiM template file
     mapping = {
         'population_file' : args.population_file,
-        'segment_length' : args.segment_length,
+        'segment_length' : int(float(args.segment_length)),
         'spacing' : args.spacing,
         'neutral_pos' : 'c(' + ','.join(str(pos) for pos in neutral_pos) + ')',
         'neutral_count': len(neutral_pos),
