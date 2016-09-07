@@ -71,7 +71,7 @@ if __name__ == '__main__':
         ends  = 'c(' + ','.join(str(i) for i in recomb_map.interval_end) + ')'
         rates = 'c(' + ','.join(str(i) for i in recomb_map.recomb_rate) + ')'
 
-        args.recomb_rate = ends + ',\n' + rates
+        args.recomb_rate = rates + ',\n' + ends
         args.segment_length = max(recomb_map.interval_end)
 
     if not args.segment_length:
