@@ -61,9 +61,6 @@ if __name__ == '__main__':
     parser.add_argument('--dominance-coef', type=float, required=True,
                         help='Dominance coefficient of deleterious mutations')
 
-    parser.add_argument('--dominance-coef', type=float, required=True,
-                        help='Dominance coefficient of deleterious mutations')
-
     parser.add_argument('--admixture-rate', type=float, default=0.1,
                         help='Neanderthal migration rate')
 
