@@ -7,7 +7,7 @@ from tempfile import NamedTemporaryFile
 import subprocess
 import logging
 
-import pandas
+import pandas as pd
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s :: %(levelname)s :: %(message)s',
                     datefmt="%Y-%m-%d %H:%M:%S")
