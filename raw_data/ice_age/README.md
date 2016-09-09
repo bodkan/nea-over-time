@@ -28,6 +28,7 @@ If you agree, I would suggest redoing your analyses (all analyses including indi
 # "individuals" file
 
 This is a list of the 48 individuals in the same order that they appear in the genotype string in the “genosnp” file. Columns are:
+
 1. Index (order in genotype string)
 2. Sample ID
 3. Name of sample in paper used for example in Table S3.1
@@ -39,6 +40,7 @@ This is a list of the 48 individuals in the same order that they appear in the g
 # "genosnp_*.gz" files
 
 This contains 956,456 rows corresponding to the SNPs from the archaic admixture array that are informative about Neanderthal ancestry (the SNPs you picked are a subset of these). The columns are:
+
 1. Chromosome
 2. hg19 position
 3. Chromosome_hg19position
