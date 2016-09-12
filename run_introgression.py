@@ -143,9 +143,11 @@ if __name__ == '__main__':
             with NamedTemporaryFile('w') as slim_file:
                 print(slim_template.substitute(mapping),
                       file=slim_file, flush=True)
-                logger.info('Simulation #{} (SLiM input file "{}")'.format(i + 1, slim_file.name))
+                logger.info('Running simulation #{} (SLiM input file "{}")'.format(i + 1, slim_file.name))
 
                 slim_output = subprocess.run(['slim', slim_file.name],
                                              stdout=subprocess.PIPE,
                                              universal_newlines=True)
                 parse_and_save(slim_output.stdout, output_file)
+
+                logger.info('Simulation #{} done (return code = {})'.format(i + 1, slim_output.returncode))
