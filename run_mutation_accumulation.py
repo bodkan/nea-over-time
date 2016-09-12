@@ -33,16 +33,16 @@ if __name__ == '__main__':
     parser.add_argument('--dominance-coef', type=float, required=True,
                         help='Dominance coefficient of deleterious mutations')
 
-    parser.add_argument('--afr-size', type=int, default=10000,
+    parser.add_argument('--afr-size', type=int, default=14474,
                         help='Effective population size of the ancestral population')
     parser.add_argument('--nea-size', type=int, default=1000,
                         help='Effective population size of the Neanderthal population')
     parser.add_argument('--founder-size', type=int, default=1861,
                         help='Effective population size of the founding population')
 
-    parser.add_argument('--burnin', type=int, default=1000000,
+    parser.add_argument('--burnin', type=int, default=1100000,
                         help='Length of initial burnin [years]')
-    parser.add_argument('--hum-nea-split', type=int, default=500000,
+    parser.add_argument('--hum-nea-split', type=int, default=400000,
                         help='Split time of Neanderthals [years ago]')
     parser.add_argument('--out-of-africa', type=int, default=60000,
                         help='Out of Africa migration [years ago]')
