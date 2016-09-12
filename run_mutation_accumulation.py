@@ -98,5 +98,8 @@ if __name__ == '__main__':
               file=slim_file, flush=True)
 
         logger.info('Simulating populations (SLiM input {})'.format(slim_file.name))
+
         slim_output = subprocess.run(['slim', slim_file.name],
                                      stdout=subprocess.PIPE)
+
+        logger.info('Simulation using "{}" done (return code = {})'.format(slim_file.name, slim_output.returncode))
