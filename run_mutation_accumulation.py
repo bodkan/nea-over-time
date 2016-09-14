@@ -23,8 +23,6 @@ if __name__ == '__main__':
 
     parser.add_argument('--segment-length',
                         help='Length of the simulated segment')
-    parser.add_argument('--spacing', type=int, default=10000,
-                        help='Number of bases between neutral markers')
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--recomb-rate', type=float, help='Recombination rate')
@@ -58,7 +56,7 @@ if __name__ == '__main__':
     # convert arguments specified in years BP to generations since the
     # start of the simulation
     burnin          = years_to_gen(args.burnin)
-    hum_nea_split   = years_to_gen(args.hum_nea_split) 
+    hum_nea_split   = years_to_gen(args.hum_nea_split)
     out_of_africa   = burnin + hum_nea_split - years_to_gen(args.out_of_africa)
 
     # specify recombination rate either as a fixed value or as
@@ -80,17 +78,16 @@ if __name__ == '__main__':
     # values to fill in the SLiM template file
     mapping = {
         'segment_length' : int(float(args.segment_length)),
-        'spacing' : args.spacing,
         'dominance_coef' : args.dominance_coef,
-        'recomb_rate' : args.recomb_rate,
-        'founder_size' : args.founder_size,
-        'afr_size' :  args.afr_size,
-        'nea_size' : args.nea_size,
-        'burnin' : burnin,
-        'out_of_africa' : out_of_africa,
-        'output_prefix' : args.output_prefix
+        'recomb_rate'    : args.recomb_rate,
+        'founder_size'   : args.founder_size,
+        'afr_size'       : args.afr_size,
+        'nea_size'       : args.nea_size,
+        'burnin'         : burnin,
+        'out_of_africa'  : out_of_africa,
+        'output_prefix'  : args.output_prefix
     }
-                
+
     # fill in the SLiM template with simulation parameter values and
     # run SLiM with it as an input file
     with NamedTemporaryFile('w') as slim_file:

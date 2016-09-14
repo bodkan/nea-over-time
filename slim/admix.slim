@@ -52,9 +52,8 @@ $eur_growth:$sim_length {
 }
 
 
-// output frequencies of neutral mutations in each generation
+// print average Neanderthal ancestry in each generation
 $admixture_start:$sim_length {
-    // print average Neanderthal ancestry in this generation
     cat("\t" + sum(p3.genomes.countOfMutationsOfType(m1)) / (2 * p3.individualCount) / $neutral_count);
 }
 

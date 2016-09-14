@@ -117,21 +117,21 @@ if __name__ == '__main__':
     # values to fill in the SLiM template file
     mapping = {
         'population_file' : args.population_file,
-        'segment_length' : int(float(args.segment_length)),
-        'spacing' : args.spacing,
-        'neutral_pos' : 'c(' + ','.join(str(pos) for pos in neutral_pos) + ')',
-        'neutral_count': len(neutral_pos),
-        'dominance_coef' : args.dominance_coef,
-        'recomb_rate' : args.recomb_rate,
-        'founder_size' : args.founder_size,
-        'admixture_rate' : args.admixture_rate,
-        'out_of_africa' : out_of_africa,
-        'admixture_start': admixture_start,
-        'admixture_end' : admixture_end,
-        'eur_growth' : eur_growth,
-        'sim_length' : out_of_africa,
+        'segment_length'  : int(float(args.segment_length)),
+        'spacing'         : args.spacing,
+        'neutral_pos'     : 'c(' + ','.join(str(pos) for pos in neutral_pos) + ')',
+        'neutral_count'   : len(neutral_pos),
+        'dominance_coef'  : args.dominance_coef,
+        'recomb_rate'     : args.recomb_rate,
+        'founder_size'    : args.founder_size,
+        'admixture_rate'  : args.admixture_rate,
+        'out_of_africa'   : out_of_africa,
+        'admixture_start' : admixture_start,
+        'admixture_end'   : admixture_end,
+        'eur_growth'      : eur_growth,
+        'sim_length'      : out_of_africa,
     }
-                
+
     # count the number of already finished simulations
     already_finished = count_finished_simulations(args.output_file)
 
