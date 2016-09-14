@@ -45,11 +45,10 @@ $admixture_end {
     p2.setSubpopulationSize(0);
 }
 
-
 // exponentially grow the European population
 $eur_growth:$sim_length {
     t_i = sim.generation - $eur_growth;
-    p3.setSubpopulationSize(asInteger($founder_size * exp(t_i * 0.0038)));
+    p3.setSubpopulationSize(asInteger(1032 * exp(t_i * 0.0038)));
 }
 
 
