@@ -66,7 +66,7 @@ if __name__ == '__main__':
     parser.add_argument('--founder-size', type=int, default=1861,
                         help='Effective population size of the founding population')
 
-    parser.add_argument('--out-of-africa', type=int, default=60000,
+    parser.add_argument('--out-of-africa', type=int, default=55000,
                         help='Out of Africa migration [years ago] (start of the simulation)')
     parser.add_argument('--admixture-start', type=int, default=55000,
                         help='Start of Neanderthal admixture [years ago]')

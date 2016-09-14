@@ -44,7 +44,7 @@ if __name__ == '__main__':
                         help='Length of initial burnin [years]')
     parser.add_argument('--hum-nea-split', type=int, default=400000,
                         help='Split time of Neanderthals [years ago]')
-    parser.add_argument('--out-of-africa', type=int, default=60000,
+    parser.add_argument('--out-of-africa', type=int, default=55000,
                         help='Out of Africa migration [years ago]')
 
     parser.add_argument('--output-prefix', required=True,
