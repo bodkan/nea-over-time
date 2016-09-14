@@ -31,7 +31,7 @@ if __name__ == '__main__':
     parser.add_argument('--dominance-coef', type=float, required=True,
                         help='Dominance coefficient of deleterious mutations')
 
-    parser.add_argument('--afr-size', type=int, default=14474,
+    parser.add_argument('--afr-size', type=int, default=10000,
                         help='Effective population size of the ancestral population')
     parser.add_argument('--nea-size', type=int, default=1000,
                         help='Effective population size of the Neanderthal population')
