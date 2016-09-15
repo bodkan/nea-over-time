@@ -48,6 +48,9 @@ if __name__ == '__main__':
     parser.add_argument('--output-prefix', required=True,
                         help='Where to save the populations simulated by SLiM')
 
+    parser.add_argument('--dump-slim', metavar='FILE', help='Dump the SLiM config'
+                        ' file without running the simulation')
+
     args = parser.parse_args()
 
     slim_template = Template(open('slim/init.slim', 'r').read() +
@@ -90,12 +93,15 @@ if __name__ == '__main__':
 
     # fill in the SLiM template with simulation parameter values and
     # run SLiM with it as an input file
-    with NamedTemporaryFile('w') as slim_file:
-        print(slim_template.substitute(mapping),
-              file=slim_file, flush=True)
+    slim_file = open(args.dump_slim, 'w') if args.dump_slim else NamedTemporaryFile('w')
 
+    print(slim_template.substitute(mapping),
+          file=slim_file, flush=True)
+
+    # run the simulation if not in the debugging mode
+    if not args.dump_slim:
         logger.info('Simulating populations (SLiM input {})'.format(slim_file.name))
-
         slim_output = subprocess.run(['slim', slim_file.name])
+        logger.info('Simulation using "{}" done (returned {})'.format(slim_file.name, slim_output.returncode))
 
-        logger.info('Simulation using "{}" done (return code = {})'.format(slim_file.name, slim_output.returncode))
+    slim_file.close()
