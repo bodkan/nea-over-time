@@ -21,12 +21,8 @@ def years_to_gen(years, years_per_gen=25):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Simulate mutations in AMH and Neanderthals')
 
-    parser.add_argument('--segment-length',
-                        help='Length of the simulated segment')
-
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--recomb-rate', type=float, help='Recombination rate')
-    group.add_argument('--recomb-map', metavar='FILE', help='Recombination map file')
+    parser.add_argument('--exon-coordinates', metavar='FILE', required=True,
+                        help='Tab delimited text file with exon coordinates')
 
     parser.add_argument('--dominance-coef', type=float, required=True,
                         help='Dominance coefficient of deleterious mutations')
@@ -62,33 +58,22 @@ if __name__ == '__main__':
     hum_nea_split   = years_to_gen(args.hum_nea_split)
     out_of_africa   = burnin + hum_nea_split - years_to_gen(args.out_of_africa)
 
-    # specify recombination rate either as a fixed value or as
-    # a pair of coordinates and recombination rates as required
-    # by SLiM
-    if args.recomb_map:
-        recomb_map = pd.read_table(args.recomb_map,
-                                   names=['interval_end', 'recomb_rate'])
-        ends  = 'c(' + ','.join(str(i) for i in recomb_map.interval_end) + ')'
-        rates = 'c(' + ','.join(str(i) for i in recomb_map.recomb_rate) + ')'
-
-        args.recomb_rate = rates + ',\n' + ends
-        args.segment_length = max(recomb_map.interval_end)
-
-    if not args.segment_length:
-        parser.error('Segment length has to be specified'
-                     '(or taken from the recombination map)!')
+    # load the SLiM 0-based coordinates of exons
+    exon_coords = pd.read_table(args.exon_coordinates, sep='\t',
+                                names=['start', 'end'])
+    genomic_elements = '\n'.join('initializeGenomicElement(g1, {}, {});'.format(s, e)
+                                 for s, e in zip(exon_coords.start, exon_coords.end))
 
     # values to fill in the SLiM template file
     mapping = {
-        'segment_length' : int(float(args.segment_length)),
-        'dominance_coef' : args.dominance_coef,
-        'recomb_rate'    : args.recomb_rate,
-        'founder_size'   : args.founder_size,
-        'afr_size'       : args.afr_size,
-        'nea_size'       : args.nea_size,
-        'burnin'         : burnin,
-        'out_of_africa'  : out_of_africa,
-        'output_prefix'  : args.output_prefix
+        'genomic_elements' : genomic_elements,
+        'dominance_coef'   : args.dominance_coef,
+        'founder_size'     : args.founder_size,
+        'afr_size'         : args.afr_size,
+        'nea_size'         : args.nea_size,
+        'burnin'           : burnin,
+        'out_of_africa'    : out_of_africa,
+        'output_prefix'    : args.output_prefix
     }
 
     # fill in the SLiM template with simulation parameter values and

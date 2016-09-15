@@ -1,5 +1,5 @@
 initialize() {
-    initializeRecombinationRate($recomb_rate);
+    initializeRecombinationRate(1e-8);
     initializeMutationRate(7e-9);
 
     // deleterious mutation type
@@ -9,6 +9,7 @@ initialize() {
     initializeMutationType("m1", 0.5, "f", 0.0);
 
     initializeGenomicElementType("g1", m0, 1.0);
-    initializeGenomicElement(g1, 0, $segment_length - 1);
+
+    $genomic_elements
 }
 
