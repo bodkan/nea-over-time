@@ -12,7 +12,7 @@ $burnin {
 
 
 // split between non-Africans and Africans
-$out_of_africa {
+$out_of_africa late() {
     sim.addSubpopSplit("p3", $founder_size, p1);
 
     sim.outputFull("$output_prefix" + getSeed() + ".txt");
