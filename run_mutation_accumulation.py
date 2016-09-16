@@ -23,6 +23,8 @@ if __name__ == '__main__':
 
     parser.add_argument('--exon-coordinates', metavar='FILE', required=True,
                         help='Tab delimited text file with exon coordinates')
+    parser.add_argument('--recomb-map', metavar='FILE', required=True,
+                        help='Tab delimited text file with the recombination map')
 
     parser.add_argument('--dominance-coef', type=float, required=True,
                         help='Dominance coefficient of deleterious mutations')
@@ -64,8 +66,13 @@ if __name__ == '__main__':
     genomic_elements = '\n'.join('initializeGenomicElement(g1, {}, {});'.format(s, e)
                                  for s, e in zip(exon_coords.start, exon_coords.end))
 
+    # load the SLiM 0-based coordinates of recombination gaps
+    recomb_map = pd.read_table(args.recomb_map)
+
     # values to fill in the SLiM template file
     mapping = {
+        'recomb_ends'      : 'c(' + ','.join(str(i) for i in recomb_map.slim_end) + ')',
+        'recomb_rates'     : 'c(' + ','.join(str(i) for i in recomb_map.recomb_rate) + ')',
         'genomic_elements' : genomic_elements,
         'dominance_coef'   : args.dominance_coef,
         'founder_size'     : args.founder_size,
