@@ -61,10 +61,10 @@ if __name__ == '__main__':
     out_of_africa   = burnin + hum_nea_split - years_to_gen(args.out_of_africa)
 
     # load the SLiM 0-based coordinates of exons
-    exon_coords = pd.read_table(args.exon_coordinates, sep='\t',
-                                names=['start', 'end'])
+    exon_coords = pd.read_table(args.exon_coordinates, sep='\t')
     genomic_elements = '\n'.join('initializeGenomicElement(g1, {}, {});'.format(s, e)
-                                 for s, e in zip(exon_coords.start, exon_coords.end))
+                                 for s, e in zip(exon_coords.slim_start,
+                                                 exon_coords.slim_end))
 
     # load the SLiM 0-based coordinates of recombination gaps
     recomb_map = pd.read_table(args.recomb_map)
