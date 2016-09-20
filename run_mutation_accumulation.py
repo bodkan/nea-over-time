@@ -29,7 +29,7 @@ if __name__ == '__main__':
     parser.add_argument('--dominance-coef', type=float, required=True,
                         help='Dominance coefficient of deleterious mutations')
 
-    parser.add_argument('--afr-size', type=int, default=10000,
+    parser.add_argument('--anc-size', type=int, default=10000,
                         help='Effective population size of the ancestral population')
     parser.add_argument('--nea-size', type=int, default=1000,
                         help='Effective population size of the Neanderthal population')
@@ -76,7 +76,7 @@ if __name__ == '__main__':
         'genomic_elements' : genomic_elements,
         'dominance_coef'   : args.dominance_coef,
         'founder_size'     : args.founder_size,
-        'afr_size'         : args.afr_size,
+        'anc_size'         : args.anc_size,
         'nea_size'         : args.nea_size,
         'burnin'           : burnin,
         'out_of_africa'    : out_of_africa,
