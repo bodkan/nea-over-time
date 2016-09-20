@@ -36,9 +36,7 @@ if __name__ == '__main__':
     parser.add_argument('--founder-size', type=int, default=1861,
                         help='Effective population size of the founding population')
 
-    parser.add_argument('--burnin', type=int, default=1100000,
-                        help='Length of initial burnin [years]')
-    parser.add_argument('--hum-nea-split', type=int, default=400000,
+    parser.add_argument('--hum-nea-split', type=int, default=500000,
                         help='Split time of Neanderthals [years ago]')
     parser.add_argument('--out-of-africa', type=int, default=55000,
                         help='Out of Africa migration [years ago]')
@@ -56,7 +54,7 @@ if __name__ == '__main__':
 
     # convert arguments specified in years BP to generations since the
     # start of the simulation
-    burnin          = years_to_gen(args.burnin)
+    burnin          = 5 * args.anc_size  # loosely based on SLiM 1.8 manual
     hum_nea_split   = years_to_gen(args.hum_nea_split)
     out_of_africa   = burnin + hum_nea_split - years_to_gen(args.out_of_africa)
 
