@@ -1,36 +1,12 @@
-initialize() {
-    // distance between the fixed neutral markers
-    defineConstant("spacing", $spacing);
-
-    // positions of the fixed neutral markers
-    defineConstant("neutral_pos", $neutral_pos);
-}
-
-
 // load the simulation state after the out of Africa event
 1 {
     sim.readFromPopulationFile("$population_file");
+    sim.generation = 1;
 }
-
-
-// place neutral markers on all Neanderthal haplotypes
-1 {
-    // extract the Neanderthal haplotypes
-    nea_haps = p2.genomes;
-
-    // place neutral markers on the first Neanderthal haplotype
-    neutral_muts = apply(neutral_pos, "nea_haps[0].addNewDrawnMutation(m1, applyValue);");
-
-    // copy the mutations to the remaining Neanderthal haplotypes
-    nea_haps[1:(size(nea_haps) - 1)].addMutations(neutral_muts);
-}
-
 
 // start of the Neanderthal admixture
 $admixture_start {
     p3.setMigrationRates(p2, $admixture_rate);
-
-    cat("#OUT:");
 }
 
 
@@ -53,7 +29,10 @@ $eur_growth:$sim_length {
 
 
 // print average Neanderthal ancestry in each generation
-$admixture_start:$sim_length {
-    cat("\t" + sum(p3.genomes.countOfMutationsOfType(m1)) / (2 * p3.individualCount) / $neutral_count);
-}
+//$admixture_start:$sim_length {
+//    cat("\t" + sum(p3.genomes.countOfMutationsOfType(m1)) / (2 * p3.individualCount) / $neutral_count);
+//}
 
+1:$sim_length {
+   cat(time() + " :: INFO :: Simulation of h = $dominance_coef introgression (" + sim.generation + "/$out_of_africa generations)\n");
+}

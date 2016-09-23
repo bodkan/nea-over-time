@@ -9,17 +9,22 @@ $burnin {
     sim.addSubpopSplit("p2", $nea_size, p1);
 }
 
-
-// split between non-Africans and Africans
+// dump all populations and mutations at the end of the simulation
 $out_of_africa late() {
+    // split between non-Africans and Africans
     sim.addSubpopSplit("p3", $founder_size, p1);
+
+    // place neutral markers on all Neanderthal haplotypes
+    for (pos in neutral_pos) {
+        p2.genomes.addNewDrawnMutation(m1, pos);
+    }
 
     sim.outputFull("$output_prefix" + getSeed() + ".txt");
     sim.simulationFinished();
 }
 
 1:$out_of_africa {
-    if (sim.generation % 100 == 1) {
+    if (sim.generation % 10 == 1) {
        cat("INFO :: Simulation of h = $dominance_coef (" + sim.generation + "/$out_of_africa generations)\n");
     }
 }

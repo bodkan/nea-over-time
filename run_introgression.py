@@ -45,17 +45,15 @@ if __name__ == '__main__':
 
     parser.add_argument('--num-iters', type=int, required=True,
                         help='Number of iterations of the simulation')
+
     parser.add_argument('--population-file', required=True,
                         help='File with simulated AMH and Neanderthal populations')
-
-    parser.add_argument('--segment-length',
-                        help='Length of the simulated segment')
-    parser.add_argument('--spacing', type=int, default=10000,
-                        help='Number of bases between neutral markers')
-
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--recomb-rate', type=float, help='Recombination rate')
-    group.add_argument('--recomb-map', metavar='FILE', help='Recombination map file')
+    parser.add_argument('--recomb-map', metavar='FILE', required=True,
+                        help='Tab delimited text file with the recombination map')
+    parser.add_argument('--informative-sites', metavar='FILE', required=True,
+                        help='Positions of sites from the archaic admixture array')
+    parser.add_argument('--exon-coordinates', metavar='FILE', required=True,
+                        help='Tab delimited text file with exon coordinates')
 
     parser.add_argument('--dominance-coef', type=float, required=True,
                         help='Dominance coefficient of deleterious mutations')
@@ -75,8 +73,11 @@ if __name__ == '__main__':
     parser.add_argument('--eur-growth', type=int, default=23000,
                         help='Start of European growth after the split with Asians [years ago]')
 
-    parser.add_argument('--output-file', required=True,
-                        help='Where to save the output table with frequencies')
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('--output-file', metavar='FILE', help='Where to save'
+                       ' the output table with frequencies at each informative position')
+    group.add_argument('--dump-slim', metavar='FILE', help='Dump the SLiM config'
+                        ' file without running the simulation')
 
     args = parser.parse_args()
 
@@ -93,36 +94,27 @@ if __name__ == '__main__':
         admixture_end = admixture_start + 1
     eur_growth      = out_of_africa - years_to_gen(args.eur_growth)
 
-    # specify recombination rate either as a fixed value or as
-    # a pair of coordinates and recombination rates as required
-    # by SLiM
-    if args.recomb_map:
-        recomb_map = pd.read_table(args.recomb_map,
-                                   names=['interval_end', 'recomb_rate'])
-        ends  = 'c(' + ','.join(str(i) for i in recomb_map.interval_end) + ')'
-        rates = 'c(' + ','.join(str(i) for i in recomb_map.recomb_rate) + ')'
+    # load the SLiM 0-based coordinates of exons
+    exon_coords = pd.read_table(args.exon_coordinates, sep='\t')
+    genomic_elements = '\n'.join('initializeGenomicElement(g1, {}, {});'.format(s, e)
+                                 for s, e in zip(exon_coords.slim_start,
+                                                 exon_coords.slim_end))
 
-        args.recomb_rate = rates + ',\n' + ends
-        args.segment_length = max(recomb_map.interval_end)
+    # load the SLiM 0-based coordinates of recombination gaps
+    recomb_map = pd.read_table(args.recomb_map)
 
-    if not args.segment_length:
-        parser.error('Segment length has to be specified'
-                     '(or taken from the recombination map)!')
-
-    # place neutral mutations at regular intervals
-    neutral_pos = [pos for pos in range(int(args.spacing / 2),
-                                        int(float(args.segment_length)),
-                                        args.spacing)]
+    # read coordinates of sites from the archaic admixture array
+    sites_coords = pd.read_table(args.informative_sites, names=['slim_start'])
 
     # values to fill in the SLiM template file
     mapping = {
         'population_file' : args.population_file,
-        'segment_length'  : int(float(args.segment_length)),
-        'spacing'         : args.spacing,
-        'neutral_pos'     : 'c(' + ','.join(str(pos) for pos in neutral_pos) + ')',
-        'neutral_count'   : len(neutral_pos),
+        'recomb_ends'      : 'c(' + ','.join(str(i) for i in recomb_map.slim_end) + ')',
+        'recomb_rates'     : 'c(' + ','.join(str(i) for i in recomb_map.recomb_rate) + ')',
+        'genomic_elements' : genomic_elements,
+        'neutral_pos'     : 'c(' + ','.join(str(pos) for pos in sites_coords.slim_start) + ')',
+        'neutral_count'   : len(sites_coords),
         'dominance_coef'  : args.dominance_coef,
-        'recomb_rate'     : args.recomb_rate,
         'founder_size'    : args.founder_size,
         'admixture_rate'  : args.admixture_rate,
         'out_of_africa'   : out_of_africa,
@@ -132,22 +124,27 @@ if __name__ == '__main__':
         'sim_length'      : out_of_africa,
     }
 
-    # count the number of already finished simulations
-    already_finished = count_finished_simulations(args.output_file)
+    if args.dump_slim:
+        with open(args.dump_slim, 'w') as slim_file:
+            print(slim_template.substitute(mapping),
+                  file=slim_file)
+    else:
+        # count the number of already finished simulations
+        already_finished = count_finished_simulations(args.output_file)
 
-    with open(args.output_file, 'a') as output_file:
-        # run the given number of SLiM iterations
-        for i in range(already_finished, args.num_iters):
-            # fill in the SLiM template with simulation parameter values and
-            # run SLiM with it as an input file
-            with NamedTemporaryFile('w') as slim_file:
-                print(slim_template.substitute(mapping),
-                      file=slim_file, flush=True)
-                logger.info('Running simulation #{} (SLiM input file "{}")'.format(i + 1, slim_file.name))
+        with open(args.output_file, 'a') as output_file:
+            # run the given number of SLiM iterations
+            for i in range(already_finished, args.num_iters):
+                # fill in the SLiM template with simulation parameter values and
+                # run SLiM with it as an input file
+                with NamedTemporaryFile('w') as slim_file:
+                    print(slim_template.substitute(mapping),
+                          file=slim_file, flush=True)
+                    logger.info('Running simulation #{} (SLiM input file "{}")'.format(i + 1, slim_file.name))
 
-                slim_output = subprocess.run(['slim', slim_file.name],
-                                             stdout=subprocess.PIPE,
-                                             universal_newlines=True)
-                parse_and_save(slim_output.stdout, output_file)
+                    slim_output = subprocess.run(['slim', slim_file.name],
+                                                 stdout=subprocess.PIPE,
+                                                 universal_newlines=True)
+                    parse_and_save(slim_output.stdout, output_file)
 
-                logger.info('Simulation #{} done (return code = {})'.format(i + 1, slim_output.returncode))
+                    logger.info('Simulation #{} done (return code = {})'.format(i + 1, slim_output.returncode))

@@ -25,6 +25,8 @@ if __name__ == '__main__':
                         help='Tab delimited text file with exon coordinates')
     parser.add_argument('--recomb-map', metavar='FILE', required=True,
                         help='Tab delimited text file with the recombination map')
+    parser.add_argument('--informative-sites', metavar='FILE', required=True,
+                        help='Positions of sites from the archaic admixture array')
 
     parser.add_argument('--dominance-coef', type=float, required=True,
                         help='Dominance coefficient of deleterious mutations')
@@ -67,11 +69,15 @@ if __name__ == '__main__':
     # load the SLiM 0-based coordinates of recombination gaps
     recomb_map = pd.read_table(args.recomb_map)
 
+    # read coordinates of sites from the archaic admixture array
+    sites_coords = pd.read_table(args.informative_sites, names=['slim_start'])
+
     # values to fill in the SLiM template file
     mapping = {
         'recomb_ends'      : 'c(' + ','.join(str(i) for i in recomb_map.slim_end) + ')',
         'recomb_rates'     : 'c(' + ','.join(str(i) for i in recomb_map.recomb_rate) + ')',
         'genomic_elements' : genomic_elements,
+        'neutral_pos'      : 'c(' + ','.join(str(pos) for pos in sites_coords.slim_start) + ')',
         'dominance_coef'   : args.dominance_coef,
         'founder_size'     : args.founder_size,
         'anc_size'         : args.anc_size,
