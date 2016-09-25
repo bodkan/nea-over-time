@@ -25,8 +25,11 @@ if __name__ == '__main__':
                         help='Tab delimited text file with exon coordinates')
     parser.add_argument('--recomb-map', metavar='FILE', required=True,
                         help='Tab delimited text file with the recombination map')
-    parser.add_argument('--informative-sites', metavar='FILE', required=True,
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('--array-sites', metavar='FILE',
                         help='Positions of sites from the archaic admixture array')
+    group.add_argument('--even-spacing', type=int, metavar='N',
+                        help='Place evenly distributed neutral sites every N basepairs')
 
     parser.add_argument('--dominance-coef', type=float, required=True,
                         help='Dominance coefficient of deleterious mutations')
@@ -69,8 +72,13 @@ if __name__ == '__main__':
     # load the SLiM 0-based coordinates of recombination gaps
     recomb_map = pd.read_table(args.recomb_map)
 
-    # read coordinates of sites from the archaic admixture array
-    sites_coords = pd.read_table(args.informative_sites, names=['slim_start'])
+    if args.array_sites:
+        # read coordinates of sites from the archaic admixture array
+        sites_coords = pd.read_table(args.array_sites, names=['slim_start'])
+    else:
+        sites_coords = pd.DataFrame({'slim_start': [pos for pos in range(0,
+                                                                         max(recomb_map.slim_end),
+                                                                         args.even_spacing)]})
 
     # values to fill in the SLiM template file
     mapping = {
