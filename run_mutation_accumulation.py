@@ -29,7 +29,7 @@ if __name__ == '__main__':
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--array-sites', metavar='FILE',
                         help='Positions of sites from the archaic admixture array')
-    group.add_argument('--even-spacing', type=int, metavar='N',
+    group.add_argument('--neutral-spacing', type=int, metavar='N',
                         help='Place evenly distributed neutral sites every N basepairs')
 
     parser.add_argument('--dominance-coef', type=float, required=True,
