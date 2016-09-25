@@ -5,6 +5,7 @@ from string import Template
 from tempfile import NamedTemporaryFile
 import subprocess
 import logging
+import random
 
 import pandas as pd
 
@@ -105,7 +106,7 @@ if __name__ == '__main__':
     # run the simulation if not in the debugging mode
     if not args.dump_slim:
         logger.info('Simulating populations (SLiM input {})'.format(slim_file.name))
-        slim_output = subprocess.run(['slim', slim_file.name])
+        slim_output = subprocess.run(['slim', '-s', str(random.randint(1, 10**13)), slim_file.name])
         logger.info('Simulation using "{}" done (returned {})'.format(slim_file.name, slim_output.returncode))
 
     slim_file.close()

@@ -19,7 +19,7 @@ $out_of_africa late() {
         p2.genomes.addNewDrawnMutation(m1, pos);
     }
 
-    sim.outputFull("$output_prefix" + getSeed() + ".txt");
+    sim.outputFull("$output_prefix" + "seed_" + getSeed() + ".txt");
     sim.simulationFinished();
 }
 
