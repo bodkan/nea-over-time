@@ -79,7 +79,7 @@ if __name__ == '__main__':
     else:
         sites_coords = pd.DataFrame({'slim_start': [pos for pos in range(0,
                                                                          max(recomb_map.slim_end),
-                                                                         args.even_spacing)]})
+                                                                         args.neutral_spacing)]})
 
     # values to fill in the SLiM template file
     mapping = {
