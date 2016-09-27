@@ -13,18 +13,18 @@ python3 run_mutation_accumulation.py --exon-coordinates $exome_only_exon_coords 
 				     --recomb-map $exome_only_recomb_map \
 				     --neutral-spacing 10000 \
 				     --dominance-coef $h \
-				     --output-prefix ${sims_dir}/exome_only__h_$h__ &
+				     --output-prefix ${sims_dir}/exome_only__h_${h}__ &
 
 h=0.1
 python3 run_mutation_accumulation.py --exon-coordinates $exome_only_exon_coords \
 				     --recomb-map $exome_only_recomb_map \
 				     --neutral-spacing 10000 \
 				     --dominance-coef $h \
-				     --output-prefix ${sims_dir}/exome_only__h_$h__ &
+				     --output-prefix ${sims_dir}/exome_only__h_${h}__ &
 
 h=0.0
 python3 run_mutation_accumulation.py --exon-coordinates $exome_only_exon_coords \
 				     --recomb-map $exome_only_recomb_map \
 				     --neutral-spacing 10000 \
 				     --dominance-coef $h \
-				     --output-prefix ${sims_dir}/exome_only__h_$h__ &
+				     --output-prefix ${sims_dir}/exome_only__h_${h}__ &
