@@ -2,7 +2,7 @@
 
 input_dir=clean_data
 sims_dir=simulations
-
+tmp_dir=tmp
 
 
 # 
@@ -44,7 +44,7 @@ python3 run_mutation_accumulation.py --exon-coordinates $exome_only_exon_coords 
 # Using SLiM recombination map by Harris and Nielsen, 2016.
 #
 
-harris_config=slim/execute_mut_accum_partially_recessive.slim
+harris_config=${tmp_dir}/wholegenome_run1_gen60000.txt
 harris_recomb_map=${input_dir}/harris_recombination_map.txt
 harris_exon_coords=${input_dir}/harris_exon_coordinates.txt
 
@@ -52,7 +52,7 @@ harris_exon_coords=${input_dir}/harris_exon_coordinates.txt
 # (converting 1-based coordinates of SliM 1.8 to 0-based coordinates
 # of SLiM 2)
 echo -e "slim_end\trecomb_rate" > $harris_recomb_map
-awk -vOFS="\t" 'NR > 12 && NR < 390986 {print $1 - 1, $2}' $harris_config \
+awk -vOFS="\t" 'NR > 9 && NR < 436867 {print $1 - 1, $2}' $harris_config \
     >> $harris_recomb_map
 
 # get the coordinates of the simulated genomic element
