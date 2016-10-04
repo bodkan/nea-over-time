@@ -2,7 +2,7 @@ initialize() {
     defineConstant("sampling_times", c(seq(1, 100), seq(120, $sim_length, 20)));
 
     // write the header
-    writeFile("$output_file", paste(sampling_times, "\t") + "\n");
+    writeFile("$output_file", "gen\tmean\tsd\n");
 }
 
 // load the simulation state after the out of Africa event
@@ -35,7 +35,10 @@ $eur_growth:$sim_length {
 $admixture_start:$sim_length late() {
     if (any(sim.generation == sampling_times)) {
         cat(time() + " :: INFO :: " + sim.generation + "/$out_of_africa generations\n");
-        nea_ancestry = sum(p3.genomes.countOfMutationsOfType(m1)) / (2 * p3.individualCount) / $neutral_count;
-        writeFile("$output_file", asString(nea_ancestry) + "\t", append=T);
+	nea_per_ind = p3.individuals.countOfMutationsOfType(m1) / (2 * size(neutral_pos));
+        writeFile("$output_file", paste(c(sim.generation,
+	                                  mean(nea_per_ind),
+					  sd(nea_per_ind)), "\t") + "\n",
+		  append=T);
   }
 }
