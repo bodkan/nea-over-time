@@ -1,3 +1,10 @@
+initialize() {
+    defineConstant("sampling_times", c(seq(1, 100), seq(120, $sim_length, 20)));
+
+    // write the header
+    writeFile("$output_file", paste(sampling_times, "\t") + "\n");
+}
+
 // load the simulation state after the out of Africa event
 1 {
     sim.readFromPopulationFile("$population_file");
@@ -9,12 +16,10 @@ $admixture_start {
     p3.setMigrationRates(p2, $admixture_rate);
 }
 
-
 // end of Neanderthal admixture
 $admixture_end {
     p3.setMigrationRates(p2, 0);
 }
-
 
 // extinction of Neanderthals
 $admixture_end {
@@ -27,12 +32,10 @@ $eur_growth:$sim_length {
     p3.setSubpopulationSize(asInteger(1032 * exp(t_i * 0.0038)));
 }
 
-
-// print average Neanderthal ancestry in each generation
-//$admixture_start:$sim_length {
-//    cat("\t" + sum(p3.genomes.countOfMutationsOfType(m1)) / (2 * p3.individualCount) / $neutral_count);
-//}
-
-1:$sim_length {
-   cat(time() + " :: INFO :: Simulation of h = $dominance_coef introgression (" + sim.generation + "/$out_of_africa generations)\n");
+$admixture_start:$sim_length late() {
+    if (any(sim.generation == sampling_times)) {
+        cat(time() + " :: INFO :: " + sim.generation + "/$out_of_africa generations\n");
+        nea_ancestry = sum(p3.genomes.countOfMutationsOfType(m1)) / (2 * p3.individualCount) / $neutral_count;
+        writeFile("$output_file", asString(nea_ancestry) + "\t", append=T);
+  }
 }
