@@ -22,13 +22,13 @@ dates=`tail -n+2 ${input_dir}/nea_ancestry_direct.tsv | cut -f2 | tr '\n' ' '`
 run_introgression() {
     case $2 in
 	0.5)
-	    mem=7G
+	    mem=8G
 	    ;;
 	0.1)
-	    mem=9G
+	    mem=10G
 	    ;;
 	0.0)
-	    mem=11G
+	    mem=12G
 	    ;;
 	*)
 	    echo "Suspicious dominance coefficient: $2"
