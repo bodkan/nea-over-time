@@ -50,6 +50,10 @@ if __name__ == '__main__':
     parser.add_argument('--eur-growth', type=int, default=23000,
                         help='Start of European growth after the split with Asians [years ago]')
 
+    parser.add_argument('--sampling-times', nargs='*', type=int, default=[],
+                        help='List of timepoints (in years BP) at which to sample'
+                        ' Neanderthal ancestry in a population')
+
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--output-file', metavar='FILE', help='Where to save'
                        ' Neanderthal ancestries over time')
@@ -76,6 +80,10 @@ if __name__ == '__main__':
     genomic_elements = '\n'.join('initializeGenomicElement(g1, {}, {});'.format(s, e)
                                  for s, e in zip(exon_coords.slim_start,
                                                  exon_coords.slim_end))
+
+    # convert sampling times from years BP to generations since
+    # the start of the simulation
+    sampling_times = [out_of_africa - years_to_gen(s) for s in args.sampling_times]
 
     # load the SLiM 0-based coordinates of recombination gaps
     recomb_map = pd.read_table(args.recomb_map)
@@ -104,6 +112,7 @@ if __name__ == '__main__':
         'admixture_end'   : admixture_end,
         'eur_growth'      : eur_growth,
         'sim_length'      : out_of_africa,
+        'sampling_times'  : 'c(' + ','.join(str(i) for i in sampling_times) + ')',
         'output_file'     : args.output_file
     }
 

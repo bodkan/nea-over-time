@@ -1,5 +1,7 @@
 initialize() {
-    defineConstant("sampling_times", c(seq(1, 100), seq(120, $sim_length, 20)));
+    defineConstant("output_generations", sort(unique(c($sampling_times,
+                                                       seq(1, 100),
+						       seq(120, $sim_length, 20)))));
 
     // write the header
     writeFile("$output_file", "gen\tmean\tsd\n");
@@ -33,7 +35,7 @@ $eur_growth:$sim_length {
 }
 
 $admixture_start:$sim_length late() {
-    if (any(sim.generation == sampling_times)) {
+    if (any(sim.generation == output_generations)) {
         cat(time() + " :: INFO :: " + sim.generation + "/$out_of_africa generations\n");
 	nea_per_ind = p3.individuals.countOfMutationsOfType(m1) / (2 * size(neutral_pos));
         writeFile("$output_file", paste(c(sim.generation,
