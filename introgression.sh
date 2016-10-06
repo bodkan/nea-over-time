@@ -1,6 +1,7 @@
 #!/bin/bash
 
-input_dir=clean_data
+input_dir=input_data
+clean_dir=clean_data
 sims_dir=simulations
 traject_dir=${sims_dir}/trajectories
 tmp_dir=tmp
@@ -14,6 +15,8 @@ init_props="0.01 0.03 0.05 0.07 0.09"
 # number of replicates of each model
 num_replicates=10
 
+# dates of samples
+dates=`tail -n+2 ${input_dir}/nea_ancestry_direct.tsv | cut -f2 | tr '\n' ' '`
 
 # wrapper for submitting introgression simulations to SGE
 run_introgression() {
@@ -43,6 +46,7 @@ run_introgression() {
 	    --neutral-spacing 10000 \
 	    --admixture-rate $5 \
 	    --dominance-coef $2 \
+	    --sampling-times $dates \
 	    --output-file ${traject_dir}/${run_id}.txt
 }
 
@@ -55,9 +59,8 @@ run_introgression() {
 # Exome only, not including sites from the archaic admixture array.
 #
 
-exome_only_exon_coords=${input_dir}/exome_only_exon_coordinates.txt
-exome_only_recomb_map=${input_dir}/exome_only_recombination_map.txt
-
+exome_only_exon_coords=${clean_dir}/exome_only_exon_coordinates.txt
+exome_only_recomb_map=${clean_dir}/exome_only_recombination_map.txt
 
 for rep_i in `seq 1 $num_replicates`; do
     for init_nea in $init_props; do
@@ -78,8 +81,8 @@ done
 # Using SLiM recombination map by Harris and Nielsen, 2016.
 #
 
-# harris_recomb_map=${input_dir}/harris_recombination_map.txt
-# harris_exon_coords=${input_dir}/harris_exon_coordinates.txt
+# harris_recomb_map=${clean_dir}/harris_recombination_map.txt
+# harris_exon_coords=${clean_dir}/harris_exon_coordinates.txt
 
 
 # for rep_i in `seq 1 $num_replicates`; do
