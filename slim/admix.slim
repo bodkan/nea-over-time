@@ -2,9 +2,8 @@ initialize() {
     defineConstant("output_generations", sort(unique(c($sampling_times,
                                                        seq(1, 100),
 						       seq(120, $sim_length, 20)))));
-
     // write the header
-    writeFile("$output_file", "gen\tmean\tsd\n");
+    writeFile("$output_file", "gen\tmean\tsd\tmedian\tmin\tmax\tNe\n");
 }
 
 // load the simulation state after the out of Africa event
@@ -40,7 +39,11 @@ $admixture_start:$sim_length late() {
 	nea_per_ind = p3.individuals.countOfMutationsOfType(m1) / (2 * size(neutral_pos));
         writeFile("$output_file", paste(c(sim.generation,
 	                                  mean(nea_per_ind),
-					  sd(nea_per_ind)), "\t") + "\n",
+					  sd(nea_per_ind),
+					  sort(nea_per_ind)[asInteger(size(nea_per_ind) / 2)],
+					  min(nea_per_ind),
+					  max(nea_per_ind),
+					  p3.individualCount), "\t") + "\n",
 		  append=T);
   }
 }
