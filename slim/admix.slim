@@ -36,7 +36,8 @@ $eur_growth:$sim_length {
 $admixture_start:$sim_length late() {
     if (any(sim.generation == output_generations)) {
         cat(time() + " :: INFO :: " + sim.generation + "/$out_of_africa generations\n");
-	nea_per_ind = p3.individuals.countOfMutationsOfType(m1) / (2 * size(neutral_pos));
+        nea_per_ind = apply(seq(0, p3.individualCount - 1),
+                            "sum(p3.genomes[c(2 * applyValue, 2 * applyValue + 1)].countOfMutationsOfType(m1));") / (2 * size(neutral_pos));
         writeFile("$output_file", paste(c(sim.generation,
 	                                  mean(nea_per_ind),
 					  sd(nea_per_ind),
