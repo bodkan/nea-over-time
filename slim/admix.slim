@@ -9,6 +9,7 @@ initialize() {
 // load the simulation state after the out of Africa event
 1 {
     sim.readFromPopulationFile("$population_file");
+    p1.setSubpopulationSize(0);
     sim.generation = 1;
 }
 
