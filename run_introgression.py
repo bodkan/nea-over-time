@@ -40,13 +40,11 @@ if __name__ == '__main__':
 
     parser.add_argument('--admixture-rate', type=float, default=0.1,
                         help='Neanderthal migration rate')
+    parser.add_argument('--admixture-time', type=int, default=55000,
+                        help='Time of Neanderthal admixture [years ago]')
 
     parser.add_argument('--out-of-africa', type=int, default=55000,
                         help='Out of Africa migration [years ago] (start of the simulation)')
-    parser.add_argument('--admixture-start', type=int, default=55000,
-                        help='Start of Neanderthal admixture [years ago]')
-    parser.add_argument('--admixture-length', type=int,
-                        help='Duration of Neanderthal admixture [years]')
     parser.add_argument('--eur-growth', type=int, default=23000,
                         help='Start of European growth after the split with Asians [years ago]')
 
@@ -67,12 +65,8 @@ if __name__ == '__main__':
 
     # convert arguments specified in years BP to generations since the
     # start of the simulation
-    out_of_africa   = years_to_gen(args.out_of_africa)
-    admixture_start = out_of_africa - years_to_gen(args.admixture_start) + 1
-    if args.admixture_length:
-        admixture_end = admixture_start + years_to_gen(args.admixture_length)
-    else:
-        admixture_end = admixture_start + 1
+    out_of_africa   = years_to_gen(args.out_of_africa) + 1
+    admixture_time  = out_of_africa - years_to_gen(args.admixture_time) + 1
     eur_growth      = out_of_africa - years_to_gen(args.eur_growth)
 
     # load the SLiM 0-based coordinates of exons
@@ -108,8 +102,9 @@ if __name__ == '__main__':
         'dominance_coef'  : args.dominance_coef,
         'admixture_rate'  : args.admixture_rate,
         'out_of_africa'   : out_of_africa,
-        'admixture_start' : admixture_start,
-        'admixture_end'   : admixture_end,
+        'prior_admixture' : admixture_time - 1,
+        'admixture_time'  : admixture_time,
+        'admixture_end'   : admixture_time + 1,
         'eur_growth'      : eur_growth,
         'sim_length'      : out_of_africa,
         'sampling_times'  : 'c(' + ','.join(str(i) for i in sampling_times) + ')',
