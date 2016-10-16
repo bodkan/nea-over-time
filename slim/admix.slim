@@ -1,9 +1,7 @@
 initialize() {
     defineConstant("output_generations", sort(unique(c($sampling_times,
-                                                       seq($admixture_time, 100 + $admixture_time),
-						       seq(120 + $admixture_time,
-                                                           $sim_length + $admixture_time,
-                                                           20)))));
+                                                       seq(1, 100),
+						       seq(120, $sim_length, 20)))) + 1);
     defineConstant("tmp_file", "tmp/tmp" + getSeed() + ".txt");
 }
 
@@ -62,7 +60,7 @@ $admixture_time:$sim_length late() {
         if (sim.generation == $admixture_time)
             writeFile("$output_file", "gen\tmean\tsd\tmedian\tmin\tmax\tNe\n");
 
-        writeFile("$output_file", paste(c(sim.generation - $admixture_time + 1,
+        writeFile("$output_file", paste(c(sim.generation - 1,
 	                                  mean(nea_per_ind),
 			                  sd(nea_per_ind),
 				          sort(nea_per_ind)[asInteger(size(nea_per_ind) / 2)],
