@@ -10,10 +10,10 @@ mkdir -p $traject_dir
 
 
 # initial Neanderthal proportions
-init_props="0.01 0.03 0.05 0.07 0.09"
+init_props="0.01 0.025 0.05 0.075 0.1"
 
 # number of replicates of each model
-num_replicates=10
+num_replicates=50
 
 # dates of samples
 dates=`tail -n+2 ${input_dir}/nea_ancestry_direct.tsv | cut -f2 | tr '\n' ' '`
