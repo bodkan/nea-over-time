@@ -30,7 +30,7 @@ $admixture_time {
 $admixture_time late() {
     mean_nea = sum(p3.genomes.countOfMutationsOfType(m1)) / (2 * p3.individualCount) / size(neutral_pos);
 
-    if (abs(mean_nea - $admixture_rate) > ($admixture_rate * 0.05)) {
+    if (abs(mean_nea - $admixture_rate) > ($admixture_rate * 0.025)) {
         cat(time() + " :: INFO :: Simulated gene flow NOT accepted (" + mean_nea + ") - restarting.\n");
         sim.readFromPopulationFile(tmp_file);
         setSeed(getSeed() + 1);
