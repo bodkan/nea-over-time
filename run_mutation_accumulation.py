@@ -57,8 +57,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    slim_template = Template(open('slim/init.slim', 'r').read() +
-                             open('slim/burnin.slim', 'r').read())
+    slim_template = Template(open('slim/mut_accum.slim', 'r').read())
 
     # convert arguments specified in years BP to generations since the
     # start of the simulation
