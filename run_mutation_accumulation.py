@@ -27,10 +27,12 @@ if __name__ == '__main__':
     parser.add_argument('--recomb-map', metavar='FILE', required=True,
                         help='Tab delimited text file with the recombination map')
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--array-sites', metavar='FILE',
-                        help='Positions of sites from the archaic admixture array')
+    group.add_argument('--exonic-sites', metavar='FILE',
+                        help='Positions of exonic sites from the archaic admixture array')
     group.add_argument('--neutral-spacing', type=int, metavar='N',
                         help='Place evenly distributed neutral sites every N basepairs')
+    parser.add_argument('--nonexonic-sites', metavar='FILE',
+                        help='Positions of non-exonic sites from the archaic admixture array')
 
     parser.add_argument('--dominance-coef', type=float, required=True,
                         help='Dominance coefficient of deleterious mutations')
@@ -73,9 +75,11 @@ if __name__ == '__main__':
     # load the SLiM 0-based coordinates of recombination gaps
     recomb_map = pd.read_table(args.recomb_map)
 
-    if args.array_sites:
+    if args.exonic_sites:
         # read coordinates of sites from the archaic admixture array
-        sites_coords = pd.read_table(args.array_sites, names=['slim_start'])
+        exonic_sites_coords = pd.read_table(args.exonic_sites, names=['slim_start'])
+        if args.nonexonic_sites:
+            nonexonic_sites_coords = pd.read_table(args.nonexonic_sites, names=['slim_start'])
     else:
         sites_coords = pd.DataFrame({'slim_start': [pos for pos in range(0,
                                                                          max(recomb_map.slim_end),
@@ -86,7 +90,8 @@ if __name__ == '__main__':
         'recomb_ends'      : 'c(' + ','.join(str(i) for i in recomb_map.slim_end) + ')',
         'recomb_rates'     : 'c(' + ','.join(str(i) for i in recomb_map.recomb_rate) + ')',
         'genomic_elements' : genomic_elements,
-        'neutral_pos'      : 'c(' + ','.join(str(pos) for pos in sites_coords.slim_start) + ')',
+        'exonic_pos'       : 'c(' + ','.join(str(pos) for pos in exonic_sites_coords.slim_start) + ')',
+        'nonexonic_pos'    : 'c(' + ','.join(str(pos) for pos in nonexonic_sites_coords.slim_start) + ')',
         'dominance_coef'   : args.dominance_coef,
         'founder_size'     : args.founder_size,
         'anc_size'         : args.anc_size,
