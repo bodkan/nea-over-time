@@ -1,0 +1,58 @@
+initialize() {
+    initializeRecombinationRate($recomb_rates, $recomb_ends);
+    initializeMutationRate(7e-9);
+
+    // deleterious mutation type
+    initializeMutationType("m0", $dominance_coef, "g", -0.043, 0.23);
+
+    // mutation type of exonic neutral markers
+    initializeMutationType("m1", 0.5, "f", 0.0);
+    m1.convertToSubstitution = F;
+
+    // mutation type of non-exonic neutral markers
+    initializeMutationType("m2", 0.5, "f", 0.0);
+    m2.convertToSubstitution = F;
+
+    initializeGenomicElementType("g1", m0, 1.0);
+
+    $genomic_elements
+
+    // positions of the fixed Neanderthal neutral markers
+    defineConstant("exonic_pos", $exonic_pos);
+    defineConstant("nonexonic_pos", $nonexonic_pos);
+}
+
+// create the population of AMH and Neanderthal ancestors
+1 {
+    sim.addSubpop("p1", $anc_size);
+}
+
+// split between AMH and Neanderthals after a period of burnin
+$burnin {
+    sim.addSubpopSplit("p2", $nea_size, p1);
+}
+
+// dump all populations and mutations at the end of the simulation
+$out_of_africa late() {
+    // split between non-Africans and Africans
+    sim.addSubpopSplit("p3", $founder_size, p1);
+
+    // place neutral markers on all Neanderthal haplotypes
+    cat(time() + " :: INFO :: Placing Neanderthal exonic neutral markers (h = $dominance_coef).\n");
+    for (pos in exonic_pos) {
+        p2.genomes.addNewDrawnMutation(m1, pos);
+    }
+    cat(time() + " :: INFO :: Placing Neanderthal non-exonic neutral markers (h = $dominance_coef).\n");
+    for (pos in nonexonic_pos) {
+        p2.genomes.addNewDrawnMutation(m2, pos);
+    }
+
+    sim.outputFull("$output_prefix" + "seed_" + getSeed() + ".txt");
+    sim.simulationFinished();
+}
+
+1:$out_of_africa {
+    if (sim.generation % 500 == 1) {
+       cat(time() + " :: INFO :: Simulation of h = $dominance_coef (" + sim.generation + "/$out_of_africa generations)\n");
+    }
+}
