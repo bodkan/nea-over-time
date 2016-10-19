@@ -1,4 +1,23 @@
 initialize() {
+    initializeRecombinationRate($recomb_rates, $recomb_ends);
+    initializeMutationRate(7e-9);
+
+    // deleterious mutation type
+    initializeMutationType("m0", $dominance_coef, "g", -0.043, 0.23);
+
+    // mutation type of neutral markers
+    initializeMutationType("m1", 0.5, "f", 0.0);
+    m1.convertToSubstitution = F;
+
+    initializeGenomicElementType("g1", m0, 1.0);
+
+    $genomic_elements
+
+    // positions of the fixed Neanderthal neutral markers
+    defineConstant("neutral_pos", $neutral_pos);
+}
+
+initialize() {
     defineConstant("output_generations", sort(unique(c($sampling_times,
                                                        seq(1, 100),
 						       seq(120, $sim_length, 20)))) + 1);
