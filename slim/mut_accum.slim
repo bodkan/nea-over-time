@@ -42,9 +42,11 @@ $out_of_africa late() {
     for (pos in exonic_pos) {
         p2.genomes.addNewDrawnMutation(m1, pos);
     }
-    cat(time() + " :: INFO :: Placing Neanderthal non-exonic neutral markers (h = $dominance_coef).\n");
-    for (pos in nonexonic_pos) {
-        p2.genomes.addNewDrawnMutation(m2, pos);
+    if (size(nonexonic_pos) > 0) {
+        cat(time() + " :: INFO :: Placing Neanderthal non-exonic neutral markers (h = $dominance_coef).\n");
+	    for (pos in nonexonic_pos) {
+                p2.genomes.addNewDrawnMutation(m2, pos);
+	    }
     }
 
     sim.outputFull("$output_prefix" + "seed_" + getSeed() + ".txt");

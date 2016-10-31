@@ -26,6 +26,7 @@ if __name__ == '__main__':
                         help='Tab delimited text file with exon coordinates')
     parser.add_argument('--recomb-map', metavar='FILE', required=True,
                         help='Tab delimited text file with the recombination map')
+
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--exonic-sites', metavar='FILE',
                         help='Positions of exonic sites from the archaic admixture array')
@@ -80,9 +81,12 @@ if __name__ == '__main__':
         if args.nonexonic_sites:
             nonexonic_sites_coords = pd.read_table(args.nonexonic_sites, names=['slim_start'])
     else:
-        sites_coords = pd.DataFrame({'slim_start': [pos for pos in range(0,
-                                                                         max(recomb_map.slim_end),
-                                                                         args.neutral_spacing)]})
+        exonic_sites_coords = pd.DataFrame(
+            {'slim_start': [pos for pos in range(0,
+                                                 max(recomb_map.slim_end),
+                                                 args.neutral_spacing)]
+            })
+        nonexonic_sites_coords = pd.DataFrame({'slim_start': []})
 
     # values to fill in the SLiM template file
     mapping = {
