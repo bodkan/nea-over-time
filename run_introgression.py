@@ -29,11 +29,14 @@ if __name__ == '__main__':
                         help='Tab delimited text file with exon coordinates')
     parser.add_argument('--recomb-map', metavar='FILE', required=True,
                         help='Tab delimited text file with the recombination map')
+
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--array-sites', metavar='FILE',
-                        help='Positions of sites from the archaic admixture array')
+    group.add_argument('--exonic-sites', metavar='FILE',
+                        help='Positions of exonic sites from the archaic admixture array')
     group.add_argument('--neutral-spacing', type=int, metavar='N',
                         help='Place evenly distributed neutral sites every N basepairs')
+    parser.add_argument('--nonexonic-sites', metavar='FILE',
+                        help='Positions of non-exonic sites from the archaic admixture array')
 
     parser.add_argument('--dominance-coef', type=float, required=True,
                         help='Dominance coefficient of deleterious mutations')
@@ -52,9 +55,12 @@ if __name__ == '__main__':
                         help='List of timepoints (in years BP) at which to sample'
                         ' Neanderthal ancestry in a population')
 
+    parser.add_argument('--save-nea-mutations', action='store_true',
+                        help='Save the data about introgressed Neanderthal mutations'
+                        ' in the founder population')
+
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--output-file', metavar='FILE', help='Where to save'
-                       ' Neanderthal ancestries over time')
+    group.add_argument('--output-prefix', metavar='FILE', help='Prefix of output files')
     group.add_argument('--dump-slim', metavar='FILE', help='Dump the SLiM config'
                         ' file without running the simulation')
 
@@ -81,14 +87,18 @@ if __name__ == '__main__':
     # load the SLiM 0-based coordinates of recombination gaps
     recomb_map = pd.read_table(args.recomb_map)
 
-    if args.array_sites:
+    if args.exonic_sites:
         # read coordinates of sites from the archaic admixture array
-        sites_coords = pd.read_table(args.array_sites, names=['slim_start'])
+        exonic_sites_coords = pd.read_table(args.exonic_sites, names=['slim_start'])
+        if args.nonexonic_sites:
+            nonexonic_sites_coords = pd.read_table(args.nonexonic_sites, names=['slim_start'])
     else:
-        # place neutral mutations at regular interval
-        sites_coords = pd.DataFrame({'slim_start': [pos for pos in range(int(args.neutral_spacing / 2),
-                                                                         max(recomb_map.slim_end),
-                                                                         args.neutral_spacing)]})
+        exonic_sites_coords = pd.DataFrame(
+            {'slim_start': [pos for pos in range(0,
+                                                 max(recomb_map.slim_end),
+                                                 args.neutral_spacing)]
+            })
+        nonexonic_sites_coords = pd.DataFrame({'slim_start': []})
 
     # values to fill in the SLiM template file
     mapping = {
@@ -96,8 +106,8 @@ if __name__ == '__main__':
         'recomb_ends'      : 'c(' + ','.join(str(i) for i in recomb_map.slim_end) + ')',
         'recomb_rates'     : 'c(' + ','.join(str(i) for i in recomb_map.recomb_rate) + ')',
         'genomic_elements' : genomic_elements,
-        'neutral_pos'     : 'c(' + ','.join(str(pos) for pos in sites_coords.slim_start) + ')',
-        'neutral_count'   : len(sites_coords),
+        'exonic_pos'       : 'c(' + ','.join(str(pos) for pos in exonic_sites_coords.slim_start) + ')',
+        'nonexonic_pos'    : 'c(' + ','.join(str(pos) for pos in nonexonic_sites_coords.slim_start) + ')',
         'dominance_coef'  : args.dominance_coef,
         'admixture_rate'  : args.admixture_rate,
         'out_of_africa'   : out_of_africa,
@@ -107,7 +117,7 @@ if __name__ == '__main__':
         'eur_growth'      : eur_growth,
         'sim_length'      : out_of_africa,
         'sampling_times'  : 'c(' + ','.join(str(i) for i in sampling_times) + ')',
-        'output_file'     : args.output_file
+        'output_prefix'   : args.output_prefix
     }
 
     if args.dump_slim:

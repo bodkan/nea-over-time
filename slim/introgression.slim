@@ -5,22 +5,25 @@ initialize() {
     // deleterious mutation type
     initializeMutationType("m0", $dominance_coef, "g", -0.043, 0.23);
 
-    // mutation type of neutral markers
+    // mutation type of exonic neutral markers
     initializeMutationType("m1", 0.5, "f", 0.0);
     m1.convertToSubstitution = F;
+
+    // mutation type of non-exonic neutral markers
+    initializeMutationType("m2", 0.5, "f", 0.0);
+    m2.convertToSubstitution = F;
 
     initializeGenomicElementType("g1", m0, 1.0);
 
     $genomic_elements
 
     // positions of the fixed Neanderthal neutral markers
-    defineConstant("neutral_pos", $neutral_pos);
-}
+    defineConstant("exonic_pos", $exonic_pos);
+    defineConstant("nonexonic_pos", $nonexonic_pos);
 
-initialize() {
     defineConstant("output_generations", sort(unique(c($sampling_times,
                                                        seq(1, 100),
-						       seq(120, $sim_length, 20)))) + 1);
+                                                       seq(120, $sim_length, 20)))) + 1);
     defineConstant("tmp_file", "tmp/tmp" + getSeed() + ".txt");
 }
 
@@ -47,7 +50,11 @@ $admixture_time {
 
 // make sure the simulated population received enough Neanderthal gene flow
 $admixture_time late() {
-    mean_nea = sum(p3.genomes.countOfMutationsOfType(m1)) / (2 * p3.individualCount) / size(neutral_pos);
+    exonic_count = p3.genomes.countOfMutationsOfType(m1);
+    nonexonic_count = p3.genomes.countOfMutationsOfType(m2);
+    total = size(exonic_pos) + size(nonexonic_pos);
+
+    mean_nea = sum(exonic_count + nonexonic_count) / (2 * p3.individualCount) / total;
 
     if (abs(mean_nea - $admixture_rate) > ($admixture_rate * 0.025)) {
         cat(time() + " :: INFO :: Simulated gene flow NOT accepted (" + mean_nea + ") - restarting.\n");
@@ -69,23 +76,50 @@ $eur_growth:$sim_length {
     p3.setSubpopulationSize(asInteger(1032 * exp(t_i * 0.0038)));
 }
 
+// output Nea. ancestry trajectories calculated on exonic sites
 $admixture_time:$sim_length late() {
+    output_file = "$output_prefix" + "__exonic_sites.txt";
+
     if (any(sim.generation == output_generations)) {
         cat(time() + " :: INFO :: " + sim.generation + "/$out_of_africa generations\n");
 
         nea_per_ind = apply(seq(0, p3.individualCount - 1),
-                            "sum(p3.genomes[c(2 * applyValue, 2 * applyValue + 1)].countOfMutationsOfType(m1));") / (2 * size(neutral_pos));
+                            "sum(p3.genomes[c(2 * applyValue, 2 * applyValue + 1)].countOfMutationsOfType(m1));") / (2 * size(exonic_pos));
 
         if (sim.generation == $admixture_time)
-            writeFile("$output_file", "gen\tmean\tsd\tmedian\tmin\tmax\tNe\n");
+            writeFile(output_file, "gen\tmean\tsd\tmedian\tmin\tmax\tNe\n");
 
-        writeFile("$output_file", paste(c(sim.generation - 1,
-	                                  mean(nea_per_ind),
-			                  sd(nea_per_ind),
-				          sort(nea_per_ind)[asInteger(size(nea_per_ind) / 2)],
-				          min(nea_per_ind),
-				          max(nea_per_ind),
-				          p3.individualCount), "\t") + "\n",
-		  append=T);
+            writeFile(output_file, paste(c(sim.generation - 1,
+                                           mean(nea_per_ind),
+                                           sd(nea_per_ind),
+                                           sort(nea_per_ind)[asInteger(size(nea_per_ind) / 2)],
+                                           min(nea_per_ind),
+                                           max(nea_per_ind),
+                                           p3.individualCount), "\t") + "\n",
+                      append=T);
+  }
+}
+
+// output Nea. ancestry trajectories calculated on non-exonic sites
+$admixture_time:$sim_length late() {
+    output_file = "$output_prefix" + "__nonexonic_sites.txt";
+
+    if (any(sim.generation == output_generations)) {
+        cat(time() + " :: INFO :: " + sim.generation + "/$out_of_africa generations\n");
+
+        nea_per_ind = apply(seq(0, p3.individualCount - 1),
+                            "sum(p3.genomes[c(2 * applyValue, 2 * applyValue + 1)].countOfMutationsOfType(m2));") / (2 * size(nonexonic_pos));
+
+        if (sim.generation == $admixture_time)
+            writeFile(output_file, "gen\tmean\tsd\tmedian\tmin\tmax\tNe\n");
+
+            writeFile(output_file, paste(c(sim.generation - 1,
+                                           mean(nea_per_ind),
+                                           sd(nea_per_ind),
+                                           sort(nea_per_ind)[asInteger(size(nea_per_ind) / 2)],
+                                           min(nea_per_ind),
+                                           max(nea_per_ind),
+                                           p3.individualCount), "\t") + "\n",
+                      append=T);
   }
 }
