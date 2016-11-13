@@ -3,3 +3,5 @@ tmp/*
 clean_data/*
 simulations/*
 tests/*
+__pycache__/*
+results/*
