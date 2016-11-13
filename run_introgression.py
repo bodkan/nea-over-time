@@ -55,9 +55,8 @@ if __name__ == '__main__':
                         help='List of timepoints (in years BP) at which to sample'
                         ' Neanderthal ancestry in a population')
 
-    parser.add_argument('--save-nea-mutations', action='store_true',
-                        help='Save the data about introgressed Neanderthal mutations'
-                        ' in the founder population')
+    parser.add_argument('--save-mutations', action='store_true',
+                        help='Save the data about deleterious mutations')
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--output-prefix', metavar='FILE', help='Prefix of output files')
@@ -117,6 +116,7 @@ if __name__ == '__main__':
         'eur_growth'      : eur_growth,
         'sim_length'      : out_of_africa,
         'sampling_times'  : 'c(' + ','.join(str(i) for i in sampling_times) + ')',
+        'save_mutations'  : 'T' if args.save_mutations else 'F',
         'output_prefix'   : args.output_prefix
     }
 

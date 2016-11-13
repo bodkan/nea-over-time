@@ -21,15 +21,19 @@ initialize() {
     defineConstant("exonic_pos", $exonic_pos);
     defineConstant("nonexonic_pos", $nonexonic_pos);
 
-    defineConstant("output_generations", sort(unique(c($sampling_times,
-                                                       seq(1, 100),
-                                                       seq(120, $sim_length, 20)))) + 1);
+    defineConstant("trajectories_gen", sort(unique(c($sampling_times,
+                                                     seq(1, 100),
+                                                     seq(120, $sim_length, 20)))) + 1);
+
+    defineConstant("dump_gen", c(seq(1, 50),
+                                 seq(100, $sim_length, 300)) + 1);
+
     defineConstant("tmp_file", "tmp/tmp" + getSeed() + ".txt");
 }
 
 // load the simulation state after the out of Africa event
 1 {
-    cat(time() + " :: INFO :: Reading populations.");
+    cat(time() + " :: INFO :: Reading populations.\n");
     sim.readFromPopulationFile("$population_file");
     p1.setSubpopulationSize(0);
     sim.generation = 1;
@@ -80,7 +84,7 @@ $eur_growth:$sim_length {
 $admixture_time:$sim_length late() {
     output_file = "$output_prefix" + "__exonic_sites.txt";
 
-    if (any(sim.generation == output_generations)) {
+    if (any(sim.generation == trajectories_gen)) {
         cat(time() + " :: INFO :: " + sim.generation + "/$out_of_africa generations\n");
 
         nea_per_ind = apply(seq(0, p3.individualCount - 1),
@@ -104,9 +108,7 @@ $admixture_time:$sim_length late() {
 $admixture_time:$sim_length late() {
     output_file = "$output_prefix" + "__nonexonic_sites.txt";
 
-    if (any(sim.generation == output_generations)) {
-        cat(time() + " :: INFO :: " + sim.generation + "/$out_of_africa generations\n");
-
+    if (any(sim.generation == trajectories_gen)) {
         nea_per_ind = apply(seq(0, p3.individualCount - 1),
                             "sum(p3.genomes[c(2 * applyValue, 2 * applyValue + 1)].countOfMutationsOfType(m2));") / (2 * size(nonexonic_pos));
 
@@ -122,4 +124,11 @@ $admixture_time:$sim_length late() {
                                            p3.individualCount), "\t") + "\n",
                       append=T);
   }
+}
+
+// save the simulation states at defined timepoints
+$admixture_time:$sim_length late() {
+    if ($save_mutations & any(sim.generation == dump_gen)) {
+        sim.outputFull("$output_prefix" + "__dump_gen" + asString(sim.generation - 1) + ".txt");
+    }
 }
