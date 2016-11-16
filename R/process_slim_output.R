@@ -59,11 +59,14 @@ read_populations <- function(slim_file) {
 ## Parse the mutation section of the SLiM file into a data frame.
 ##
 read_mutations <- function(slim_file, m, p, t=0) {
-    read_section_data(slim_file, "Mutations") %>%
-        read.table(text=., col.names=c("mut_id", "run_id", "mut_type",
-                                       "pos", "s", "h", "pop_origin",
-                                       "gen_origin", "freq")) %>%
-        filter(mut_type == m & pop_origin == p & gen_origin >= t)
+    read_section_data(slim_file, "Mutations") %>% # take all lines with mutations
+        .[which(!is.na(str_match(., p)))] %>%     # take lines matching pop. origin
+        .[which(!is.na(str_match(., m)))] %>%     # take lines matching mut. type
+        read.table(text=., # after pre-filtering above convert lines to data frame
+                   col.names=c("mut_id", "run_id", "mut_type",
+                               "pos", "s", "h", "pop_origin",
+                               "gen_origin", "freq")) %>%
+        filter(gen_origin >= t)
 }
 
 
