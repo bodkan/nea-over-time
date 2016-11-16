@@ -112,7 +112,6 @@ if __name__ == '__main__':
         'out_of_africa'   : out_of_africa,
         'prior_admixture' : admixture_time - 1,
         'admixture_time'  : admixture_time,
-        'admixture_end'   : admixture_time + 1,
         'eur_growth'      : eur_growth,
         'sim_length'      : out_of_africa,
         'sampling_times'  : 'c(' + ','.join(str(i) for i in sampling_times) + ')',

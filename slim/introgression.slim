@@ -67,11 +67,8 @@ $admixture_time late() {
     } else {
         cat(time() + " :: INFO :: Simulated gene flow accepted (" + mean_nea + ") - continuing.\n");
         deleteFile(tmp_file);
+        p2.setSubpopulationSize(0);
     }
-}
-
-$admixture_end {
-    p2.setSubpopulationSize(0);
 }
 
 // exponentially grow the European population
