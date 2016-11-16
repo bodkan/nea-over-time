@@ -35,7 +35,7 @@ run_introgression() {
 	    exit
     esac
 
-    run_id=exome_only__h_${2}__init_nea_${5}__rep_${1}
+    run_id=exonic_and_nonexonic__h_${2}__init_nea_${5}__rep_${1}
     
 #    qsub -V -cwd -j y -S /bin/bash -l virtual_free=$mem,h_vmem=$mem \
 #	 -o ${tmp_dir}/sge__${run_id}.out -N ${run_id} \
