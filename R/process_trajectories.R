@@ -3,9 +3,11 @@ library(dplyr)
 library(reshape2)
 library(ggplot2)
 
-sim_dir <- "simulations/trajectories"
 
-load_results <- function(scenario, h, init_nea) {
+##
+## Create a data frame with Nea. trajectories from all replicates.
+##
+load_trajectories <- function(sim_dir, scenario, h, init_nea) {
     # compose the pattern describing all input tables
     pattern <- paste0(scenario,
                       "__h_", h,
@@ -27,6 +29,10 @@ load_results <- function(scenario, h, init_nea) {
 }
 
 
+##
+## Plot one statistic of Nea. trajectories over time
+## separately for each replicate simulation.
+##
 plot_one_stat <- function(df, stat="mean", title="") {
     if (! stat %in% c("mean", "sd", "median", "min", "max")) {
         error(paste("Invalid admixture statistic provided:", stat, "!"))
@@ -47,6 +53,10 @@ plot_one_stat <- function(df, stat="mean", title="") {
 }
 
 
+##
+## Plot means of all statistics of Nea. trajectories over time
+## from all replicates.
+##
 plot_all_stats <- function(df, log_scale=FALSE, title="")
 {
     df <-
