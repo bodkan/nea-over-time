@@ -36,7 +36,6 @@ initialize() {
     cat(time() + " :: INFO :: Reading populations.\n");
     sim.readFromPopulationFile("$population_file");
     p1.setSubpopulationSize(0);
-    p3.setSubpopulationSize($founder_size);
     sim.generation = 1;
 }
 

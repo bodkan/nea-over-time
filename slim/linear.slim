@@ -13,6 +13,10 @@ initialize() {
     defineConstant("r", log(final_Ne / linear_Ne) / ($sim_length - $exp_growth));
 }
 
+1 {
+    p3.setSubpopulationSize($founder_size);
+}
+
 // linear growth of the European population until it reaches Ne = 10000
 $admixture_time:$exp_growth late() {
     p3.setSubpopulationSize($founder_size + asInteger(slope * sim.generation));

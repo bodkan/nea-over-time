@@ -75,7 +75,7 @@ if __name__ == '__main__':
     # create the SLiM template file for a specified demographic model
     template_str = open('slim/introgression.slim', 'r').read()
     if args.constant:
-        slim_template = Template(template_str)
+        slim_template = Template(template_str + open('slim/constant.slim', 'r').read())
     if args.gravel:
         slim_template = Template(template_str + open('slim/gravel.slim', 'r').read())
     elif args.linear:
