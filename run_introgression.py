@@ -52,7 +52,7 @@ if __name__ == '__main__':
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--gravel', action='store_true', help='Use the Gravel et al.'
                        ' model of European demography')
-    group.add_argument('--constant', type=int, help='Use a model of constant Ne after the'
+    group.add_argument('--constant', help='Use a model of constant Ne = 10000 after the'
                        ' out of Africa migration')
     group.add_argument('--linear', action='store_true', help='Use a model of a linear growth'
                        ' from 1861 to 10000 up to 10000 years ago and then exponential growth'
@@ -89,7 +89,7 @@ if __name__ == '__main__':
     # set the appropriate growth rate and effective population size of the non-African
     # population after the out of Africa migration
     if args.constant:
-        founder_size = int(args.constant)
+        founder_size = 10000
         exp_growth = -1
     elif args.gravel:
         founder_size = 1861
