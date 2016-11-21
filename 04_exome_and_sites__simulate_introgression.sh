@@ -70,10 +70,7 @@ nonexonic_sites=${clean_dir}/admixture_array_coordinates_nonexonic.txt
 
 for model in 'constant' 'linear' 'gravel'; do
     run_introgression 1 0.5 $exome_only_exon_coords $exome_only_recomb_map $init_nea $exonic_sites $nonexonic_sites $model --save-mutations
-done
-
-for rep_i in `seq 2 $num_replicates`; do
-    for model in 'constant' 'linear' 'gravel'; do
+    for rep_i in `seq 2 $num_replicates`; do
         run_introgression $rep_i 0.5 $exome_only_exon_coords $exome_only_recomb_map $init_nea $exonic_sites $nonexonic_sites $model
     done
 done
