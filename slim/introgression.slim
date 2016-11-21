@@ -36,6 +36,7 @@ initialize() {
     cat(time() + " :: INFO :: Reading populations.\n");
     sim.readFromPopulationFile("$population_file");
     p1.setSubpopulationSize(0);
+    p3.setSubpopulationSize($founder_size);
     sim.generation = 1;
 }
 
@@ -69,12 +70,6 @@ $admixture_time late() {
         deleteFile(tmp_file);
         p2.setSubpopulationSize(0);
     }
-}
-
-// exponentially grow the European population
-$eur_growth:$sim_length {
-    t_i = sim.generation - $eur_growth;
-    p3.setSubpopulationSize(asInteger(1032 * exp(t_i * 0.0038)));
 }
 
 // output Nea. ancestry trajectories calculated on exonic sites
@@ -129,3 +124,4 @@ $admixture_time:$sim_length late() {
         sim.outputFull("$output_prefix" + "__dump_gen" + asString(sim.generation - 1) + ".txt");
     }
 }
+

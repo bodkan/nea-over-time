@@ -1,0 +1,26 @@
+initialize() {
+    defineConstant("linear_Ne", 10000);
+
+    // slope of the linear growth function
+    defineConstant("slope", (linear_Ne - $founder_size) / $exp_growth);
+
+    // calculate the final European population size from the Gravel et al. model
+    defineConstant("final_Ne", 1032 * exp(asInteger(23000 / 25) * 0.0038));
+
+    // what is the required exponential growth rate over 400 generations
+    // to reach "final_Ne" if we're not starting from Ne = 1032 but from
+    // Ne = 10000?
+    defineConstant("r", log(final_Ne / linear_Ne) / ($sim_length - $exp_growth));
+}
+
+// linear growth of the European population until it reaches Ne = 10000
+$admixture_time:$exp_growth late() {
+    p3.setSubpopulationSize($founder_size + asInteger(slope * sim.generation));
+}
+
+// exponential growth of the European population until it reaches the
+// final Ne predicted by the Gravel et al. model
+$exp_growth:$sim_length {
+    t_i = sim.generation - $exp_growth;
+    p3.setSubpopulationSize(asInteger(linear_Ne * exp(t_i * r)));
+}

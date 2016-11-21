@@ -48,8 +48,15 @@ if __name__ == '__main__':
 
     parser.add_argument('--out-of-africa', type=int, default=55000,
                         help='Out of Africa migration [years ago] (start of the simulation)')
-    parser.add_argument('--eur-growth', type=int, default=23000,
-                        help='Start of European growth after the split with Asians [years ago]')
+
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('--gravel', action='store_true', help='Use the Gravel et al.'
+                       ' model of European demography')
+    group.add_argument('--constant', type=int, help='Use a model of constant Ne after the'
+                       ' out of Africa migration')
+    group.add_argument('--linear', action='store_true', help='Use a model of a linear growth'
+                       ' from 1861 to 10000 up to 10000 years ago and then exponential growth'
+                       ' with the same final Ne as predicted by the Gravel model')
 
     parser.add_argument('--sampling-times', nargs='*', type=int, default=[],
                         help='List of timepoints (in years BP) at which to sample'
@@ -65,13 +72,31 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    slim_template = Template(open('slim/introgression.slim', 'r').read())
+    # create the SLiM template file for a specified demographic model
+    template_str = open('slim/introgression.slim', 'r').read()
+    if args.constant:
+        slim_template = Template(template_str)
+    if args.gravel:
+        slim_template = Template(template_str + open('slim/gravel.slim', 'r').read())
+    elif args.linear:
+        slim_template = Template(template_str + open('slim/linear.slim', 'r').read())
 
     # convert arguments specified in years BP to generations since the
     # start of the simulation
     out_of_africa   = years_to_gen(args.out_of_africa) + 1
     admixture_time  = out_of_africa - years_to_gen(args.admixture_time) + 1
-    eur_growth      = out_of_africa - years_to_gen(args.eur_growth)
+
+    # set the appropriate growth rate and effective population size of the non-African
+    # population after the out of Africa migration
+    if args.constant:
+        founder_size = int(args.constant)
+        exp_growth = -1
+    elif args.gravel:
+        founder_size = 1861
+        exp_growth = out_of_africa - years_to_gen(23000)
+    elif args.linear:
+        founder_size = 1861
+        exp_growth = out_of_africa - years_to_gen(10000)
 
     # load the SLiM 0-based coordinates of exons
     exon_coords = pd.read_table(args.exon_coordinates, sep='\t')
@@ -108,11 +133,12 @@ if __name__ == '__main__':
         'exonic_pos'       : 'c(' + ','.join(str(pos) for pos in exonic_sites_coords.slim_start) + ')',
         'nonexonic_pos'    : 'c(' + ','.join(str(pos) for pos in nonexonic_sites_coords.slim_start) + ')',
         'dominance_coef'  : args.dominance_coef,
+        'founder_size'    : founder_size,
         'admixture_rate'  : args.admixture_rate,
         'out_of_africa'   : out_of_africa,
         'prior_admixture' : admixture_time - 1,
         'admixture_time'  : admixture_time,
-        'eur_growth'      : eur_growth,
+        'exp_growth'      : exp_growth,
         'sim_length'      : out_of_africa,
         'sampling_times'  : 'c(' + ','.join(str(i) for i in sampling_times) + ')',
         'save_mutations'  : 'T' if args.save_mutations else 'F',

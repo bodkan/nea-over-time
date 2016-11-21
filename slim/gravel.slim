@@ -1,0 +1,6 @@
+// exponential growth of the European population
+// for the Gravel et al. model
+$exp_growth:$sim_length {
+    t_i = sim.generation - $exp_growth;
+    p3.setSubpopulationSize(asInteger(1032 * exp(t_i * 0.0038)));
+}
