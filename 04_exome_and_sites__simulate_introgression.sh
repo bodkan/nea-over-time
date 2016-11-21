@@ -3,7 +3,7 @@
 input_dir=input_data
 clean_dir=clean_data
 sims_dir=simulations
-traject_dir=${sims_dir}/exonic_and_nonexonic
+traject_dir=${sims_dir}/different_models
 tmp_dir=tmp
 
 mkdir -p $traject_dir
@@ -13,7 +13,7 @@ mkdir -p $traject_dir
 init_nea=0.1
 
 # number of replicates of each model
-num_replicates=20
+num_replicates=10
 
 # dates of samples
 dates=`tail -n+2 ${input_dir}/nea_ancestry_direct.tsv | cut -f2 | tr '\n' ' '`
@@ -35,7 +35,7 @@ run_introgression() {
 	    exit
     esac
 
-    run_id=exonic_and_nonexonic__h_${2}__init_nea_${5}__rep_${1}
+    run_id=$8__h_${2}__init_nea_${5}__rep_${1}
     
     qsub -V -cwd -j y -S /bin/bash -l virtual_free=$mem,h_vmem=$mem \
 	 -o ${tmp_dir}/sge__${run_id}.out -N ${run_id} \
