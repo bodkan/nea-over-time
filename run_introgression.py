@@ -49,14 +49,8 @@ if __name__ == '__main__':
     parser.add_argument('--out-of-africa', type=int, default=55000,
                         help='Out of Africa migration [years ago] (start of the simulation)')
 
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--gravel', action='store_true', help='Use the Gravel et al.'
-                       ' model of European demography')
-    group.add_argument('--constant', help='Use a model of constant Ne = 10000 after the'
-                       ' out of Africa migration')
-    group.add_argument('--linear', action='store_true', help='Use a model of a linear growth'
-                       ' from 1861 to 10000 up to 10000 years ago and then exponential growth'
-                       ' with the same final Ne as predicted by the Gravel model')
+    parser.add_argument('--model', type=str, required=True, choices=['constant', 'gravel', 'linear'],
+                        help='Demographic model to use in the simulation.')
 
     parser.add_argument('--sampling-times', nargs='*', type=int, default=[],
                         help='List of timepoints (in years BP) at which to sample'
@@ -73,13 +67,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # create the SLiM template file for a specified demographic model
-    template_str = open('slim/introgression.slim', 'r').read()
-    if args.constant:
-        slim_template = Template(template_str + open('slim/constant.slim', 'r').read())
-    if args.gravel:
-        slim_template = Template(template_str + open('slim/gravel.slim', 'r').read())
-    elif args.linear:
-        slim_template = Template(template_str + open('slim/linear.slim', 'r').read())
+    slim_template = Template(open('slim/introgression.slim', 'r').read() +
+                             open('slim/' + args.model + '.slim', 'r').read())
 
     # convert arguments specified in years BP to generations since the
     # start of the simulation
@@ -88,13 +77,13 @@ if __name__ == '__main__':
 
     # set the appropriate growth rate and effective population size of the non-African
     # population after the out of Africa migration
-    if args.constant:
+    if args.model == 'constant':
         founder_size = 10000
         exp_growth = -1
-    elif args.gravel:
+    elif args.model == 'gravel':
         founder_size = 1861
         exp_growth = out_of_africa - years_to_gen(23000)
-    elif args.linear:
+    elif args.model == 'linear':
         founder_size = 1861
         exp_growth = out_of_africa - years_to_gen(10000)
 
