@@ -7,12 +7,13 @@ library(ggplot2)
 ##
 ## Create a data frame with Nea. trajectories from all replicates.
 ##
-load_trajectories <- function(sim_dir, scenario, h, init_nea) {
+load_trajectories <- function(sim_dir, scenario, h, init_nea, sites) {
     # compose the pattern describing all input tables
     pattern <- paste0(scenario,
                       "__h_", h,
                       "__init_nea_", init_nea,
-                      "__rep_.*.txt")
+                      "__rep_.*",
+                      "__", sites, "_sites.txt")
 
     # get paths of all input tables
     files <- list.files(sim_dir, pattern, full.names=TRUE)
@@ -21,7 +22,9 @@ load_trajectories <- function(sim_dir, scenario, h, init_nea) {
     tables <- lapply(seq_along(files),
            function(i) {
                    read.table(files[i], header=TRUE) %>%
-                       mutate(rep=i)
+                       mutate(rep=i,
+                              model=scenario,
+                              sites=sites)
            })
 
     # merge all dataframes into one
@@ -59,10 +62,11 @@ plot_one_stat <- function(df, stat="mean", title="") {
 ##
 plot_all_stats <- function(df, log_scale=FALSE, title="")
 {
-    df <-
-        group_by(df, gen) %>%
-        summarize_each(funs(mean)) %>% 
-        melt(id=c("gen", "rep"), measure=c("mean", "sd", "min", "max"))        
+    df %<>%
+        select(-model, -sites) %>%
+        group_by(gen) %>%
+        summarize_each(funs(mean)) %>%
+        melt(id=c("gen"), measure=c("mean", "sd", "min", "max"))
 
     p <-
         ggplot(df, aes(x=gen, y=value, color=variable)) +
