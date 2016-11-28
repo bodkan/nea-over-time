@@ -120,7 +120,7 @@ $admixture_time:$sim_length late() {
 // save the simulation states at defined timepoints
 $admixture_time:$sim_length late() {
     if ($save_mutations & any(sim.generation == dump_gen)) {
-        sim.outputFull("$output_prefix" + "__dump_gen" + asString(sim.generation - 1) + ".txt");
+        sim.outputFull("$output_prefix" + "__dump_gen_" + asString(sim.generation - 1) + ".txt");
     }
 }
 
