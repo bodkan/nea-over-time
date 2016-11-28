@@ -4,6 +4,39 @@ library(stringr)
 library(ggplot2)
 
 
+##
+## Exported functions ------------------------------------------------
+##
+
+##
+## Parse the population section of the SLiM file into a data frame.
+##
+read_populations <- function(slim_file) {
+    read_section_data(slim_file, "Populations") %>%
+        read.table(text=., col.names=c("pop_id", "pop_size", "sex"))
+}
+
+
+##
+## Parse the mutation section of the SLiM file into a data frame.
+##
+read_mutations <- function(slim_file, m, p, t=0) {
+    read_section_data(slim_file, "Mutations") %>% # take all lines with mutations
+        .[which(!is.na(str_match(., p)))] %>%     # take lines matching pop. origin
+        .[which(!is.na(str_match(., m)))] %>%     # take lines matching mut. type
+        read.table(text=., # after pre-filtering above convert lines to data frame
+                   col.names=c("mut_id", "run_id", "mut_type",
+                               "pos", "s", "h", "pop_origin",
+                               "gen_origin", "freq")) %>%
+        filter(gen_origin >= t)
+}
+
+
+##
+## Helper functions --------------------------------------------------
+##
+
+
 SECTION_HEADERS <- c("Populations", "Mutations", "Individuals", "Genomes")
 
 
@@ -13,6 +46,7 @@ SECTION_HEADERS <- c("Populations", "Mutations", "Individuals", "Genomes")
 read_slim_file <- function(path) {
     readLines(path)
 }
+
 
 ##
 ## Read the positions of the SLiM output file section headers
@@ -47,42 +81,9 @@ read_section_data <- function(slim_file, section_name) {
 
 
 ##
-## Parse the population section of the SLiM file into a data frame.
-##
-read_populations <- function(slim_file) {
-    read_section_data(slim_file, "Populations") %>%
-        read.table(text=., col.names=c("pop_id", "pop_size", "sex"))
-}
-
-
-##
-## Parse the mutation section of the SLiM file into a data frame.
-##
-read_mutations <- function(slim_file, m, p, t=0) {
-    read_section_data(slim_file, "Mutations") %>% # take all lines with mutations
-        .[which(!is.na(str_match(., p)))] %>%     # take lines matching pop. origin
-        .[which(!is.na(str_match(., m)))] %>%     # take lines matching mut. type
-        read.table(text=., # after pre-filtering above convert lines to data frame
-                   col.names=c("mut_id", "run_id", "mut_type",
-                               "pos", "s", "h", "pop_origin",
-                               "gen_origin", "freq")) %>%
-        filter(gen_origin >= t)
-}
-
-
-##
 ## Parse the individual section of the SLiM file into a data frame.
 ##
 read_individuals <- function(slim_file) {
     read_section_data(slim_file, "Individuals") %>%
         read.table(text=., col.names=c("ind_id", "sex", "genome1_id", "genome2_id"))
 }
-
-
-## ggplot(mut, aes(pop_origin, log_s, fill=pop_origin)) +
-##     geom_violin() +
-##     geom_hline(yintercept=log10(1/(2 * c(1000, 10000))), color=c("green", "red")) +
-##     coord_flip() +
-##     ylim(-1, -12)
-
-## group_by(mut, pop_origin) %>% summarise(mean(s), median(s), max(s), min(s))
