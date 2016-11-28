@@ -1,7 +1,4 @@
-library(magrittr)
-library(dplyr)
-library(stringr)
-library(ggplot2)
+library(tidyverse)
 
 
 ##
@@ -13,7 +10,8 @@ library(ggplot2)
 ##
 read_populations <- function(slim_file) {
     read_section_data(slim_file, "Populations") %>%
-        read.table(text=., col.names=c("pop_id", "pop_size", "sex"))
+        read.table(text=., col.names=c("pop_id", "pop_size", "sex")) %>%
+        as_tibble
 }
 
 
@@ -28,6 +26,7 @@ read_mutations <- function(slim_file, m, p, t=0) {
                    col.names=c("mut_id", "run_id", "mut_type",
                                "pos", "s", "h", "pop_origin",
                                "gen_origin", "freq")) %>%
+        as_tibble %>%
         filter(gen_origin >= t)
 }
 
@@ -60,9 +59,9 @@ read_section_delims <- function(slim_file) {
 
     # put information about starts/ends of individuals section
     # into a data frame
-    data.frame(section=SECTION_HEADERS,
-               start=section_pos[-length(section_pos)] + 1,
-               end=section_pos[-1] - 1)
+    tibble(section=SECTION_HEADERS,
+           start=section_pos[-length(section_pos)] + 1,
+           end=section_pos[-1] - 1)
 }
 
 
@@ -74,9 +73,9 @@ read_section_data <- function(slim_file, section_name) {
         stop("Invalid SLiM output section specified!")
 
     delims <- read_section_delims(slim_file)
-
     pos_in_file <- filter(delims, section == section_name)
-    return(slim_file[pos_in_file$start:pos_in_file$end])
+
+    slim_file[pos_in_file$start:pos_in_file$end]
 }
 
 
@@ -85,5 +84,6 @@ read_section_data <- function(slim_file, section_name) {
 ##
 read_individuals <- function(slim_file) {
     read_section_data(slim_file, "Individuals") %>%
-        read.table(text=., col.names=c("ind_id", "sex", "genome1_id", "genome2_id"))
+        read.table(text=., col.names=c("ind_id", "sex", "genome1_id", "genome2_id")) %>%
+        as_tibble
 }
