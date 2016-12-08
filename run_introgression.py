@@ -56,8 +56,11 @@ if __name__ == '__main__':
                         help='List of timepoints (in years BP) at which to sample'
                         ' Neanderthal ancestry in a population')
 
+    parser.add_argument('--save-trajectories', action='store_true',
+                        help='Save table with Neanderthal ancestry statistics')
     parser.add_argument('--save-mutations', action='store_true',
-                        help='Save the data about deleterious mutations')
+                        help='Save the data about deleterious mutations over'
+                        ' the course of the simulation')
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--output-prefix', metavar='FILE', help='Prefix of output files')
@@ -65,6 +68,10 @@ if __name__ == '__main__':
                         ' file without running the simulation')
 
     args = parser.parse_args()
+
+    if not args.save_trajectories and not args.save_mutations:
+        parser.error('At least one output option must be chosen (either saving'
+                     ' Nea. trajectories or whole SLiM output files).')
 
     # create the SLiM template file for a specified demographic model
     slim_template = Template(open('slim/introgression.slim', 'r').read() +
@@ -130,6 +137,7 @@ if __name__ == '__main__':
         'exp_growth'      : exp_growth,
         'sim_length'      : out_of_africa,
         'sampling_times'  : 'c(' + ','.join(str(i) for i in sampling_times) + ')',
+        'save_trajectories' : 'T' if args.save_trajectories else 'F',
         'save_mutations'  : 'T' if args.save_mutations else 'F',
         'output_prefix'   : args.output_prefix
     }

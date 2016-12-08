@@ -75,7 +75,7 @@ $admixture_time late() {
 $admixture_time:$sim_length late() {
     output_file = "$output_prefix" + "__exonic_sites.txt";
 
-    if (any(sim.generation == trajectories_gen)) {
+    if ($save_trajectories & any(sim.generation == trajectories_gen)) {
         cat(time() + " :: INFO :: " + sim.generation + "/$out_of_africa generations\n");
 
         nea_per_ind = apply(seq(0, p3.individualCount - 1),
@@ -99,7 +99,7 @@ $admixture_time:$sim_length late() {
 $admixture_time:$sim_length late() {
     output_file = "$output_prefix" + "__nonexonic_sites.txt";
 
-    if (any(sim.generation == trajectories_gen)) {
+    if ($save_trajectories & any(sim.generation == trajectories_gen)) {
         nea_per_ind = apply(seq(0, p3.individualCount - 1),
                             "sum(p3.genomes[c(2 * applyValue, 2 * applyValue + 1)].countOfMutationsOfType(m2));") / (2 * size(nonexonic_pos));
 
