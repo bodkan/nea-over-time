@@ -141,7 +141,7 @@ calculate_indiv_load <- function(indiv_id, muts_per_genome) {
         filter(muts_per_genome, genome_id %in% genome_ids) %>%
         group_by(mut_id, s, h) %>%
         summarize(count=n()) %>%
-        mutate(fitness=h * s * count / 2)
+        mutate(fitness=ifelse(count == 1, h, 1) * (-s) * count)
 
     1 - exp(-sum(load_per_locus$fitness))
 }
