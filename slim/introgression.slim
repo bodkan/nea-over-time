@@ -28,6 +28,8 @@ initialize() {
     defineConstant("dump_gen", c(seq(1, 50),
                                  seq(100, $sim_length, 300)) + 1);
 
+    defineConstant("simulate_dilution", $simulate_dilution);
+
     defineConstant("tmp_file", "tmp/tmp" + getSeed() + ".txt");
 }
 
@@ -35,8 +37,12 @@ initialize() {
 1 {
     cat(time() + " :: INFO :: Reading populations.\n");
     sim.readFromPopulationFile("$population_file");
-    p1.setSubpopulationSize(0);
     sim.generation = 1;
+
+    // delete the African population when not simulating dilution
+    if (!simulate_dilution) {
+        p1.setSubpopulationSize(0);
+    }
 }
 
 // save the simulation state right before admixture in case it is

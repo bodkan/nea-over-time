@@ -52,6 +52,10 @@ if __name__ == '__main__':
     parser.add_argument('--model', type=str, required=True, choices=['constant', 'gravel', 'linear'],
                         help='Demographic model to use in the simulation.')
 
+    parser.add_argument('--dilution', nargs=3, default=None,
+                        help='Tuple of length 3, specifying the rate, start and end'
+                        ' of the dilution from a population with no Neanderthal admixture')
+
     parser.add_argument('--sampling-times', nargs='*', type=int, default=[],
                         help='List of timepoints (in years BP) at which to sample'
                         ' Neanderthal ancestry in a population')
@@ -74,8 +78,11 @@ if __name__ == '__main__':
                      ' Nea. trajectories or whole SLiM output files).')
 
     # create the SLiM template file for a specified demographic model
-    slim_template = Template(open('slim/introgression.slim', 'r').read() +
-                             open('slim/' + args.model + '.slim', 'r').read())
+    slim_template = Template(
+        open('slim/introgression.slim', 'r').read() +
+        open('slim/' + args.model + '.slim', 'r').read() +
+        (open('slim/dilution.slim', 'r').read() if args.dilution else '')
+    )
 
     # convert arguments specified in years BP to generations since the
     # start of the simulation
@@ -136,11 +143,20 @@ if __name__ == '__main__':
         'admixture_time'  : admixture_time,
         'exp_growth'      : exp_growth,
         'sim_length'      : out_of_africa,
+        'simulate_dilution' : 'T' if args.dilution else 'F',
         'sampling_times'  : 'c(' + ','.join(str(i) for i in sampling_times) + ')',
         'save_trajectories' : 'T' if args.save_trajectories else 'F',
         'save_mutations'  : 'T' if args.save_mutations else 'F',
         'output_prefix'   : args.output_prefix
     }
+
+    # if simulating dilution, add the necessary parameters
+    if args.dilution:
+        mapping.update({
+            'dilution_rate'  : float(args.dilution[0]),
+            'dilution_start' : out_of_africa - years_to_gen(int(args.dilution[1])) + 1,
+            'dilution_end'   : out_of_africa - years_to_gen(int(args.dilution[2]))
+        })
 
     if args.dump_slim:
         with open(args.dump_slim, 'w') as slim_file:
