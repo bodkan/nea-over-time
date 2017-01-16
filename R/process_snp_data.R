@@ -5,8 +5,7 @@ library(ggplot2)
 
 
 ## Load information about samples.
-load_sample_info <- function(path)
-{
+load_sample_info <- function(path) {
     exclude_samples <- c("Altai", "Chimp", "Denisova", "B_Dinka_3",
                          "aurig", "Href", "Kostenki14_SG",
                          "B_Mandenka_3", "B_Mbuti_4", "MezE",
@@ -89,7 +88,7 @@ calc_mean_nea <- function(snps, sample_ids) {
     E_dinka <- calc_proportion(snps, "Altai", "B_Dinka_3")
     E_vindija <- calc_proportion(snps, "Altai", "Vi_merge")
 
-    mean_nea <- sapply(include_samples, function(s) {
+    mean_nea <- sapply(sample_ids, function(s) {
         (calc_proportion(snps, "Altai", s) - E_dinka) / (E_vindija - E_dinka)
     })
 
