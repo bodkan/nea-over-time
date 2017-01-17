@@ -26,10 +26,10 @@ if (length(args) != 4) {
     stop("Genotype file, snp file, indiv. file and output file have to be specified.")
 }
 
-geno_file <- "archaic.geno" #args[1]
-snp_file <- "archaic.snp" #args[2]
-ind_file <- "archaic.ind" #args[3]
-output_file <- "t.tsv" #args[4]
+geno_file   <- args[1]
+snp_file    <- args[2]
+ind_file    <- args[3]
+output_file <- args[4]
 
 snp <- read_fwf(snp_file, fwf_widths(c(20, 6, 16, 16, 2, 2),
                                      col_names=c("id", "chrom", "gen", "pos",
