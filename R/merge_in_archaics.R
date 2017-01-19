@@ -9,13 +9,13 @@
 library(tidyverse)
 
 args <- commandArgs(trailingOnly=TRUE)
-if (length(args) != 4) {
+if (length(args) != 3) {
     stop("Table with EMH data, table of archaic GTs and output file must be specified")
 }
 
-iceage_file   <- "clean_data/ice_age.tsv" # args[1]
-archaics_file <- "clean_data/archaics.tsv" #args[2]
-output_file   <- "clean_data/array.tsv"
+iceage_file   <- args[1]
+archaics_file <- args[2]
+output_file   <- args[3]
 
 iceage <- read_tsv(iceage_file)
 archaics <- read_tsv(archaics_file)
