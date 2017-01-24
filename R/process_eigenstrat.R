@@ -42,8 +42,8 @@ colnames(geno) <- ind$label %>% str_replace("-|\\.", "_")
 
 # perform random calling on het calls - for each het call (1), flip a
 # coin and replace it with 0 or 2
-hets <- geno == 1
-geno <- replace(geno, hets, 2 * rbinom(sum(hets), 1, 0.5))
+# hets <- geno == 1
+# geno <- replace(geno, hets, 2 * rbinom(sum(hets), 1, 0.5))
 
 # merge the geno/snp file data into a single dataframe
 snp_table <-
