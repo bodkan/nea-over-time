@@ -38,7 +38,7 @@ ind <- read_table(ind_file, col_names=c("id", "sex", "label"))
 geno <- readLines(geno_file) %>% str_split("", simplify=TRUE)
 
 # replace dashes and dots in sample names with underscores
-colnames(geno) <- ind$id %>% str_replace("-|\\.", "_")
+colnames(geno) <- ind$label %>% str_replace("-|\\.", "_")
 
 # perform random calling on het calls - for each het call (1), flip a
 # coin and replace it with 0 or 2
