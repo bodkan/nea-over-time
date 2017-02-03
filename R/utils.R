@@ -96,9 +96,9 @@ load_dataset <- function(ice_age_path,
 
     sgdp <-
         read_tsv(sgdp_path, progress=FALSE) %>%
-       # select(c(chrom, pos, ref, alt,
-       #          one_of(sgdp_info$name))) %>%
-       random_call
+        select(c(chrom, pos, ref, alt,
+                 one_of(sgdp_info$name))) %>%
+        random_call
     names(sgdp)[-(1 : 4)] %<>% str_replace("^S_", "SGDP_")
         
     archaics <-
