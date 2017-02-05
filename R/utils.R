@@ -67,7 +67,7 @@ estimate_nea <- function(snps, sample_names) {
 #
 # Load the SGDP metadata info table.
 #
-load_sgdp_info <- function(path="raw_data/10_24_2014_SGDP_metainformation_update.txt") {
+load_sgdp_info <- function() {
     read_tsv("raw_data/10_24_2014_SGDP_metainformation_update.txt") %>%
         select(Panel, name=SGDP_ID, Region, Country, Latitude, Longitude) %>%
         filter(complete.cases(.)) %>%
@@ -89,9 +89,8 @@ load_dataset <- function(ice_age_path,
     ice_age <-
         read_tsv(ice_age_path, progress=FALSE) %>%
         random_call(c("Loschbour", "Stuttgart", "UstIshim"))
-    names(ice_age)[-(1 : 4)] %<>% str_replace("^", "EMH_")
 
-    # read the list of samples with metadata in them
+    # read the list of samples with available metadata
     sgdp_info <- load_sgdp_info()
 
     sgdp <-
@@ -99,12 +98,12 @@ load_dataset <- function(ice_age_path,
         select(c(chrom, pos, ref, alt,
                  one_of(sgdp_info$name))) %>%
         random_call
-    names(sgdp)[-(1 : 4)] %<>% str_replace("^S_", "SGDP_")
+    names(sgdp)[-(1 : 4)] %<>% str_replace("^S_", "")
         
     archaics <-
         read_tsv(archaics_path, progress=FALSE) %>%
         filter(Altai == 2, Vindija == 2)
-    names(archaics)[-(1 : 4)] %<>% str_replace("^", "arch_")    
+    names(archaics)[-(1 : 4)] %<>% str_replace("^", "archaic_")    
 
     all_samples <-
         inner_join(ice_age, archaics) %>% # intersect with archaic fixed sites
