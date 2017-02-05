@@ -20,38 +20,26 @@
                        "clean_data/annotations.tsv") %>%
       remove_transitions
 
-   sgdp_info <-
-      load_sgdp_info("raw_data/10_24_2014_SGDP_metainformation_update.txt") %>%
-      mutate(name=str_replace(name, "^S_", "SGDP_")) %>%
-      filter(name %in% colnames(snps))
-#+END_SRC
+  sgdp_info <-
+      load_sgdp_info() %>%
+      mutate(name=str_replace(name, "^S_", "")) %>%
+      filter(name %in% colnames(snps)) %>%
+      mutate(age=0) %>%
+      rename(pop=Region)
 
-Load ages of all Upper-Paleolithic samples
+  emh_info <-
+      read_delim("clean_data/ages.txt", delim=" ") %>%
+      mutate(pop="EMH") %>%
+      filter(name %in% colnames(snps),
+             ! name %in% c("Continenza", "Kostenki12", "Ostuni2",
+                           "Pavlov1", "Vestonice15", "Vestonice43",
+                           "Vestonice13", "Oase1", "Muierii2",
+                           "AfontovaGora2"))
 
-#+BEGIN_SRC R :session :results output silent
-  emh_samples <- select(snps, starts_with("EMH")) %>%
-      colnames %>%
-      setdiff(paste0("EMH_", c("Continenza", "Kostenki12", "Ostuni2",
-                               "Pavlov1", "Vestonice15", "Vestonice43",
-                               "Vestonice13", "Oase1", "Muierii2",
-                               "AfontovaGora2")))
-  west_eurasians <- select(snps, matches("French|Sardinian|Finnish|English|Czech|Estonian|Basque|Georgian|Russian", ignore.case=FALSE)) %>% colnames
-  east_asians <- select(snps, matches("Dai|Han|Japanese|Korean|Thai", ignore.case=FALSE)) %>% colnames
-  papuans <- select(snps, matches("Papuan", ignore.case=FALSE)) %>% colnames
-  sgdp_samples <- c(west_eurasians, east_asians, papuans)
-
-  emh_ages <- read_delim("clean_data/ages.txt", delim=" ") %>%
-      mutate(name=paste0("EMH_", name))
-
-  sgdp_ages <- tibble(name=sgdp_samples,
-                      age=rep(0L, length(sgdp_samples)))
-
-  ages <- bind_rows(emh_ages, sgdp_ages) %>%
-      mutate(post_admixture=as.integer(55000 - age))
-
-  ages <- ages[ages$name %in% c(emh_samples, sgdp_samples), ]
-
-  emh_samples <- filter(ages, str_detect(name, "EMH_"))$name
+  samples_info <-
+      bind_rows(emh_info, sgdp_info) %>%
+      mutate(post_admixture=55000 - age,
+             name=factor(name, levels=name))
 #+END_SRC
 
 #+BEGIN_SRC R :session :results output silent
@@ -60,113 +48,82 @@ Load ages of all Upper-Paleolithic samples
   qs <- quantile(snps$bStatistic,
                  prob=seq(0, 1, length.out=n_bins + 1),
                  na.rm=TRUE)
-  bin_assignments <- findInterval(snps$bStatistic, vec=qs, rightmost.closed=TRUE)
+  snps$bin <- findInterval(snps$bStatistic, vec=qs, rightmost.closed=TRUE)
 #+END_SRC
+
+** Calculate Nea% in each bin in each sample. Store results in a long format.
 
 #+BEGIN_SRC R :session :results output silent
-  nea_in_bins_in_sample <- function(snps, n_bins, sample_name) {
-      sapply(seq_len(n_bins), function(bin) {
-          calc_sharing_prop(filter(snps, bin == bin_assignments), "arch_Altai", sample_name)
-      })
-  }
+    calc_nea_in_bins <- function(snps, n_bins, sample_name) {
+        sapply(seq_len(n_bins), function(i) {
+            calc_sharing_prop(filter(snps, bin == i), "archaic_Altai", sample_name)
+        }) %>% as_tibble %>% mutate(bin=seq_len(n_bins)) %>% rename(nea=value) 
+    }
 
-  nea_in_bins_per_pop <- function(snps, n_bins, sample_names, pop) {
-      sapply(sample_names, function(s) { nea_in_bins_in_sample(snps, n_bins, s)}) %>%
-          as_tibble %>%
-          mutate(pop=pop, bin=seq_len(n_bins)) %>%
-          gather(name, nea, -bin, -pop)
-  }
-
-  nea_in_bins <-
-      list(
-          nea_in_bins_per_pop(snps, n_bins, emh_samples, "EMH"),
-          nea_in_bins_per_pop(snps, n_bins, west_eurasians, "WestEurasians"),
-          nea_in_bins_per_pop(snps, n_bins, east_asians, "EastAsians"),
-          nea_in_bins_per_pop(snps, n_bins, papuans, "Papuans")
-      ) %>%
-      bind_rows
-
-  # order factor of names by age of each sample (to make ggplot arrange
-  # facets based on age)
-  nea_in_bins$name <- factor(nea_in_bins$name, levels=ages$name)
+    nea_df <- samples_info %>%
+        mutate(nea_bins=map(as.character(name), function(n) { calc_nea_in_bins(snps, n_bins, n)})) %>%
+        mutate(nea_est=sapply(as.character(name), function(n) { calc_sharing_prop(snps, "archaic_Altai", n)}))
 #+END_SRC
 
+** Plots of linear regression lines
 
-#+BEGIN_SRC R :session :results output silent
-  xnea_in_bins <-
-      sapply(c(emh_samples, sgdp_samples), function(s) {
-          nea_in_sample <- sapply(seq_len(n_bins), function(bin) {
-              calc_sharing_prop(filter(snps, bin == bin_assignments), "arch_Altai", s)
-          })
-      }) %>%
-      as_tibble %>%
-      select(one_of(ages$name)) %>% # arrange columns based on sample ages
-      mutate(bin=seq_len(n_bins))
-
-  df <- nea_in_bins %>% gather(name, nea, -bin)
-  df$name <- factor(df$name, levels=ages$name)
-#+END_SRC
-
-
-#+BEGIN_SRC R :session :results output graphics :exports both :file ~/devel/slim-neanderthal/org/img/bvaluecorr.pdf :width 8 :height 8
-  plot_ind_corr <- function(df, pop_id) {
-      filter(df, pop == pop_id) %>%
-          ggplot() +
-          geom_point(aes(bin, nea, colour=name)) +
-          geom_smooth(aes(bin, nea), method="lm", se=FALSE) +
-          ggtitle(paste("Correlation of Nea% vs B value bin ",
-                        "(", pop_id, ")")) +
-          coord_cartesian(ylim=c(0, 0.05)) +
-          facet_wrap(~ name) +
-          theme(legend.position="bottom")
+#+BEGIN_SRC R :session :results output graphics :exports both :file ~/devel/slim-neanderthal/org/img/bvalue_corr.pdf :width 8 :height 8
+  for (pop_id in unique(samples_info$pop)) {
+      unnest(nea_df, nea_bins) %>% filter(pop == pop_id) %>%
+          {
+              ggplot(., aes(bin, nea, color=name)) +
+                  geom_point() +
+                  geom_smooth(method="lm", se=FALSE, color="black", size=0.5) +
+                  coord_cartesian(ylim=c(0, 0.05)) +
+                  ggtitle(paste("Correlation of Nea% vs bin ",
+                                "(", pop_id, ")")) +
+                  theme(legend.position="none") +
+                  facet_wrap(~ name)
+          } %>% print
   }
 
-  plot_all_corr <- function(df, pop_id) {
-      filter(df, pop == pop_id) %>%
-          ggplot() +
-          geom_line(aes(bin, nea, group=name, colour=name), alpha=1/2) +
-          geom_smooth(aes(bin, nea), method="lm") +
-          ggtitle(paste("Correlation of Nea% vs B value bin ",
-                        "(", pop_id, ")")) +
-          coord_cartesian(ylim=c(0, 0.05)) +
-          theme(legend.position="bottom")
+  for (pop_id in unique(samples_info$pop)) {
+      unnest(nea_df, nea_bins) %>% filter(pop == pop_id) %>%
+          {
+              ggplot(., aes(bin, nea, color=name)) +
+                  geom_line(alpha=1/2) +
+                  geom_smooth(method="lm", se=FALSE, color="black") +
+                  coord_cartesian(ylim=c(0, 0.05)) +
+                  ggtitle(paste("Correlation of Nea% vs bin ",
+                                "(", pop_id, ")")) +
+                  theme(legend.position="bottom")
+          } %>% print
   }
 
-
-  plot_ind_corr(nea_in_bins, "EMH")
-  plot_ind_corr(nea_in_bins, "WestEurasians")
-  plot_ind_corr(nea_in_bins, "EastAsians")
-  plot_ind_corr(nea_in_bins, "Papuans")
-
-  plot_all_corr(nea_in_bins, "EMH")
-  plot_all_corr(nea_in_bins, "WestEurasians")
-  plot_all_corr(nea_in_bins, "EastAsians")
-  plot_all_corr(nea_in_bins, "Papuans")
 #+END_SRC
 
 #+RESULTS:
-[[file:~/devel/slim-neanderthal/org/img/bvaluecorr.pdf]]
+[[file:~/devel/slim-neanderthal/org/img/bvalue_corr.pdf]]
+
+** Plots of linear regression metrics
 
 #+BEGIN_SRC R :session :results output graphics :exports both :file ~/devel/slim-neanderthal/org/img/bvaluecorr_metrics.pdf :width 8 :height 5
   nea_bin_lm <- function(df) {
       lm(nea ~ bin, data=df)
   }
 
-  bins_by_sample <- nea_in_bins %>%
-      group_by(name, pop) %>%
+  bins_by_sample <- nea_df %>%
+      unnest %>%
+      filter(pop != "Africa") %>%
+      group_by(name, pop, post_admixture) %>%
       nest %>%
       mutate(model=map(data, nea_bin_lm),
              glance=map(model, glance),
-             tidy=map(model, tidy),
-             post_admixture=ages$post_admixture)
+             tidy=map(model, tidy))
 
-  # plot the p values in each sample
+  # plot the p.value of each fit
   unnest(bins_by_sample, glance, .drop=TRUE) %>%
       ggplot(aes(name, p.value, colour=pop)) +
-      geom_point() +
+      geom_point(alpha=0.8) +
       geom_hline(yintercept=0.05, alpha=1/5) +
       ggtitle("p-values of the linear fits (Nea% ~ B value bin)") +
-      theme(axis.text.x=element_text(angle=60, hjust=1, size=7))
+      theme(axis.text.x=element_text(angle=60, hjust=1, size=3),
+            legend.position="bottom")
 
   # plot the slope in each sample
   unnest(bins_by_sample, tidy) %>%
@@ -174,15 +131,38 @@ Load ages of all Upper-Paleolithic samples
       ggplot(aes(name, estimate, colour=pop)) +
       geom_point() +
       ggtitle("Slopes of the linear fits (Nea% ~ B value bin)") +
-      theme(axis.text.x=element_text(angle=60, hjust=1, size=7))
+      theme(axis.text.x=element_text(angle=60, hjust=1, size=3),
+            legend.position="bottom")
+
+  # plot the distribution of slopes in each pop
+  unnest(bins_by_sample, tidy) %>%
+      filter(term == "bin") %>%
+      ggplot(aes(pop, estimate, fill=pop)) +
+      geom_violin() +
+      geom_jitter(alpha=1/2) +
+      ggtitle("Slopes of the linear fits (Nea% ~ B value bin)") +
+      theme(axis.text.x=element_text(angle=60, hjust=1),
+            legend.position="none")
+
+  # plot the distribution of slopes in each pop (only those significant)
+  unnest(bins_by_sample, tidy) %>%
+      filter(term == "bin", p.value < 0.05) %>%
+      ggplot(aes(pop, estimate, fill=pop)) +
+      geom_violin() +
+      geom_jitter(alpha=1/2) +
+      ggtitle("Slopes of the linear fits (Nea% ~ B value bin)",
+              subtitle="only fits with p-value < 0.05") +
+      theme(axis.text.x=element_text(angle=60, hjust=1),
+            legend.position="none")
 
   # plot the slopes over time
   unnest(bins_by_sample, tidy) %>%
-      filter(term == "bin", pop == "EMH" | pop == "WestEurasians") %>%
+      filter(term == "bin", pop == "EMH" | pop == "WestEurasia") %>%
       ggplot(aes(post_admixture, estimate, colour=pop)) +
       geom_point() +
       ggtitle("Slopes of the linear fits (Nea% ~ B value bin) over time") +
-      theme(axis.text.x=element_text(angle=60, hjust=1, size=7)) +
+      theme(axis.text.x=element_text(angle=60, hjust=1, size=7),
+            legend.position="bottom") +
       xlim(0, 55000)
 
   # plot the R^2 in each sample
@@ -190,73 +170,57 @@ Load ages of all Upper-Paleolithic samples
       ggplot(aes(name, r.squared, colour=pop)) +
       geom_point() +
       ggtitle("R-squared of the linear fits (Nea% ~ B value bin)") +
-      theme(axis.text.x=element_text(angle=60, hjust=1, size=7))
+      theme(axis.text.x=element_text(angle=60, hjust=1, size=7),
+            legend.position="bottom")
 
+  # plot the distribution of R^2 in each pop
+  unnest(bins_by_sample, glance, .drop=TRUE) %>%
+      ggplot(aes(pop, r.squared, fill=pop)) +
+      geom_violin() +
+      geom_jitter(alpha=1/2) +
+      ggtitle("R-squared of the linear fits (Nea% ~ B value bin)",
+              subtitle="all fits") +
+      theme(axis.text.x=element_text(angle=60, hjust=1, size=7),
+            legend.position="none") +
+      coord_cartesian(ylim=c(0, 1))
+
+
+  # plot the distribution of R^2 in each pop (only significant fits)
+  unnest(bins_by_sample, glance, .drop=TRUE) %>%
+      filter(p.value < 0.05) %>%
+      ggplot(aes(pop, r.squared, fill=pop)) +
+      geom_violin() +
+      geom_jitter(alpha=1/2) +
+      ggtitle("R-squared of the linear fits (Nea% ~ B value bin)",
+              subtitle="only fits with p < 0.05") +
+      theme(axis.text.x=element_text(angle=60, hjust=1, size=7),
+            legend.position="none") +
+      coord_cartesian(ylim=c(0, 1))
 #+END_SRC
 
 #+RESULTS:
 [[file:~/devel/slim-neanderthal/org/img/bvaluecorr_metrics.pdf]]
 
+*8 Plots of geographic distribution of Nea% measures
+
 #+BEGIN_SRC R :session :results output silent
-  library(tidyverse)
-  library(stringr)
   library(maps)
-
-  sgdp_info <- read_tsv("https://simonsfoundation.s3.amazonaws.com/share/SCDA/datasets/10_24_2014_SGDP_metainformation_update.txt") %>%
-      select(name=SGDP_ID, Region, Country, Latitude, Longitude) %>%
-      filter(complete.cases(.)) %>%
-      mutate(name=str_replace(name, "-", "_")) %>%
-      mutate(name=str_replace(name, "^S_|^A_|^B_", "SGDP_")) %>%
-      filter(name %in% (select(snps, starts_with("SGDP")) %>% colnames)) %>%
-      mutate(nea=sapply(name, function(s) {calc_sharing_prop(snps, "arch_Altai", s)}))
 #+END_SRC
-
-#+BEGIN_SRC R :session :results output
-    sgdp_info %>%
-        group_by(Region) %>%
-        nest %>%
-        mutate(data=purrr::map(data, function(df) {arrange(df, desc(nea)) %>% head(3)})) %>%
-        unnest %>%
-        select(Region, Country, name, nea) %>%
-        as.data.frame
-#+END_SRC
-
-#+RESULTS:
-#+begin_example
-               Region        Country                   name        nea
-1              Africa    SouthAfrica     SGDP_Khomani_San_1 0.01678636
-2              Africa        Namibia   SGDP_Ju_hoan_North_3 0.01556499
-3              Africa        Namibia   SGDP_Ju_hoan_North_4 0.01552856
-4             America         Mexico            SGDP_Mixe_3 0.02237139
-5             America         Mexico         SGDP_Zapotec_2 0.02226792
-6             America         Brazil           SGDP_Surui_2 0.02222194
-7  CentralAsiaSiberia         Russia           SGDP_Ulchi_1 0.02530020
-8  CentralAsiaSiberia         Russia           SGDP_Yakut_1 0.02345564
-9  CentralAsiaSiberia         Russia SGDP_Eskimo_Sireniki_2 0.02305658
-10           EastAsia          China             SGDP_She_1 0.02481017
-11           EastAsia       Thailand            SGDP_Thai_1 0.02419334
-12           EastAsia        Myanmar         SGDP_Burmese_1 0.02386420
-13            Oceania PapuaNewGuinea         SGDP_Papuan_15 0.03108798
-14            Oceania PapuaNewGuinea          SGDP_Papuan_2 0.03077702
-15            Oceania PapuaNewGuinea         SGDP_Papuan_14 0.03030648
-16          SouthAsia       Pakistan         SGDP_Punjabi_1 0.02224655
-17          SouthAsia     Bangladesh         SGDP_Bengali_1 0.02183265
-18          SouthAsia          India          SGDP_Yadava_2 0.02134108
-19        WestEurasia        Georgia        SGDP_Georgian_1 0.02089528
-20        WestEurasia Italy(Bergamo)         SGDP_Bergamo_2 0.02088157
-21        WestEurasia        Iceland       SGDP_Icelandic_2 0.02000949
-#+end_example
 
 #+BEGIN_SRC R :session :results output graphics :exports both :file ~/devel/slim-neanderthal/org/img/nea_maps.pdf :width 10 :height 6
-map_plot <-
-    map_data("world") %>%
-    ggplot() +
-    geom_polygon(aes(x=long, y=lat, group=group), 
-                 colour="light gray", fill="light gray")
+  map_plot <-
+      map_data("world") %>%
+      ggplot() +
+      geom_polygon(aes(x=long, y=lat, group=group), 
+                   colour="light gray", fill="light gray")
 
-map_plot +
-    geom_point(data=sgdp_info, 
-               aes(Longitude, Latitude, fill=nea, size=nea), pch=21, alpha=1/2)
+  map_plot +
+      geom_point(data=nea_df, 
+                 aes(Longitude, Latitude, fill=nea_est, size=nea_est), pch=21, alpha=1/2)
+
+  map_plot +
+      geom_point(data=bins_by_sample %>% unnest(tidy) %>% filter(term == "bin", pop != "EMH") %>% inner_join(nea_df),
+                 aes(Longitude, Latitude, size=estimate, fill=nea_est), pch=21, alpha=1/2)
 #+END_SRC
 
 #+RESULTS:
