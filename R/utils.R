@@ -83,12 +83,17 @@ load_sgdp_info <- function() {
 load_dataset <- function(ice_age_path,
                          sgdp_path,
                          archaics_path,
-                         annotations_path) {
+                         annotations_path,
+                         filter_damage=TRUE) {
     # load the genotypes from all individuals and call random alleles for
     # humans with diploid calls
     ice_age <-
         read_tsv(ice_age_path, progress=FALSE) %>%
         random_call(c("Loschbour", "Stuttgart", "UstIshim"))
+
+    if (filter_damage) {
+        ice_age <- remove_transitions(ice_age)
+    }
 
     # read the list of samples with available metadata
     sgdp_info <- load_sgdp_info()
