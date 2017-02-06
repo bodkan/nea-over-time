@@ -36,7 +36,7 @@ random_call <- function(df, sample_names=NULL) {
 calc_sharing_prop <- function(snps, sample_a, sample_b) {
     # take positions of SNPs where both samples have a valid allele
     # (9 encodes a missing position)
-    available_positions <- (snps[, sample_a] != 9) & (snps[, sample_b] != 9)
+    available_positions <- !is.na(snps[[sample_a]]) & !is.na(snps[[sample_b]])
     
     mean(snps[available_positions, sample_a] == snps[available_positions, sample_b])
 }
@@ -84,7 +84,12 @@ load_dataset <- function(ice_age_path,
                          sgdp_path,
                          archaics_path,
                          annotations_path,
-                         filter_damage=TRUE) {
+                         filter_damage) {
+    ## ice_age_path <- "clean_data/ice_age.tsv"
+    ## sgdp_path <- "clean_data/sgdp.tsv"
+    ## archaics_path <- "clean_data/archaics.tsv"
+    ## annotations_path <- "clean_data/annotations.tsv"
+    
     # load the genotypes from all individuals and call random alleles for
     # humans with diploid calls
     ice_age <-
@@ -104,16 +109,20 @@ load_dataset <- function(ice_age_path,
                  one_of(sgdp_info$name))) %>%
         random_call
     names(sgdp)[-(1 : 4)] %<>% str_replace("^S_", "")
-        
+
     archaics <-
         read_tsv(archaics_path, progress=FALSE) %>%
         filter(Altai == 2, Vindija == 2)
     names(archaics)[-(1 : 4)] %<>% str_replace("^", "archaic_")    
 
     all_samples <-
-        inner_join(ice_age, archaics) %>% # intersect with archaic fixed sites
+        right_join(ice_age, archaics) %>% # join archaic data with EMH
+        { replace(., is.na(.), 9L) } %>%  # replace missing EMH data with 9 "alleles"
         left_join(sgdp) %>%               # add variable SGDP sites
         { replace(., is.na(.), 0L) }      # fill in missing SGDP alleles as REF
+
+    # replace all 9 values with NA
+    all_samples[all_samples == 9] <- NA
     
     # ice_age %>% {sapply(colnames(.)[5:ncol(.)], function(s) {table(.[[s]])})}
     # sgdp %>% {sapply(colnames(.)[5:ncol(.)], function(s) {table(.[[s]])})}
@@ -126,8 +135,7 @@ load_dataset <- function(ice_age_path,
         inner_join(all_samples)
 
     merged <-
-        inner_join(all_samples, raw_annotations)# %>%
-#        select(-c(chrom, pos, ref, alt))
+        inner_join(all_samples, raw_annotations)
 
     merged
 }
