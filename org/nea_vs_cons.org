@@ -16,7 +16,9 @@ individual annotations is [[http://cadd.gs.washington.edu/static/ReleaseNotes_CA
   library(broom)
 
   source("R/utils.R")
+#+END_SRC
 
+#+BEGIN_SRC R :session :results output silent
   all_snps <- load_dataset("clean_data/ice_age.tsv",
                            "clean_data/sgdp.tsv",
                            "clean_data/archaics.tsv",
@@ -74,12 +76,12 @@ individual annotations is [[http://cadd.gs.washington.edu/static/ReleaseNotes_CA
 #+BEGIN_SRC R :session :results output graphics :exports both :file ~/devel/slim-neanderthal/org/img/bvalue_bins2.pdf :width 8 :height 5
   n_bins <- 2
   snps <- all_snps %>%
-      mutate(bin=ifelse(bStatistic < 200, 1, ifelse(bStatistic > 800, n_bins, NA))) %>%
+      mutate(bin=ifelse(bStatistic < 500, 1, ifelse(bStatistic > 950, n_bins, NA))) %>%
       filter(!is.na(bin)) %>%
       group_by(bin) %>%
       sample_n(size=min(table(.[["bin"]])))
 
-  qplot(all_snps$bStatistic, bins=100) + geom_vline(xintercept=c(200, 800))
+  qplot(all_snps$bStatistic, bins=100) + geom_vline(xintercept=c(500, 950))
 #+END_SRC
 
 #+RESULTS:
@@ -351,7 +353,7 @@ individual annotations is [[http://cadd.gs.washington.edu/static/ReleaseNotes_CA
 
 ** Ratios of Nea% in the most conserved vs most neutral regions
 
-#+BEGIN_SRC R :session :results output graphics :exports both :file ~/devel/slim-neanderthal/org/img/codingVSintergenic.pdf :width 8 :height 5
+#+BEGIN_SRC R :session :results output graphics :exports both :file ~/devel/slim-neanderthal/org/img/bvalue_lowVShigh.pdf :width 8 :height 5
   low_and_high <- unnest(nea_bins, bins) %>%
       filter(bin == 1 | bin == n_bins, pop != "Africa") %>%
       mutate(bin=ifelse(bin == 1, "most_conserved", "most_neutral"))
@@ -374,6 +376,9 @@ individual annotations is [[http://cadd.gs.washington.edu/static/ReleaseNotes_CA
 #+END_SRC
 
 #+RESULTS:
+[[file:~/devel/slim-neanderthal/org/img/bvalue_lowVShigh.pdf]]
+
+#+RESULTS:
 [[file:~/devel/slim-neanderthal/org/img/codingVSintergenic.pdf]]
 
 #+RESULTS:
@@ -387,9 +392,6 @@ individual annotations is [[http://cadd.gs.washington.edu/static/ReleaseNotes_CA
 
 #+RESULTS:
 [[file:~/devel/slim-neanderthal/org/img/priPhCons_lowVShigh.pdf]]
-
-#+RESULTS:
-[[file:~/devel/slim-neanderthal/org/img/bvalue_lowVShigh.pdf]]
 
 
 
@@ -408,13 +410,13 @@ individual annotations is [[http://cadd.gs.washington.edu/static/ReleaseNotes_CA
 #+END_SRC
 
 #+RESULTS:
-| EMH                |  0.00116069512417814 |
-| America            | 6.11127060266149e-08 |
-| CentralAsiaSiberia |    0.146347457854357 |
-| EastAsia           |    0.104762604090992 |
-| Papuan             |    0.705605417984664 |
-| SouthAsia          |     0.93245609852484 |
-| WestEurasia        |    0.600027052453275 |
+| EMH                |   0.0727515519035191 |
+| America            |  1.9545241706064e-21 |
+| CentralAsiaSiberia |  1.0846107345652e-20 |
+| EastAsia           | 3.39538744502293e-37 |
+| Papuan             | 2.69860910224942e-10 |
+| SouthAsia          | 1.56997261046462e-12 |
+| WestEurasia        | 1.14719957546612e-22 |
 
 ** 8 Plots of geographic distribution of Nea% measures
 
