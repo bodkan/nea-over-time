@@ -1,9 +1,7 @@
 #+TITLE:  Neanderthal ancestry vs conservation in single individuals
 #+AUTHOR: Martin Petr
 #+EMAIL:  mp@bodkan.net
-#+DATE:
-
-#+property: session nea_vs_cons
+#+PROPERTY: session nea_vs_cons
 
 All annotations where obtained using the [[http://cadd.gs.washington.edu/][CADD]] online service (table of
 individual annotations is [[http://cadd.gs.washington.edu/static/ReleaseNotes_CADD_v1.3.pdf][here]]).
