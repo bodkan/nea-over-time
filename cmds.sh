@@ -20,11 +20,11 @@ for chrom in `seq 1 22`; do
 done >> clean_data/archaics.tsv
 
 # get the list of SGDP (C-team)
-sgdp_samples=`bcftools query -l /mnt/sequencedb/SGDP_May2016/combined_vcf/c_team_chr1.vcf.gz`
+sgdp_samples=`bcftools query -l /mnt/sequencedb/SGDP_May2016/combined_vcf/c_team_chr1.vcf.gz | grep "^S_" | tr '\n' ' '`
 # process the SGDP VCF files to get the numbers of archaic-like
 # alleles for each samples
-echo "chrom pos ref alt "`echo -e $samples` | tr ' ' '\t' | tr '-' '_' > clean_data/sgdp.tsv
-for chrom in `seq 1 22`; do
+echo "chrom pos ref alt "`echo -e $sgdp_samples` | tr ' ' '\t' | tr '-' '_' > clean_data/sgdp.tsv
+time for chrom in `seq 1 22`; do
     bcftools query -R <(tail -n+2 clean_data/ice_age.tsv) -f '%CHROM\t%POS\t%REF\t%ALT[\t%GT]\n' /mnt/sequencedb/SGDP_May2016/combined_vcf/c_team_chr${chrom}.vcf.gz -s `echo -e $sgdp_samples | tr ' ' ','` \
     | awk '$4 !~ "-"' \
     | sed 's/0\/0/0/g; s/0\/1/1/g; s/1\/1/2/g; s#\./\.#9#g'
