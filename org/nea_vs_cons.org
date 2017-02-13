@@ -5,6 +5,9 @@
 
 #+property: session nea_vs_cons
 
+All annotations where obtained using the [[http://cadd.gs.washington.edu/][CADD]] online service (table of
+individual annotations is [[http://cadd.gs.washington.edu/static/ReleaseNotes_CADD_v1.3.pdf][here]]).
+
 #+BEGIN_SRC R :session :results output silent
   library(tidyverse)
   library(stringr)
@@ -14,23 +17,25 @@
 
   source("R/utils.R")
 
-  snps <- load_dataset("clean_data/ice_age.tsv",
-                       "clean_data/sgdp.tsv",
-                       "clean_data/archaics.tsv",
-                       "clean_data/annotations.tsv") %>%
-      remove_transitions
+  all_snps <- load_dataset("clean_data/ice_age.tsv",
+                           "clean_data/sgdp.tsv",
+                           "clean_data/archaics.tsv",
+                           "clean_data/annotations.tsv",
+                           filter_damage=TRUE)
 
   sgdp_info <-
       load_sgdp_info() %>%
       mutate(name=str_replace(name, "^S_", "")) %>%
-      filter(name %in% colnames(snps)) %>%
+      filter(name %in% colnames(all_snps)) %>%
       mutate(age=0) %>%
-      rename(pop=Region)
+      rename(pop=Region) %>%
+      filter(!(pop == "Oceania" & Country != "PapuaNewGuinea")) %>%
+      mutate(pop=ifelse(pop == "Oceania", "Papuan", pop))
 
   emh_info <-
       read_delim("clean_data/ages.txt", delim=" ") %>%
       mutate(pop="EMH") %>%
-      filter(name %in% colnames(snps),
+      filter(name %in% colnames(all_snps),
              ! name %in% c("Continenza", "Kostenki12", "Ostuni2",
                            "Pavlov1", "Vestonice15", "Vestonice43",
                            "Vestonice13", "Oase1", "Muierii2",
@@ -39,17 +44,132 @@
   samples_info <-
       bind_rows(emh_info, sgdp_info) %>%
       mutate(post_admixture=55000 - age,
-             name=factor(name, levels=name))
+             name=factor(name, levels=name),
+             pop=as.factor(pop))
+
 #+END_SRC
 
-#+BEGIN_SRC R :session :results output silent
-  # Get a vector of bin assignments
+** Dividing SNPs into bins
+
+*** B value bins v1.0
+
+#+BEGIN_SRC R :session :results output graphics :exports both :file ~/devel/slim-neanderthal/org/img/bvalue_bins1.pdf :width 8 :height 5
+  # B values
   n_bins <- 10
-  qs <- quantile(snps$bStatistic,
+  cutoffs <- quantile(all_snps$bStatistic,
                  prob=seq(0, 1, length.out=n_bins + 1),
                  na.rm=TRUE)
-  snps$bin <- findInterval(snps$bStatistic, vec=qs, rightmost.closed=TRUE)
+  snps <- mutate(all_snps,
+                 bin=findInterval(bStatistic, vec=cutoffs,
+                                  rightmost.closed=TRUE))
+
+  qplot(snps$bStatistic, bins=100) + geom_vline(xintercept=cutoffs)
 #+END_SRC
+
+#+RESULTS:
+[[file:~/devel/slim-neanderthal/org/img/bvalue_bins1.pdf]]
+
+*** B value bins v2.0
+
+#+BEGIN_SRC R :session :results output graphics :exports both :file ~/devel/slim-neanderthal/org/img/bvalue_bins2.pdf :width 8 :height 5
+  n_bins <- 2
+  snps <- all_snps %>%
+      mutate(bin=ifelse(bStatistic < 200, 1, ifelse(bStatistic > 800, n_bins, NA))) %>%
+      filter(!is.na(bin)) %>%
+      group_by(bin) %>%
+      sample_n(size=min(table(.[["bin"]])))
+
+  qplot(all_snps$bStatistic, bins=100) + geom_vline(xintercept=c(200, 800))
+#+END_SRC
+
+#+RESULTS:
+[[file:~/devel/slim-neanderthal/org/img/bvalue_bins2.pdf]]
+
+*** primate phastCons bins
+
+#+BEGIN_SRC R :session :results output  graphics :exports both :file ~/devel/slim-neanderthal/org/img/priPhCons_bins.pdf :width 8 :height 5
+  n_bins <- 2
+  snps <- all_snps %>%
+      mutate(bin=ifelse(priPhCons > 0.8, 1, ifelse(priPhCons < 0.01, n_bins, NA))) %>%
+      filter(!is.na(bin)) %>%
+      group_by(bin) %>%
+      sample_n(size=min(table(.[["bin"]])))
+
+  qplot(all_snps$priPhCons, bins=100) + geom_vline(xintercept=c(0.01, 0.8))
+#+END_SRC
+
+#+RESULTS:
+[[file:~/devel/slim-neanderthal/org/img/priPhCons_bins.pdf]]
+
+*** mammalian phastCons bins
+
+#+BEGIN_SRC R :session :results output  graphics :exports both :file ~/devel/slim-neanderthal/org/img/mamPhCons_bins.pdf :width 8 :height 5
+  n_bins <- 2
+  snps <- all_snps %>%
+      mutate(bin=ifelse(mamPhCons > 0.8, 1, ifelse(mamPhCons < 0.01, n_bins, NA))) %>%
+      filter(!is.na(bin)) %>%
+      group_by(bin) %>%
+      sample_n(size=min(table(.[["bin"]])))
+
+  qplot(all_snps$mamPhCons, bins=100) + geom_vline(xintercept=c(0.01, 0.8))
+#+END_SRC
+
+#+RESULTS:
+[[file:~/devel/slim-neanderthal/org/img/mamPhCons_bins.pdf]]
+
+*** C-score
+
+#+BEGIN_SRC R :session :results output graphics :exports both :file  ~/devel/slim-neanderthal/org/img/Cscore_bins.pdf :width 8 :height 5
+  n_bins <- 2
+
+  snps <- all_snps %>%
+      mutate(bin=ifelse(as.integer(PHRED) > 10, 1,
+                 ifelse(as.integer(PHRED) <= 1, n_bins, NA))) %>%
+      filter(!is.na(bin)) %>%
+      group_by(bin) %>%
+      sample_n(size=min(table(.[["bin"]])))
+
+  qplot(all_snps$PHRED, bins=100) + geom_vline(xintercept=c(1, 10))
+#+END_SRC
+
+#+RESULTS:
+[[file:~/devel/slim-neanderthal/org/img/Cscore_bins.pdf]]
+
+*** Coding & regulatory vs intergenic features
+
+#+BEGIN_SRC R :session :results output graphics :exports both :file  ~/devel/slim-neanderthal/org/img/codingreg_intergenic_bins.pdf :width 8 :height 5
+  n_bins <- 2
+
+  snps <- all_snps %>%
+      mutate(bin=ifelse(AnnoType %in% c("CodingTranscript", "RegulatoryFeature"), 1,
+                 ifelse(AnnoType == "Intergenic", n_bins, NA))) %>%
+      filter(!is.na(bin)) %>%
+      group_by(bin) %>%
+      sample_n(size=min(table(.[["bin"]])))
+
+  ggplot(snps, aes(as.factor(bin), fill=AnnoType)) + geom_bar()
+#+END_SRC
+
+#+RESULTS:
+[[file:~/devel/slim-neanderthal/org/img/codingreg_intergenic_bins.pdf]]
+
+*** Coding vs intergenic features
+
+#+BEGIN_SRC R :session :results output graphics :exports both :file  ~/devel/slim-neanderthal/org/img/coding_intergenic_bins.pdf :width 8 :height 5
+  n_bins <- 2
+
+  snps <- all_snps %>%
+      mutate(bin=ifelse(AnnoType %in% "CodingTranscript", 1,
+                 ifelse(AnnoType == "Intergenic", n_bins, NA))) %>%
+      filter(!is.na(bin)) %>%
+      group_by(bin) %>%
+      sample_n(size=min(table(.[["bin"]])))
+
+  ggplot(snps, aes(as.factor(bin), fill=AnnoType)) + geom_bar()
+#+END_SRC
+
+#+RESULTS:
+[[file:~/devel/slim-neanderthal/org/img/coding_intergenic_bins.pdf]]
 
 ** Calculate Nea% in each bin in each sample. Store results in a long format.
 
@@ -57,21 +177,76 @@
     calc_nea_in_bins <- function(snps, n_bins, sample_name) {
         sapply(seq_len(n_bins), function(i) {
             calc_sharing_prop(filter(snps, bin == i), "archaic_Altai", sample_name)
-        }) %>% as_tibble %>% mutate(bin=seq_len(n_bins)) %>% rename(nea=value) 
+        }) %>% as_tibble %>% mutate(bin=as.factor(seq_len(n_bins))) %>% rename(nea=value)
     }
 
-    nea_df <- samples_info %>%
-        mutate(nea_bins=map(as.character(name), function(n) { calc_nea_in_bins(snps, n_bins, n)})) %>%
-        mutate(nea_est=sapply(as.character(name), function(n) { calc_sharing_prop(snps, "archaic_Altai", n)}))
+    nea_bins <- samples_info %>%
+        mutate(bins=purrr::map(as.character(name), function(n) { calc_nea_in_bins(snps, n_bins, n)}))
 #+END_SRC
 
-** Plots of linear regression lines
+** Genome-wide Nea% in all samples
 
-#+BEGIN_SRC R :session :results output graphics :exports both :file ~/devel/slim-neanderthal/org/img/bvalue_corr.pdf :width 8 :height 8
+#+BEGIN_SRC R :session :results output silent
+    nea_est <- samples_info %>%
+        mutate(nea=sapply(as.character(name), function(n) { calc_sharing_prop(all_snps, "archaic_Altai", n)}))
+#+END_SRC
+
+#+BEGIN_SRC R :session :results output graphics :exports both :file ~/devel/slim-neanderthal/org/img/genomewide_nea.pdf :width 8 :height 6
+  filter(nea_est, pop != "Africa") %>%
+      ggplot() +
+      geom_point(aes(name, nea, color=pop, shape=pop), size=1) +
+      coord_cartesian(ylim=c(0, 0.05)) +
+      theme(axis.text.x=element_text(angle=60, hjust=1, size=3),
+            legend.position="bottom") +
+      scale_shape_manual(values=1 : nlevels(nea_est$pop))
+
+  filter(nea_est, pop != "Africa") %>%
+  ggplot() +
+      geom_boxplot(aes(pop, nea, fill=pop)) +
+      geom_jitter(aes(pop, nea, color=pop), size=1, alpha=1/2) +
+      coord_cartesian(ylim=c(0, 0.05)) +
+      theme(axis.text.x=element_text(angle=60, hjust=1, size=3),
+            legend.position="bottom")
+#+END_SRC
+
+#+RESULTS:
+[[file:~/devel/slim-neanderthal/org/img/genomewide_nea.pdf]]
+
+** Plots of B value linear regression lines
+
+#+BEGIN_SRC R :session :results output graphics :exports both :file ~/devel/slim-neanderthal/org/img/bvalue_corr.pdf :width 8 :height 6
+  # boxplots of Nea% per bin in each population
+  unnest(nea_bins, bins) %>% filter(pop != "Africa") %>%
+      {
+          ggplot(., aes(bin, nea, fill=pop, group=bin)) +
+              geom_boxplot() +
+              geom_point(alpha=1/2, size=0.5) +
+              geom_smooth(method="lm", se=FALSE, color="black", aes(group=pop)) +
+              coord_cartesian(ylim=c(0, 0.05)) +
+              ggtitle(paste("Correlation of Nea% vs bin ")) +
+              theme(legend.position="none") +
+              facet_grid(. ~ pop)
+      } %>% print
+
+  # line plots of Nea% in bins per population
   for (pop_id in unique(samples_info$pop)) {
-      unnest(nea_df, nea_bins) %>% filter(pop == pop_id) %>%
+      unnest(nea_bins, bins) %>% filter(pop == pop_id) %>%
           {
               ggplot(., aes(bin, nea, color=name)) +
+                  geom_line(aes(group=name), alpha=1/2) +
+                  geom_smooth(aes(group=pop), method="lm", se=FALSE, color="black") +
+                  coord_cartesian(ylim=c(0, 0.05)) +
+                  ggtitle(paste("Correlation of Nea% vs bin ",
+                                "(", pop_id, ")")) +
+                  theme(legend.position="none")
+          } %>% print
+  }
+
+  # each linear regression separately for each individual
+  for (pop_id in unique(samples_info$pop)) {
+      unnest(nea_bins, bins) %>% filter(pop == pop_id) %>%
+          {
+              ggplot(., aes(bin, nea, color=name, group=name)) +
                   geom_point() +
                   geom_smooth(method="lm", se=FALSE, color="black", size=0.5) +
                   coord_cartesian(ylim=c(0, 0.05)) +
@@ -81,33 +256,19 @@
                   facet_wrap(~ name)
           } %>% print
   }
-
-  for (pop_id in unique(samples_info$pop)) {
-      unnest(nea_df, nea_bins) %>% filter(pop == pop_id) %>%
-          {
-              ggplot(., aes(bin, nea, color=name)) +
-                  geom_line(alpha=1/2) +
-                  geom_smooth(method="lm", se=FALSE, color="black") +
-                  coord_cartesian(ylim=c(0, 0.05)) +
-                  ggtitle(paste("Correlation of Nea% vs bin ",
-                                "(", pop_id, ")")) +
-                  theme(legend.position="bottom")
-          } %>% print
-  }
-
 #+END_SRC
 
 #+RESULTS:
 [[file:~/devel/slim-neanderthal/org/img/bvalue_corr.pdf]]
 
-** Plots of linear regression metrics
+** Plots of B value linear regression metrics
 
 #+BEGIN_SRC R :session :results output graphics :exports both :file ~/devel/slim-neanderthal/org/img/bvaluecorr_metrics.pdf :width 8 :height 5
   nea_bin_lm <- function(df) {
-      lm(nea ~ bin, data=df)
+      lm(nea ~ bin, data=mutate(df, bin=as.integer(bin)))
   }
 
-  bins_by_sample <- nea_df %>%
+  lm_per_sample <- nea_bins %>%
       unnest %>%
       filter(pop != "Africa") %>%
       group_by(name, pop, post_admixture) %>%
@@ -117,8 +278,8 @@
              tidy=map(model, tidy))
 
   # plot the p.value of each fit
-  unnest(bins_by_sample, glance, .drop=TRUE) %>%
-      ggplot(aes(name, p.value, colour=pop)) +
+  unnest(lm_per_sample, glance, .drop=TRUE) %>%
+      ggplot(aes(name, p.value, color=pop)) +
       geom_point(alpha=0.8) +
       geom_hline(yintercept=0.05, alpha=1/5) +
       ggtitle("p-values of the linear fits (Nea% ~ B value bin)") +
@@ -126,29 +287,29 @@
             legend.position="bottom")
 
   # plot the slope in each sample
-  unnest(bins_by_sample, tidy) %>%
+  unnest(lm_per_sample, tidy) %>%
       filter(term == "bin") %>%
-      ggplot(aes(name, estimate, colour=pop)) +
+      ggplot(aes(name, estimate, color=pop)) +
       geom_point() +
       ggtitle("Slopes of the linear fits (Nea% ~ B value bin)") +
       theme(axis.text.x=element_text(angle=60, hjust=1, size=3),
             legend.position="bottom")
 
   # plot the distribution of slopes in each pop
-  unnest(bins_by_sample, tidy) %>%
+  unnest(lm_per_sample, tidy) %>%
       filter(term == "bin") %>%
       ggplot(aes(pop, estimate, fill=pop)) +
-      geom_violin() +
+      geom_boxplot() +
       geom_jitter(alpha=1/2) +
       ggtitle("Slopes of the linear fits (Nea% ~ B value bin)") +
       theme(axis.text.x=element_text(angle=60, hjust=1),
             legend.position="none")
 
   # plot the distribution of slopes in each pop (only those significant)
-  unnest(bins_by_sample, tidy) %>%
+  unnest(lm_per_sample, tidy) %>%
       filter(term == "bin", p.value < 0.05) %>%
       ggplot(aes(pop, estimate, fill=pop)) +
-      geom_violin() +
+      geom_boxplot() +
       geom_jitter(alpha=1/2) +
       ggtitle("Slopes of the linear fits (Nea% ~ B value bin)",
               subtitle="only fits with p-value < 0.05") +
@@ -156,7 +317,7 @@
             legend.position="none")
 
   # plot the slopes over time
-  unnest(bins_by_sample, tidy) %>%
+  unnest(lm_per_sample, tidy) %>%
       filter(term == "bin", pop == "EMH" | pop == "WestEurasia") %>%
       ggplot(aes(post_admixture, estimate, colour=pop)) +
       geom_point() +
@@ -166,34 +327,21 @@
       xlim(0, 55000)
 
   # plot the R^2 in each sample
-  unnest(bins_by_sample, glance, .drop=TRUE) %>%
+  unnest(lm_per_sample, glance, .drop=TRUE) %>%
       ggplot(aes(name, r.squared, colour=pop)) +
       geom_point() +
       ggtitle("R-squared of the linear fits (Nea% ~ B value bin)") +
-      theme(axis.text.x=element_text(angle=60, hjust=1, size=7),
+      theme(axis.text.x=element_text(angle=60, hjust=1, size=4),
             legend.position="bottom")
 
   # plot the distribution of R^2 in each pop
-  unnest(bins_by_sample, glance, .drop=TRUE) %>%
+  unnest(lm_per_sample, glance, .drop=TRUE) %>%
       ggplot(aes(pop, r.squared, fill=pop)) +
-      geom_violin() +
+      geom_boxplot() +
       geom_jitter(alpha=1/2) +
       ggtitle("R-squared of the linear fits (Nea% ~ B value bin)",
               subtitle="all fits") +
-      theme(axis.text.x=element_text(angle=60, hjust=1, size=7),
-            legend.position="none") +
-      coord_cartesian(ylim=c(0, 1))
-
-
-  # plot the distribution of R^2 in each pop (only significant fits)
-  unnest(bins_by_sample, glance, .drop=TRUE) %>%
-      filter(p.value < 0.05) %>%
-      ggplot(aes(pop, r.squared, fill=pop)) +
-      geom_violin() +
-      geom_jitter(alpha=1/2) +
-      ggtitle("R-squared of the linear fits (Nea% ~ B value bin)",
-              subtitle="only fits with p < 0.05") +
-      theme(axis.text.x=element_text(angle=60, hjust=1, size=7),
+      theme(axis.text.x=element_text(angle=60, hjust=1),
             legend.position="none") +
       coord_cartesian(ylim=c(0, 1))
 #+END_SRC
@@ -201,7 +349,74 @@
 #+RESULTS:
 [[file:~/devel/slim-neanderthal/org/img/bvaluecorr_metrics.pdf]]
 
-*8 Plots of geographic distribution of Nea% measures
+** Ratios of Nea% in the most conserved vs most neutral regions
+
+#+BEGIN_SRC R :session :results output graphics :exports both :file ~/devel/slim-neanderthal/org/img/codingVSintergenic.pdf :width 8 :height 5
+  low_and_high <- unnest(nea_bins, bins) %>%
+      filter(bin == 1 | bin == n_bins, pop != "Africa") %>%
+      mutate(bin=ifelse(bin == 1, "most_conserved", "most_neutral"))
+
+  ggplot(low_and_high, aes(bin, nea, fill=bin)) +
+      geom_boxplot() +
+      facet_grid(~ pop) +
+      geom_jitter(alpha=1/2, size=1) +
+      ggtitle("Nea% in the most conserved and most neutral regions") +
+      coord_cartesian(ylim=c(0, 0.05)) +
+      theme(axis.text.x=element_text(angle=60, hjust=1), legend.position="none")
+
+
+  ggplot(filter(low_and_high, pop != "EMH"), aes(bin, nea, fill=bin)) +
+      geom_boxplot() +
+      geom_jitter(alpha=1/2, size=1) +
+      ggtitle("Nea% in the most conserved and most neutral regions") +
+      coord_cartesian(ylim=c(0, 0.05)) +
+      theme(axis.text.x=element_text(angle=60, hjust=1), legend.position="none")
+#+END_SRC
+
+#+RESULTS:
+[[file:~/devel/slim-neanderthal/org/img/codingVSintergenic.pdf]]
+
+#+RESULTS:
+[[file:~/devel/slim-neanderthal/org/img/codingregVSintergenic.pdf]]
+
+#+RESULTS:
+[[file:~/devel/slim-neanderthal/org/img/Cscore_lowVShigh.pdf]]
+
+#+RESULTS:
+[[file:~/devel/slim-neanderthal/org/img/mamPhCons_lowVShigh.pdf]]
+
+#+RESULTS:
+[[file:~/devel/slim-neanderthal/org/img/priPhCons_lowVShigh.pdf]]
+
+#+RESULTS:
+[[file:~/devel/slim-neanderthal/org/img/bvalue_lowVShigh.pdf]]
+
+
+
+** T-test of distribution of Nea% in conserved vs neutral regions
+
+#+BEGIN_SRC R :session
+  cons_vs_neutral_ttest <- function(df) { t.test(df$most_conserved, df$most_neutral) }
+
+  spread(low_and_high, bin, nea) %>%
+      group_by(pop) %>%
+      nest %>%
+      mutate(model=map(data, cons_vs_neutral_ttest),
+             glance=map(model, glance)) %>%
+      unnest(glance, .drop=TRUE) %>%
+      select(pop, p.value)
+#+END_SRC
+
+#+RESULTS:
+| EMH                |  0.00116069512417814 |
+| America            | 6.11127060266149e-08 |
+| CentralAsiaSiberia |    0.146347457854357 |
+| EastAsia           |    0.104762604090992 |
+| Papuan             |    0.705605417984664 |
+| SouthAsia          |     0.93245609852484 |
+| WestEurasia        |    0.600027052453275 |
+
+** 8 Plots of geographic distribution of Nea% measures
 
 #+BEGIN_SRC R :session :results output silent
   library(maps)
@@ -226,3 +441,12 @@
 #+RESULTS:
 [[file:~/devel/slim-neanderthal/org/img/nea_maps.pdf]]
 
+** PCA of informative sites
+
+#+BEGIN_SRC R :session
+  pca_samples <- filter(sgdp_info, pop != "Africa")
+
+  mat <- select(all_snps, one_of(as.character(pca_samples$name)))
+  pca <- prcomp(t(na.omit(mat)))
+  autoplot(pca, data=pca_samples, color=pop)
+#+END_SRC
