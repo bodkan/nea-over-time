@@ -26,12 +26,12 @@ initialize() {
 }
 
 // split between AMH and Neanderthals after a period of burnin
-50 {
+50000 {
     sim.addSubpopSplit("p2", 1000, p1);
 }
 
 // dump all populations and mutations at the end of the simulation
-67 late() {
+67800 late() {
     // place neutral markers on all Neanderthal haplotypes
     for (pos in neutral_pos) {
         p2.genomes.addNewDrawnMutation(m0, pos);
@@ -39,4 +39,10 @@ initialize() {
 
     sim.outputFull("simulations/dominance_mix__" + prop_add + "_" + prop_partrec +"_" + prop_rec + ".txt");
     sim.simulationFinished();
+}
+
+1:67800 {
+    if (sim.generation % 10000 == 1) {
+       cat(time() + " :: INFO :: Simulation " + sim.generation + "/67800 generations\n");
+    }
 }
