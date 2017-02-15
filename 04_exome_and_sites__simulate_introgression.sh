@@ -37,9 +37,7 @@ run_introgression() {
 
     run_id=$8__h_${2}__init_nea_${5}__rep_${1}
     
-    qsub -V -cwd -j y -S /bin/bash -l virtual_free=$mem,h_vmem=$mem \
-	 -o ${tmp_dir}/sge__${run_id}.out -N ${run_id} \
-	 run_introgression.py \
+    ./run_introgression.py \
 	    --population-file ${sims_dir}/exome_and_sites__h_${2}__seed_*.txt \
 	    --exon-coordinates $3 \
 	    --recomb-map $4 \
@@ -50,6 +48,7 @@ run_introgression() {
 	    --nonexonic-sites $7 \
 	    --output-prefix ${traject_dir}/${run_id} \
 	    --model $8 \
+	    --save-trajectories \
 	    $9
 }
 
@@ -60,7 +59,7 @@ run_introgression() {
 # deleterious variants.
 #
 # Neutral Neanderthal markers are exonic and non-exonic sites from
-# the archaic admixture array. Dominance coefficient 0.5 only.
+# the archaic admixture array.
 #
 
 exome_only_exon_coords=${clean_dir}/exome_and_sites_exon_coordinates.txt
@@ -68,9 +67,30 @@ exome_only_recomb_map=${clean_dir}/exome_and_sites_recombination_map.txt
 exonic_sites=${clean_dir}/admixture_array_coordinates_exonic.txt
 nonexonic_sites=${clean_dir}/admixture_array_coordinates_nonexonic.txt
 
+
+dominance_coef=0.5
 for model in 'constant' 'linear' 'gravel'; do
-    run_introgression 1 0.5 $exome_only_exon_coords $exome_only_recomb_map $init_nea $exonic_sites $nonexonic_sites $model --save-mutations
+    run_introgression 1 $dominance_coef $exome_only_exon_coords $exome_only_recomb_map $init_nea $exonic_sites $nonexonic_sites $model --save-mutations
     for rep_i in `seq 2 $num_replicates`; do
-        run_introgression $rep_i 0.5 $exome_only_exon_coords $exome_only_recomb_map $init_nea $exonic_sites $nonexonic_sites $model
+        run_introgression $rep_i $dominance_coef $exome_only_exon_coords $exome_only_recomb_map $init_nea $exonic_sites $nonexonic_sites $model
     done
 done
+
+
+dominance_coef=0.1
+for model in 'constant' 'linear' 'gravel'; do
+    run_introgression 1 $dominance_coef $exome_only_exon_coords $exome_only_recomb_map $init_nea $exonic_sites $nonexonic_sites $model --save-mutations
+    for rep_i in `seq 2 $num_replicates`; do
+        run_introgression $rep_i $dominance_coef $exome_only_exon_coords $exome_only_recomb_map $init_nea $exonic_sites $nonexonic_sites $model
+    done
+done
+
+
+dominance_coef=0.0
+for model in 'constant' 'linear' 'gravel'; do
+    run_introgression 1 $dominance_coef $exome_only_exon_coords $exome_only_recomb_map $init_nea $exonic_sites $nonexonic_sites $model --save-mutations
+    for rep_i in `seq 2 $num_replicates`; do
+        run_introgression $rep_i $dominance_coef $exome_only_exon_coords $exome_only_recomb_map $init_nea $exonic_sites $nonexonic_sites $model
+    done
+done
+
