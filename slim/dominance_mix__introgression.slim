@@ -1,5 +1,5 @@
 initialize() {
-    initializeRecombinationRate(1e-8);
+    initializeRecombinationRate(recomb_rate);
     initializeMutationRate(7e-9);
 
     // deleterious mutation types
@@ -28,7 +28,7 @@ initialize() {
 // load the simulation state after the out of Africa event
 1 {
     cat(time() + " :: INFO :: Reading populations.\n");
-    sim.readFromPopulationFile("simulations/dominance_mix__" + prop_add + "_" + prop_partrec +"_" + prop_rec + ".txt");
+    sim.readFromPopulationFile("simulations/dominance_mix__" + prop_add + "_" + prop_partrec +"_" + prop_rec + "__r_" + recomb_rate + ".txt");
     sim.generation = 1;
 
     // out of Africa bottleneck
@@ -67,7 +67,7 @@ initialize() {
 
 // output Nea. ancestry trajectories calculated on neutral fixed Nea. markers
 2:2201 late() {
-    output_file = "simulations/dominance_mix/constant__" + prop_add + "_" + prop_partrec +"_" + prop_rec + "__Ne_" + pop_size + "__rep_" + rep + ".txt";
+    output_file = "simulations/dominance_mix/constant__" + prop_add + "_" + prop_partrec +"_" + prop_rec + "__Ne_" + pop_size + "__r_" + recomb_rate + "__rep_" + rep + ".txt";
 
     if (any(sim.generation == sampled_gens)) {
 //        cat(time() + " :: INFO :: " + sim.generation + "\n");

@@ -1,5 +1,5 @@
 initialize() {
-    initializeRecombinationRate(1e-8);
+    initializeRecombinationRate(recomb_rate);
     initializeMutationRate(7e-9);
 
     // deleterious mutation types
@@ -37,7 +37,7 @@ initialize() {
         p2.genomes.addNewDrawnMutation(m0, pos);
     }
 
-    sim.outputFull("simulations/dominance_mix__" + prop_add + "_" + prop_partrec +"_" + prop_rec + ".txt");
+    sim.outputFull("simulations/dominance_mix__" + prop_add + "_" + prop_partrec +"_" + prop_rec + "__r_" + recomb_rate + ".txt");
     sim.simulationFinished();
 }
 
