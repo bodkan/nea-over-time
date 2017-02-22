@@ -20,21 +20,6 @@ dates=`tail -n+2 ${input_dir}/nea_ancestry_direct.tsv | cut -f2 | tr '\n' ' '`
 
 # wrapper for submitting introgression simulations to SGE
 run_introgression() {
-    case $2 in
-	0.5)
-	    mem=8G
-	    ;;
-	0.1)
-	    mem=10G
-	    ;;
-	0.0)
-	    mem=12G
-	    ;;
-	*)
-	    echo "Suspicious dominance coefficient: $2"
-	    exit
-    esac
-
     run_id=$8__h_${2}__init_nea_${5}__rep_${1}
     
     ./run_introgression.py \
@@ -68,29 +53,46 @@ exonic_sites=${clean_dir}/admixture_array_coordinates_exonic.txt
 nonexonic_sites=${clean_dir}/admixture_array_coordinates_nonexonic.txt
 
 
-dominance_coef=0.5
+# dominance_coef=1.0
+# for model in 'constant' 'linear' 'gravel'; do
+#     run_introgression 1 $dominance_coef $exome_only_exon_coords $exome_only_recomb_map $init_nea $exonic_sites $nonexonic_sites $model --save-mutations &
+#     for rep_i in `seq 2 $num_replicates`; do
+#         run_introgression $rep_i $dominance_coef $exome_only_exon_coords $exome_only_recomb_map $init_nea $exonic_sites $nonexonic_sites $model &
+#     done
+# done
+
+
+dominance_coef=0.9
 for model in 'constant' 'linear' 'gravel'; do
-    run_introgression 1 $dominance_coef $exome_only_exon_coords $exome_only_recomb_map $init_nea $exonic_sites $nonexonic_sites $model --save-mutations
+    run_introgression 1 $dominance_coef $exome_only_exon_coords $exome_only_recomb_map $init_nea $exonic_sites $nonexonic_sites $model --save-mutations &
     for rep_i in `seq 2 $num_replicates`; do
-        run_introgression $rep_i $dominance_coef $exome_only_exon_coords $exome_only_recomb_map $init_nea $exonic_sites $nonexonic_sites $model
+        run_introgression $rep_i $dominance_coef $exome_only_exon_coords $exome_only_recomb_map $init_nea $exonic_sites $nonexonic_sites $model &
     done
 done
 
+# dominance_coef=0.5
+# for model in 'constant' 'linear' 'gravel'; do
+#     run_introgression 1 $dominance_coef $exome_only_exon_coords $exome_only_recomb_map $init_nea $exonic_sites $nonexonic_sites $model --save-mutations
+#     for rep_i in `seq 2 $num_replicates`; do
+#         run_introgression $rep_i $dominance_coef $exome_only_exon_coords $exome_only_recomb_map $init_nea $exonic_sites $nonexonic_sites $model
+#     done
+# done
 
-dominance_coef=0.1
-for model in 'constant' 'linear' 'gravel'; do
-    run_introgression 1 $dominance_coef $exome_only_exon_coords $exome_only_recomb_map $init_nea $exonic_sites $nonexonic_sites $model --save-mutations
-    for rep_i in `seq 2 $num_replicates`; do
-        run_introgression $rep_i $dominance_coef $exome_only_exon_coords $exome_only_recomb_map $init_nea $exonic_sites $nonexonic_sites $model
-    done
-done
+
+# dominance_coef=0.1
+# for model in 'constant' 'linear' 'gravel'; do
+#     run_introgression 1 $dominance_coef $exome_only_exon_coords $exome_only_recomb_map $init_nea $exonic_sites $nonexonic_sites $model --save-mutations
+#     for rep_i in `seq 2 $num_replicates`; do
+#         run_introgression $rep_i $dominance_coef $exome_only_exon_coords $exome_only_recomb_map $init_nea $exonic_sites $nonexonic_sites $model
+#     done
+# done
 
 
-dominance_coef=0.0
-for model in 'constant' 'linear' 'gravel'; do
-    run_introgression 1 $dominance_coef $exome_only_exon_coords $exome_only_recomb_map $init_nea $exonic_sites $nonexonic_sites $model --save-mutations
-    for rep_i in `seq 2 $num_replicates`; do
-        run_introgression $rep_i $dominance_coef $exome_only_exon_coords $exome_only_recomb_map $init_nea $exonic_sites $nonexonic_sites $model
-    done
-done
+# dominance_coef=0.0
+# for model in 'constant' 'linear' 'gravel'; do
+#     run_introgression 1 $dominance_coef $exome_only_exon_coords $exome_only_recomb_map $init_nea $exonic_sites $nonexonic_sites $model --save-mutations
+#     for rep_i in `seq 2 $num_replicates`; do
+#         run_introgression $rep_i $dominance_coef $exome_only_exon_coords $exome_only_recomb_map $init_nea $exonic_sites $nonexonic_sites $model
+#     done
+# done
 
