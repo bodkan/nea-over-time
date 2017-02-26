@@ -88,3 +88,11 @@ introgression_reps 0.5  0.0 0.5  10000 1e-6 &
 introgression_reps 0.75 0.0 0.25 10000 1e-6 &
 introgression_reps 0.0  0.0 1.0  10000 1e-6 &
 introgression_reps 0.0  1.0 0.0  10000 1e-6 &
+
+
+#
+# exonic structure simulations
+#
+slim -d prop_add=0.25 -d prop_rec=0.75 slim/dominance_mix__mut_accum__exons.slim &
+slim -d prop_add=0.5  -d prop_rec=0.5  slim/dominance_mix__mut_accum__exons.slim &
+slim -d prop_add=0.75 -d prop_rec=0.25 slim/dominance_mix__mut_accum__exons.slim &
