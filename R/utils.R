@@ -67,8 +67,8 @@ estimate_nea <- function(snps, sample_names) {
 #
 # Load the SGDP metadata info table.
 #
-load_sgdp_info <- function() {
-    read_tsv("raw_data/10_24_2014_SGDP_metainformation_update.txt") %>%
+load_sgdp_info <- function(path) {
+    read_tsv(path) %>%
         select(Panel, name=SGDP_ID, Region, Country, Latitude, Longitude) %>%
         filter(complete.cases(.)) %>%
         filter(Panel == "C") %>%
@@ -84,7 +84,8 @@ load_dataset <- function(ice_age_path,
                          sgdp_path,
                          archaics_path,
                          annotations_path,
-                         filter_damage) {
+                         filter_damage,
+                         metadata_path) {
     ## ice_age_path <- "clean_data/ice_age.tsv"
     ## sgdp_path <- "clean_data/sgdp.tsv"
     ## archaics_path <- "clean_data/archaics.tsv"
@@ -101,7 +102,7 @@ load_dataset <- function(ice_age_path,
     }
 
     # read the list of samples with available metadata
-    sgdp_info <- load_sgdp_info()
+    sgdp_info <- load_sgdp_info(metadata_path)
 
     sgdp <-
         read_tsv(sgdp_path, progress=FALSE) %>%

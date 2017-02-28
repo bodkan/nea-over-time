@@ -1,0 +1,183 @@
+#+TITLE:  Neanderthal ancestry vs conservation in single individuals
+#+AUTHOR: Martin Petr
+#+EMAIL:  mp@bodkan.net
+#+PROPERTY: session nea_vs_cons
+
+All annotations where obtained using the [[http://cadd.gs.washington.edu/][CADD]] online service (table of
+individual annotations is [[http://cadd.gs.washington.edu/static/ReleaseNotes_CADD_v1.3.pdf][here]]).
+
+#+BEGIN_SRC R :session :results output silent
+  library(tidyverse)
+  library(stringr)
+  library(magrittr)
+  library(modelr)
+  library(broom)
+
+  source("R/utils.R")
+#+END_SRC
+
+*** Load the data
+
+#+BEGIN_SRC R :session :results output silent
+  all_snps <- load_dataset("clean_data/ice_age.tsv",
+                           "clean_data/sgdp.tsv",
+                           "clean_data/archaics.tsv",
+                           "clean_data/annotations.tsv",
+                           filter_damage=TRUE,
+                           metadata_path="raw_data/10_24_2014_SGDP_metainformation_update.txt")
+
+  sgdp_info <-
+      load_sgdp_info("raw_data/10_24_2014_SGDP_metainformation_update.txt") %>%
+      mutate(name=str_replace(name, "^S_", "")) %>%
+      filter(name %in% colnames(all_snps)) %>%
+      mutate(age=0) %>%
+      rename(pop=Region) %>%
+      filter(!(pop == "Oceania" & Country != "PapuaNewGuinea")) %>%
+      mutate(pop=ifelse(pop == "Oceania", "Papuan", pop))
+
+  emh_info <-
+      read_delim("clean_data/ages.txt", delim=" ") %>%
+      mutate(pop="EMH") %>%
+      filter(name %in% colnames(all_snps),
+             ! name %in% c("Continenza", "Kostenki12", "Ostuni2",
+                           "Pavlov1", "Vestonice15", "Vestonice43",
+                           "Vestonice13", "Oase1", "Muierii2",
+                           "AfontovaGora2"))
+
+  samples_info <-
+      bind_rows(emh_info, sgdp_info) %>%
+      mutate(post_admixture=55000 - age,
+             name=factor(name, levels=name),
+             pop=as.factor(pop))
+
+#+END_SRC
+
+*** Plot annotation bins
+
+#+BEGIN_SRC R :session :results output graphics :exports both :file ~/projects/slim-neanderthal/org/img/annots_dists.pdf :width 10 :height 7
+  plot_annot <- function(annot, low, high) {
+      qplot(all_snps[[annot]], bins=100) +
+          geom_vline(xintercept=c(low, high)) +
+          ggtitle(annot)
+  }
+
+  b_low <- 500; b_high <- 950
+  priPhCons_low <- 0.01; priPhCons_high <- 0.8
+  mamPhCons_low <- 0.01; mamPhCons_high <- 0.8
+
+  plot_annot("bStatistic", b_low, b_high)
+  plot_annot("priPhCons", priPhCons_low, priPhCons_high)
+  plot_annot("mamPhCons", mamPhCons_low, mamPhCons_high)
+#+END_SRC
+
+#+RESULTS:
+[[file:~/projects/slim-neanderthal/org/img/annots_dists.pdf]]
+
+*** Divide SNPs into conserved/neutral bins based on different annotations
+
+#+BEGIN_SRC R :session :results output silent
+  #
+  # Divide SNPs into two equal-sized bins (conserved and neutral)based
+  # on the given annotation.
+  #
+  bin_cons_neutral <- function(snps, stat,
+                               low_cutoff, high_cutoff,
+                               low_bin, high_bin, equalize=TRUE) {
+      bins <- ifelse(snps[[stat]] <= low_cutoff, low_bin,
+              ifelse(snps[[stat]] > high_cutoff, high_bin, NA))
+
+      if (equalize) {
+          # count the number of conserved and neutral elements
+          counts <- table(bins)
+
+          # get the bin with the highest number of snps
+          max_bin <- names(counts)[which(counts == max(counts))]
+
+          # make the counts of bin elements equal by removing a subset
+          # of elements from the biggest of the two bins
+          bins[sample(which(bins == max_bin), max(counts) - min(counts))] <- NA
+      }
+      
+      factor(bins)
+  }
+
+  all_snps <-
+      mutate(all_snps, # convert annotation types into numeric values for later binning
+         genic=ifelse(AnnoType %in% c("CodingTranscript", "RegulatoryFeature"), 1,
+               ifelse(AnnoType == "Intergenic", -1, NA)),
+         coding=ifelse(AnnoType == "CodingTranscript", 1, ifelse(AnnoType == "Intergenic", -1, NA))
+         ) %>% 
+      mutate( # bin SNPs into conserved/neutral regions based on different annotations
+         annot_bStatistic=bin_cons_neutral(., "bStatistic", b_low,  b_high, "conserved", "neutral"),
+         annot_priPhCons= bin_cons_neutral(., "priPhCons",  priPhCons_low, priPhCons_high, "neutral",   "conserved"),
+         annot_mamPhCons= bin_cons_neutral(., "mamPhCons",  0.01, 0.8, "neutral",   "conserved"),
+         annot_genic=     bin_cons_neutral(., "genic",        -1,   0, "neutral",   "conserved"),
+         annot_coding=    bin_cons_neutral(., "coding",       -1,   0, "neutral",   "conserved"))
+
+  binned <- gather(all_snps, annot, region, starts_with("annot_")) %>%
+      mutate(annot=str_replace(annot, "annot_", ""))
+#+END_SRC
+
+*** Calculate Nea% in each conserved/neutral bin for all annotations
+
+#+BEGIN_SRC R :session :results output silent
+  nea_cn <-
+      samples_info %>%
+      filter(pop != "Africa") %>%
+      mutate(cons_vs_neutral=purrr::map(as.character(name), function(n) {
+          select_(binned, "archaic_Altai", n, "annot", "region") %>%
+              group_by(annot, region) %>%
+              do(nea=calc_sharing_prop(., "archaic_Altai", n)) %>%
+              unnest %>%
+              filter(complete.cases(.))
+      }))
+#+END_SRC
+
+*** Ratios of Nea% in the most conserved vs most neutral regions
+
+#+BEGIN_SRC R :session :results output graphics :exports both :file ~/projects/slim-neanderthal/org/img/conserved_vs_neutral.pdf :width 10 :height 15
+  unnest(nea_cn) %>%
+      ggplot(aes(region, nea, fill=region)) +
+      geom_boxplot() +
+      facet_grid(annot ~ pop) +
+      geom_jitter(alpha=1/2, size=1) +
+      ggtitle("Nea% in the most conserved and most neutral regions") +
+      coord_cartesian(ylim=c(0, 0.05)) +
+      theme(axis.text.x=element_text(angle=20, hjust=1), legend.position="none")
+#+END_SRC
+
+#+RESULTS:
+[[file:~/projects/slim-neanderthal/org/img/conserved_vs_neutral.pdf]]
+
+
+*** T-test of distribution of Nea% in conserved vs neutral regions
+
+#+BEGIN_SRC R :session :results output graphics :exports both :file ~/projects/slim-neanderthal/org/img/conserved_vs_neutral_pvalues.png :width 1000 :height 700
+  cons_vs_neutral_ttest <- function(df) { t.test(nea ~ region, data=df) }
+
+  unnest(nea_cn) %>%
+      select(name, pop, annot, region, nea) %>%
+      group_by(pop, annot) %>%
+      nest %>%
+      mutate(model=purrr::map(data, cons_vs_neutral_ttest),
+             glance=purrr::map(model, glance)) %>%
+      unnest(glance, .drop=TRUE) %>% select(pop, annot, p.value) %>%
+      ggplot(aes(annot, p.value, group=annot, color=pop)) +
+      geom_point() +
+      geom_hline(yintercept=0.05) +
+      theme(axis.text.x=element_text(angle=20, hjust=1))
+#+END_SRC
+
+#+RESULTS:
+[[file:~/projects/slim-neanderthal/org/img/conserved_vs_neutral_pvalues.png]]
+
+#+BEGIN_SRC R :session :results output graphics
+  nea_cn %>%
+      filter(pop == "EMH") %>%
+      unnest %>%
+      ggplot(aes(age, nea, color=region)) +
+      geom_point() +
+      geom_smooth(method="lm", se=FALSE) +
+      facet_grid(. ~ annot) +
+      ylim(0, 0.1) + xlim(55000, 0)
+#+END_SRC
