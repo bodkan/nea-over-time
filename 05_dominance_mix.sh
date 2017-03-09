@@ -93,6 +93,32 @@ introgression_reps 0.0  1.0 0.0  10000 1e-6 &
 #
 # exonic structure simulations
 #
+
+#
+# mutation accumulatin
+#
 slim -d prop_add=0.25 -d prop_rec=0.75 slim/dominance_mix__mut_accum__exons.slim &
 slim -d prop_add=0.5  -d prop_rec=0.5  slim/dominance_mix__mut_accum__exons.slim &
 slim -d prop_add=0.75 -d prop_rec=0.25 slim/dominance_mix__mut_accum__exons.slim &
+
+#
+# introgression 
+#
+NUM_REPLICATES=15
+
+introgression_exons() {
+    slim -d prop_add=$1                       \
+	 -d prop_rec=$2                       \
+	 -d rep=$3                            \
+	 slim/dominance_mix__introgression__exons.slim
+}
+
+introgression_reps_exons() {
+    for rep in `seq 1 $NUM_REPLICATES`; do
+        introgression_exons $1 $2 $rep &
+    done
+}
+
+introgression_reps_exons 0.25 0.75
+introgression_reps_exons 0.5  0.5
+introgression_reps_exons 0.75 0.25
