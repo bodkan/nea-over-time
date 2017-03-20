@@ -47,9 +47,9 @@ calc_sharing_prop <- function(snps, sample_a, sample_b) {
 remove_transitions <- function(snps) {
     filter(snps, !(
         (ref == "C" & alt == "T") |
-        (ref == "T" & alt == "C") |
-        (ref == "G" & alt == "A") |
-        (ref == "A" & alt == "G")
+        #(ref == "T" & alt == "C") |
+        (ref == "G" & alt == "A") #|
+        #(ref == "A" & alt == "G")
     ))
 }
 
