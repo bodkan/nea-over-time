@@ -21,10 +21,11 @@ individual annotations is [[http://cadd.gs.washington.edu/static/ReleaseNotes_CA
                            "clean_data/sgdp.tsv",
                            "clean_data/archaics.tsv",
                            "clean_data/annotations.tsv",
-                           filter_damage=TRUE)
+                           filter_damage=TRUE,
+                           metadata_path="raw_data/10_24_2014_SGDP_metainformation_update.txt")
 
   sgdp_info <-
-      load_sgdp_info() %>%
+      load_sgdp_info("raw_data/10_24_2014_SGDP_metainformation_update.txt") %>%
       mutate(name=str_replace(name, "^S_", "")) %>%
       filter(name %in% colnames(all_snps)) %>%
       mutate(age=0) %>%
@@ -214,7 +215,7 @@ individual annotations is [[http://cadd.gs.washington.edu/static/ReleaseNotes_CA
 
 ** Plots of B value linear regression lines
 
-#+BEGIN_SRC R :session :results output graphics :exports both :file ~/devel/slim-neanderthal/org/img/bvalue_corr.pdf :width 8 :height 6
+#+BEGIN_SRC R :session :results output graphics :file ~/projects/slim-neanderthal/org/img/bvalue_corr.pdf :width 8 :height 6
   # boxplots of Nea% per bin in each population
   unnest(nea_bins, bins) %>% filter(pop != "Africa") %>%
       {
@@ -259,11 +260,11 @@ individual annotations is [[http://cadd.gs.washington.edu/static/ReleaseNotes_CA
 #+END_SRC
 
 #+RESULTS:
-[[file:~/devel/slim-neanderthal/org/img/bvalue_corr.pdf]]
+[[file:~/projects/slim-neanderthal/org/img/bvalue_corr.pdf]]
 
 ** Plots of B value linear regression metrics
 
-#+BEGIN_SRC R :session :results output graphics :exports both :file ~/devel/slim-neanderthal/org/img/bvaluecorr_metrics.pdf :width 8 :height 5
+#+BEGIN_SRC R :session :results output graphics :exports both :file ~/projects/slim-neanderthal/org/img/bvaluecorr_metrics.pdf :width 8 :height 5
   nea_bin_lm <- function(df) {
       lm(nea ~ bin, data=mutate(df, bin=as.integer(bin)))
   }
@@ -347,7 +348,7 @@ individual annotations is [[http://cadd.gs.washington.edu/static/ReleaseNotes_CA
 #+END_SRC
 
 #+RESULTS:
-[[file:~/devel/slim-neanderthal/org/img/bvaluecorr_metrics.pdf]]
+[[file:~/projects/slim-neanderthal/org/img/bvaluecorr_metrics.pdf]]
 
 ** Ratios of Nea% in the most conserved vs most neutral regions
 
