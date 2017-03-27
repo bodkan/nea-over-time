@@ -51,7 +51,7 @@ individual annotations is [[http://cadd.gs.washington.edu/static/ReleaseNotes_CA
              pop=as.factor(pop))
 
 #+END_SRC
-
+    
 *** Plot annotation bins
 
 #+BEGIN_SRC R :session :results output graphics :exports both :file ~/projects/slim-neanderthal/org/img/annots_dists.pdf :width 8 :height 5
@@ -196,4 +196,29 @@ individual annotations is [[http://cadd.gs.washington.edu/static/ReleaseNotes_CA
 
 #+RESULTS:
 [[file:~/projects/slim-neanderthal/org/img/neavstime.pdf]]
+*** Genome-wide Nea% in all samples
 
+#+BEGIN_SRC R :session :results output silent
+  nea_est <- samples_info %>%
+      mutate(nea=sapply(as.character(name), function(n) { calc_sharing_prop(all_snps, "archaic_Altai", n)}))
+#+END_SRC
+
+#+BEGIN_SRC R :session :results graphics :exports both :file ~/projects/slim-neanderthal/org/img/genomewideneavstime.pdf
+  filter(nea_est, pop %in% c("EMH", "WestEurasia")) %>%
+      ggplot(aes(age, nea)) +
+      geom_point() +
+      geom_smooth(method="lm", se=FALSE) +
+      ylim(0, 0.05) +
+      scale_x_reverse(lim=c(55000, 0)) +
+      labs(x="time [years BP]", y="Neanderthal ancestry")
+#+END_SRC
+
+#+RESULTS:
+[[file:~/projects/slim-neanderthal/org/img/genomewideneavstime.pdf]]
+
+#+BEGIN_SRC R :session :results graphics :exports both :file ~/projects/slim-neanderthal/org/img/genomewidenea.pdf :width 10 :height 5
+   filter(nea_est, ! pop %in% c("EMH", "Africa")) %>% ggplot(aes(name, nea, color=pop)) + geom_point() + ylim(0, 0.04)
+#+END_SRC
+
+#+RESULTS:
+[[file:~/projects/slim-neanderthal/org/img/genomewidenea.pdf]]
