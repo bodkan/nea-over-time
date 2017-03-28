@@ -1,6 +1,6 @@
 initialize() {
     initializeRecombinationRate($recomb_rates, $recomb_ends);
-    initializeMutationRate(7e-9);
+    initializeMutationRate($mut_rate);
 
     // deleterious mutation type
     initializeMutationType("m0", $dominance_coef, "g", -0.043, 0.23);

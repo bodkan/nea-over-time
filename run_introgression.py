@@ -29,6 +29,8 @@ if __name__ == '__main__':
                         help='Tab delimited text file with exon coordinates')
     parser.add_argument('--recomb-map', metavar='FILE', required=True,
                         help='Tab delimited text file with the recombination map')
+    parser.add_argument('--mut-rate', metavar='FILE', default=7e-9,
+                        help='Mutation rate')
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--exonic-sites', metavar='FILE',
@@ -132,6 +134,7 @@ if __name__ == '__main__':
         'population_file' : args.population_file,
         'recomb_ends'      : 'c(' + ','.join(str(i) for i in recomb_map.slim_end) + ')',
         'recomb_rates'     : 'c(' + ','.join(str(i) for i in recomb_map.recomb_rate) + ')',
+        'mut_rate'         : float(args.mut_rate),
         'genomic_elements' : genomic_elements,
         'exonic_pos'       : 'c(' + ','.join(str(pos) for pos in exonic_sites_coords.slim_start) + ')',
         'nonexonic_pos'    : 'c(' + ','.join(str(pos) for pos in nonexonic_sites_coords.slim_start) + ')',
