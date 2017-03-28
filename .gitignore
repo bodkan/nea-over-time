@@ -5,3 +5,4 @@ simulations/*
 tests/*
 __pycache__/*
 results/*
+raw_data/*
