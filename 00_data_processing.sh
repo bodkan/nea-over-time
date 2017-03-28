@@ -52,3 +52,9 @@ done
 sort -k1,1n -k2,2n annotations.tsv_unsorted > ../clean_data/annotations.tsv
 cd ../
 chmod -w clean_data/annotations.tsv
+
+
+# download the SGDP metainformation table
+cd raw_data/
+curl -O http://simonsfoundation.s3.amazonaws.com/share/SCDA/datasets/10_24_2014_SGDP_metainformation_update.txt
+cd ../
