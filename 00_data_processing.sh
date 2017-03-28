@@ -36,7 +36,7 @@ for chrom in `seq 1 22`; do
     | awk '$4 !~ "-"' \
     | sed 's/0\/0/0/g; s/0\/1/1/g; s/1\/1/2/g; s#\./\.#9#g'
 done \
-    | grep -v "/" >> clean_data/sgdp.tsv # remove remaining triallelic sites
+    | grep -v "," >> clean_data/sgdp.tsv # remove remaining triallelic sites
 chmod -w clean_data/sgdp.tsv
 
 
