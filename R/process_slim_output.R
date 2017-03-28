@@ -33,7 +33,7 @@ read_mutations <- function(slim_file, m="", p="", t=0) {
         read.table(text=.,
                    col.names=c("mut_id", "run_id", "mut_type",
                                "pos", "s", "h", "pop_origin",
-                               "gen_origin", "freq")) %>%
+                               "gen_origin", "count")) %>%
         filter(gen_origin >= t) %>%
         as_tibble
 }

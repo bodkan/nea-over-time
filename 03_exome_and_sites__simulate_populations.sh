@@ -16,6 +16,23 @@ exonic_array_sites=${input_dir}/admixture_array_coordinates_exonic.txt
 nonexonic_array_sites=${input_dir}/admixture_array_coordinates_nonexonic.txt
 
 
+h=1.0
+python3 run_mutation_accumulation.py --exon-coordinates $exome_and_sites_exon_coords \
+				     --recomb-map $exome_and_sites_recomb_map \
+                                     --exonic-sites $exonic_array_sites \
+                                     --nonexonic-sites $nonexonic_array_sites \
+				     --dominance-coef $h \
+				     --output-prefix ${sims_dir}/exome_and_sites__h_${h}__ &
+
+
+h=0.9
+python3 run_mutation_accumulation.py --exon-coordinates $exome_and_sites_exon_coords \
+				     --recomb-map $exome_and_sites_recomb_map \
+                                     --exonic-sites $exonic_array_sites \
+                                     --nonexonic-sites $nonexonic_array_sites \
+				     --dominance-coef $h \
+				     --output-prefix ${sims_dir}/exome_and_sites__h_${h}__ &
+
 h=0.5
 python3 run_mutation_accumulation.py --exon-coordinates $exome_and_sites_exon_coords \
 				     --recomb-map $exome_and_sites_recomb_map \
