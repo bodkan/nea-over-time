@@ -47,10 +47,10 @@ traject_dir=${sims_dir}/nea_pop_sizes
 
 # wrapper for submitting introgression simulations to SGE
 run_introgression() {
-    run_id=$8__h_${2}__Ne_${9}__init_nea_${5}__rep_${1}
+    run_id=Ne_$8__h_${2}__init_nea_${5}__rep_${1}
 
     python3 run_introgression.py \
-	    --population-file ${sims_dir}/exome_and_sites__h_${2}__Ne_${9}__seed_*.txt \
+	    --population-file ${sims_dir}/exome_and_sites__h_${2}__Ne_${8}__seed_*.txt \
 	    --exon-coordinates $3 \
 	    --recomb-map $4 \
 	    --admixture-rate $5 \
@@ -58,9 +58,9 @@ run_introgression() {
 	    --exonic-sites $6 \
 	    --nonexonic-sites $7 \
 	    --output-prefix ${traject_dir}/${run_id} \
-	    --model $8 \
+	    --model constant \
 	    --save-trajectories \
-	    ${10}
+	    ${9}
 }
 
 
@@ -74,11 +74,9 @@ run_introgression() {
 #
 
 dominance_coef=0.5
-for model in 'constant'; do # 'linear' 'gravel'; do
-    for nea_Ne in 10000; do #100 1000 10000; do
-	run_introgression 1 $dominance_coef $exome_and_sites_exon_coords $exome_and_sites_recomb_map $init_nea $exonic_array_sites $nonexonic_array_sites $model $nea_Ne --save-mutations &
-	for rep_i in `seq 2 $num_replicates`; do
-            run_introgression $rep_i $dominance_coef $exome_and_sites_exon_coords $exome_and_sites_recomb_map $init_nea $exonic_array_sites $nonexonic_array_sites $model $nea_Ne &
-	done
+for nea_Ne in 100 1000 10000; do
+    run_introgression 1 $dominance_coef $exome_and_sites_exon_coords $exome_and_sites_recomb_map $init_nea $exonic_array_sites $nonexonic_array_sites $model $nea_Ne --save-mutations &
+    for rep_i in `seq 2 $num_replicates`; do
+        run_introgression $rep_i $dominance_coef $exome_and_sites_exon_coords $exome_and_sites_recomb_map $init_nea $exonic_array_sites $nonexonic_array_sites $model $nea_Ne &
     done
 done
