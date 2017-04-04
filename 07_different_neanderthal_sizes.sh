@@ -25,6 +25,14 @@ nonexonic_array_sites=${clean_dir}/admixture_array_coordinates_nonexonic.txt
 # 				     --nea-size 100 \
 # 				     --output-prefix ${sims_dir}/exome_and_sites__h_${h}__Ne_100__ &
 
+h=0.5
+python3 run_mutation_accumulation.py --exon-coordinates $exome_and_sites_exon_coords \
+	                             --recomb-map $exome_and_sites_recomb_map \
+                                     --exonic-sites $exonic_array_sites \
+                                     --nonexonic-sites $nonexonic_array_sites \
+				     --dominance-coef $h \
+				     --nea-size 500 \
+				     --output-prefix ${sims_dir}/exome_and_sites__h_${h}__Ne_500__ &
 
 # h=0.5
 # python3 run_mutation_accumulation.py --exon-coordinates $exome_and_sites_exon_coords \
