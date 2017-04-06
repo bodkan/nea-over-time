@@ -25,14 +25,14 @@ nonexonic_array_sites=${clean_dir}/admixture_array_coordinates_nonexonic.txt
 # 				     --nea-size 100 \
 # 				     --output-prefix ${sims_dir}/exome_and_sites__h_${h}__Ne_100__ &
 
-h=0.5
-python3 run_mutation_accumulation.py --exon-coordinates $exome_and_sites_exon_coords \
-	                             --recomb-map $exome_and_sites_recomb_map \
-                                     --exonic-sites $exonic_array_sites \
-                                     --nonexonic-sites $nonexonic_array_sites \
-				     --dominance-coef $h \
-				     --nea-size 500 \
-				     --output-prefix ${sims_dir}/exome_and_sites__h_${h}__Ne_500__ &
+# h=0.5
+# python3 run_mutation_accumulation.py --exon-coordinates $exome_and_sites_exon_coords \
+# 	                             --recomb-map $exome_and_sites_recomb_map \
+#                                      --exonic-sites $exonic_array_sites \
+#                                      --nonexonic-sites $nonexonic_array_sites \
+# 				     --dominance-coef $h \
+# 				     --nea-size 500 \
+# 				     --output-prefix ${sims_dir}/exome_and_sites__h_${h}__Ne_500__ &
 
 # h=0.5
 # python3 run_mutation_accumulation.py --exon-coordinates $exome_and_sites_exon_coords \
@@ -82,7 +82,7 @@ run_introgression() {
 #
 
 dominance_coef=0.5
-for nea_Ne in 100 1000 10000; do
+for nea_Ne in 100 500 1000 10000; do
     run_introgression 1 $dominance_coef $exome_and_sites_exon_coords $exome_and_sites_recomb_map $init_nea $exonic_array_sites $nonexonic_array_sites $model $nea_Ne --save-mutations &
     for rep_i in `seq 2 $num_replicates`; do
         run_introgression $rep_i $dominance_coef $exome_and_sites_exon_coords $exome_and_sites_recomb_map $init_nea $exonic_array_sites $nonexonic_array_sites $model $nea_Ne &
