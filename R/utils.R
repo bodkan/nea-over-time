@@ -84,6 +84,7 @@ load_dataset <- function(ice_age_path,
                          sgdp_path,
                          archaics_path,
                          annotations_path,
+                         additional_annotations_path,
                          filter_damage,
                          metadata_path) {
     ## ice_age_path <- "clean_data/ice_age.tsv"
@@ -133,7 +134,7 @@ load_dataset <- function(ice_age_path,
     raw_annotations <-
         read_tsv(annotations_path, progress=FALSE) %>%
         rename(chrom=Chrom, pos=Pos, ref=Ref, alt=Alt) %>%
-        inner_join(all_samples)
+        inner_join(read_tsv(additional_annotations_path, progress=FALSE, na="-"))
 
     merged <-
         inner_join(all_samples, raw_annotations)
