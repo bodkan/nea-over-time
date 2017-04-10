@@ -58,3 +58,9 @@ chmod -w clean_data/annotations.tsv
 cd raw_data/
 curl -O http://simonsfoundation.s3.amazonaws.com/share/SCDA/datasets/10_24_2014_SGDP_metainformation_update.txt
 cd ../
+
+
+# download the GTF file and annotate SNPs with distances to the nearest
+# exon and densities of exons in different windows
+curl ftp://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz -o raw_data/gtf.gz
+python3 exon_annotations.py --input-file clean_data/ice_age.tsv --gtf-file raw_data/gtf.gz --window-sizes 10000 25000 50000 100000 --output-file raw_data/exon_distance_and_density.tsv
