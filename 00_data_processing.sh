@@ -105,7 +105,7 @@ window_average() {
 }
 
 snp_file=clean_data/ice_age.tsv
-annot_file=raw_data/genome_wide_annotations.sorted.bed.gz
+annot_file=${annotation_dir}/genome_wide_annotations.sorted.bed.gz
 
 for window_size in 10000 25000 50000 100000; do
     window_average priPhCons      4 $window_size $annot_file $snp_file &
