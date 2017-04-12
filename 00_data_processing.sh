@@ -60,7 +60,56 @@ curl -O http://simonsfoundation.s3.amazonaws.com/share/SCDA/datasets/10_24_2014_
 cd ../
 
 
+
+
+
+######################################################################
+## conservation annotations
+######################################################################
+
+annotation_dir=clean_data/annotations
+mkdir -p $annotation_dir
+
 # download the GTF file and annotate SNPs with distances to the nearest
 # exon and densities of exons in different windows
 curl ftp://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz -o raw_data/gtf.gz
-python3 exon_annotations.py --input-file clean_data/ice_age.tsv --gtf-file raw_data/gtf.gz --window-sizes 10000 25000 50000 100000 --output-file raw_data/exon_distance_and_density.tsv
+python3 exon_annotations.py --input-file clean_data/ice_age.tsv --gtf-file raw_data/gtf.gz --window-sizes 10000 25000 50000 100000 --output-file $annotation_dir/exon_distance_and_density.tsv
+
+# generate whole-genome BED files with different annotations for
+# later window-based analysis
+# extract chrom, pos, priPhCons, mamPhCons, priPhyloP, mamPhyloP, bStatistic
+# column numbers from here: http://cadd.gs.washington.edu/static/ReleaseNotes_CADD_v1.3.pdf
+for chr in 1 {10..19} 2 20 21 22 {3..9}; do
+    tabix /mnt/expressions/cadd/whole_genome_SNVs_inclAnno.tsv.gz ${chr} \
+        | awk -vOFS="\t" '{ $1=$1"\t"$2-1; print $1, $2, $19, $20, $22, $23, $29 }' \
+        | uniq
+done | gzip > ${annotation_dir}/genome_wide_annotations.sorted.bed.gz
+
+
+# calculate conservation statistics for different tracks and different window sizes
+window_average() {
+    track=$1      # track name
+    column=$2     # track's column in the "annot_file"
+    annot_file=$4 # BED file with the conservation track
+    snp_file=$5   # table with SNP coordinates (needs to have 2 columns: chrom and pos)
+    flank_size=`echo $3 / 2 | bc`
+
+    zcat $annot_file \
+	| tr '\t' ' ' \
+	| cut -d' ' -f1-3,${column} \
+	| awk -vOFS='\t' '{ print $1, $2, $3, $4, $4 }' \
+	| grep -v "NA" \
+	| bedmap --ec --delim '\t' --range $flank_size --echo --count --mean --kth .05 --kth .95 --median \
+		 <(tail -n+2 $snp_file | awk -vOFS='\t' '{print $1, $2-1, $2}' | sort-bed -) - \
+        > $annotation_dir/${track}__flank_${flank_size}bp.bed
+}
+
+snp_file=clean_data/ice_age.tsv
+annot_file=raw_data/genome_wide_annotations.sorted.bed.gz
+
+for window_size in 10000 25000 50000 100000; do
+    window_average priPhCons      4 $window_size $annot_file $snp_file &
+    window_average priPhyloP      6 $window_size $annot_file $snp_file &
+    window_average bval           8 $window_size $annot_file $snp_file &
+    window_average phyloP_nohuman 4 $window_size <(for chr in 1 {10..19} 2 20 21 22 {3..9}; do cat /mnt/expressions/benjamin_vernot/phyloP_no_human/Compara.36_eutherian_mammals_EPO_LOW_COVERAGE.chr${chr}_*; done | sed 's/^chr//' | gzip) $snp_file &
+done
