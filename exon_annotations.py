@@ -62,5 +62,5 @@ for flank in args.window_sizes:
     snp_pos['exon_density_' + str(flank)] = exon_total / (2 * flank + 1)
 
 snp_pos \
-    .drop(["start", "end"], axis=1) \
+    .drop(["pos"], axis=1) \
     .to_csv(args.output_file, sep='\t', index=False, na_rep='-')

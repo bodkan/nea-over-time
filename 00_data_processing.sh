@@ -73,7 +73,7 @@ mkdir -p $annotation_dir
 # download the GTF file and annotate SNPs with distances to the nearest
 # exon and densities of exons in different windows
 curl ftp://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz -o raw_data/gtf.gz
-python3 exon_annotations.py --input-file clean_data/ice_age.tsv --gtf-file raw_data/gtf.gz --window-sizes 10000 25000 50000 100000 --output-file $annotation_dir/exon_distance_and_density.tsv
+python3 exon_annotations.py --input-file clean_data/ice_age.tsv --gtf-file raw_data/gtf.gz --window-sizes 10000 25000 50000 100000 --output-file $annotation_dir/exon_distance_and_density.bed
 
 # generate whole-genome BED files with different annotations for
 # later window-based analysis
@@ -101,7 +101,7 @@ window_average() {
 	| grep -v "NA" \
 	| bedmap --ec --delim '\t' --range $flank_size --echo --count --mean --kth .05 --kth .95 --median \
 		 <(tail -n+2 $snp_file | awk -vOFS='\t' '{print $1, $2-1, $2}' | sort-bed -) - \
-        > $annotation_dir/${track}__flank_${flank_size}bp.bed
+        > $annotation_dir/${track}__window_${3}bp.bed
 }
 
 snp_file=clean_data/ice_age.tsv
