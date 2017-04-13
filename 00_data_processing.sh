@@ -75,6 +75,9 @@ mkdir -p $annotation_dir
 curl ftp://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz -o raw_data/gtf.gz
 python3 exon_annotations.py --input-file clean_data/ice_age.tsv --gtf-file raw_data/gtf.gz --window-sizes 10000 25000 50000 100000 --output-file $annotation_dir/exon_distance_and_density.bed
 
+cadd_file=${annotation_dir}/genome_wide_cadd.bed.gz
+akey_file=${annotation_dir}/genome_wide_phylop_akey.bed.gz
+
 # generate whole-genome BED files with different annotations for
 # later window-based analysis
 # extract chrom, pos, priPhCons, mamPhCons, priPhyloP, mamPhyloP, bStatistic
@@ -83,8 +86,12 @@ for chr in 1 {10..19} 2 20 21 22 {3..9}; do
     tabix /mnt/expressions/cadd/whole_genome_SNVs_inclAnno.tsv.gz ${chr} \
         | awk -vOFS="\t" '{ $1=$1"\t"$2-1; print $1, $2, $19, $20, $22, $23, $29 }' \
         | uniq
-done | gzip > ${annotation_dir}/genome_wide_annotations.sorted.bed.gz
+done | gzip > $cadd_file
 
+# concatenate the phyloP data generated in the Akey lab
+for chr in 1 {10..19} 2 20 21 22 {3..9}; do
+    sed 's/^chr//' /mnt/expressions/benjamin_vernot/phyloP_no_human/Compara.36_eutherian_mammals_EPO_LOW_COVERAGE.chr${chr}_*
+done | gzip > $akey_file
 
 # calculate conservation statistics for different tracks and different window sizes
 window_average() {
@@ -95,8 +102,7 @@ window_average() {
     flank_size=`echo $3 / 2 | bc`
 
     zcat $annot_file \
-	| tr '\t' ' ' \
-	| cut -d' ' -f1-3,${column} \
+	| cut -f1-3,${column} \
 	| awk -vOFS='\t' '{ print $1, $2, $3, $4, $4 }' \
 	| grep -v "NA" \
 	| bedmap --ec --delim '\t' --range $flank_size --echo --count --mean --kth .05 --kth .95 --median \
@@ -105,11 +111,10 @@ window_average() {
 }
 
 snp_file=clean_data/ice_age.tsv
-annot_file=${annotation_dir}/genome_wide_annotations.sorted.bed.gz
 
 for window_size in 10000 25000 50000 100000; do
-    window_average priPhCons      4 $window_size $annot_file $snp_file &
-    window_average priPhyloP      6 $window_size $annot_file $snp_file &
-    window_average bval           8 $window_size $annot_file $snp_file &
-    window_average phyloP_nohuman 4 $window_size <(for chr in 1 {10..19} 2 20 21 22 {3..9}; do cat /mnt/expressions/benjamin_vernot/phyloP_no_human/Compara.36_eutherian_mammals_EPO_LOW_COVERAGE.chr${chr}_*; done | sed 's/^chr//' | gzip) $snp_file &
+    window_average priPhCons      4 $window_size $cadd_file $snp_file &
+    window_average priPhyloP      6 $window_size $cadd_file $snp_file &
+    window_average bval           8 $window_size $cadd_file $snp_file &
+    window_average phyloP_nohuman 4 $window_size $akey_file $snp_file &
 done
