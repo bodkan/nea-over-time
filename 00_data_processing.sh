@@ -107,7 +107,7 @@ window_average() {
 	| grep -v "NA" \
 	| bedmap --ec --delim '\t' --range $flank_size --echo --mean --kth .05 --kth .95 --median --count \
 		 <(tail -n+2 $snp_file | awk -vOFS='\t' '{print $1, $2-1, $2}' | sort-bed -) - \
-        > $annotation_dir/${track}__window_${3}bp.bed
+        > $annotation_dir/${track}__${3}bp.bed
 }
 
 snp_file=clean_data/ice_age.tsv
