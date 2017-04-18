@@ -73,7 +73,7 @@ mkdir -p $annotation_dir
 # download the GTF file and annotate SNPs with distances to the nearest
 # exon and densities of exons in different windows
 curl ftp://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz -o raw_data/gtf.gz
-python3 exon_annotations.py --input-file clean_data/ice_age.tsv --gtf-file raw_data/gtf.gz --window-sizes 10000 25000 50000 100000 --output-file $annotation_dir/exon_distance_and_density.bed
+python3 exon_annotations.py --input-file clean_data/ice_age.tsv --gtf-file raw_data/gtf.gz --window-sizes 10000 25000 50000 100000 --output-dir $annotation_dir
 
 cadd_file=${annotation_dir}/genome_wide_cadd.bed.gz
 akey_file=${annotation_dir}/genome_wide_phylop_akey.bed.gz

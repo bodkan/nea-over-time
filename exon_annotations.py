@@ -13,8 +13,8 @@ parser.add_argument('--gtf-file', metavar='FILE', required=True,
                     help='Genome annotation file')
 parser.add_argument('--window-sizes', nargs='+', required=True, type=int,
                     help='Window sizes to calculate exonic densities for')
-parser.add_argument('--output-file', required=True,
-                    help='Output file name')
+parser.add_argument('--output-dir', required=True,
+                    help='Output directory')
 
 args = parser.parse_args()
 
@@ -43,8 +43,10 @@ snp_pos = snp_pos.merge(closest, on=["chrom", "start", "end"])[["chrom", "pos", 
 
 # calculate the densities of exon sequences in windows surrounding each SNP
 # flank specifies how far upstream/downstream to extend the window
-# Window size will be (2 * flank + 1) bp
-for flank in args.window_sizes:
+# window size will be (2 * flank + 1) bp
+for w in args.window_sizes:
+    flank = int(w / 2)
+
     # generate the BED object of windows flanking both sides of all SNPs
     snp_windows = snp_bed.slop(b=flank, genome='hg19')
     
@@ -59,8 +61,22 @@ for flank in args.window_sizes:
     # region using groupby (i.e. window around each SNP) gives the total
     # number of coding sequence surrounding each SNP
     exon_total = exon_overlaps.groupby(['chrom', 'start', 'end'])['thickStart'].sum().reset_index()['thickStart']
-    snp_pos['exon_density_' + str(flank)] = exon_total / (2 * flank + 1)
+    snp_pos['exon_density_' + str(w)] = exon_total / (2 * flank + 1)
 
-snp_pos \
-    .drop(["pos"], axis=1) \
-    .to_csv(args.output_file, sep='\t', index=False, na_rep='-')
+
+#
+# output results in the BED format
+#
+bed_table = snp_pos.drop(["pos"], axis=1)
+
+def write_bed(output_file, bed_table, column):
+    bed_table[['chrom', 'start', 'end', column]] \
+        .to_csv(output_file, sep='\t', header=False, index=False, na_rep='-')
+
+# output exon distance
+write_bed(args.output_dir + '/exon_distance.bed', bed_table, 'exon_distance')
+
+# output exon density
+for w in args.window_sizes:
+    write_bed(args.output_dir + '/exon_density__' + str(w) + 'bp.bed',
+              bed_table, 'exon_density_' + str(w))
