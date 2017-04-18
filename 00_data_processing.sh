@@ -105,7 +105,7 @@ window_average() {
 	| cut -f1-3,${column} \
 	| awk -vOFS='\t' '{ print $1, $2, $3, $4, $4 }' \
 	| grep -v "NA" \
-	| bedmap --ec --delim '\t' --range $flank_size --echo --count --mean --kth .05 --kth .95 --median \
+	| bedmap --ec --delim '\t' --range $flank_size --echo --mean --kth .05 --kth .95 --median --count \
 		 <(tail -n+2 $snp_file | awk -vOFS='\t' '{print $1, $2-1, $2}' | sort-bed -) - \
         > $annotation_dir/${track}__window_${3}bp.bed
 }
