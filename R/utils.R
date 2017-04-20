@@ -76,6 +76,11 @@ load_sgdp_info <- function(path) {
         select(-Panel)
 }
 
+load_annotations <- function(annotations_path) {
+    read_tsv(annotations_path, progress=FALSE) %>%
+        rename(chrom=Chrom, pos=Pos, ref=Ref, alt=Alt)
+}
+
 #
 # Load the whole data set of EMH, SGDP and archaic human SNPs
 # and combine it with the CADD annotations.
@@ -83,8 +88,6 @@ load_sgdp_info <- function(path) {
 load_dataset <- function(ice_age_path,
                          sgdp_path,
                          archaics_path,
-                         annotations_path,
-                         additional_annotations_path,
                          filter_damage,
                          metadata_path) {
     ## ice_age_path <- "clean_data/ice_age.tsv"
@@ -130,14 +133,5 @@ load_dataset <- function(ice_age_path,
     # sgdp %>% {sapply(colnames(.)[5:ncol(.)], function(s) {table(.[[s]])})}
     # archaics %>% {sapply(colnames(.)[5:ncol(.)], function(s) {table(.[[s]])})}
 
-    # load the annotation data and merge them with the genotype calls
-    raw_annotations <-
-        read_tsv(annotations_path, progress=FALSE) %>%
-        rename(chrom=Chrom, pos=Pos, ref=Ref, alt=Alt) %>%
-        inner_join(read_tsv(additional_annotations_path, progress=FALSE, na="-"))
-
-    merged <-
-        inner_join(all_samples, raw_annotations)
-
-    merged
+    all_samples
 }
