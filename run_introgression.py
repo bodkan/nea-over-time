@@ -46,7 +46,9 @@ if __name__ == '__main__':
     parser.add_argument('--admixture-rate', type=float, default=0.1,
                         help='Neanderthal migration rate')
     parser.add_argument('--admixture-time', type=int, default=55000,
-                        help='Time of Neanderthal admixture [years ago]')
+                        help='Time of the Neanderthal admixture [years ago]')
+    parser.add_argument('--admixture-end', type=int, default=55000,
+                        help='End of the Neanderthal admixture [years ago]')
 
     parser.add_argument('--out-of-africa', type=int, default=55000,
                         help='Out of Africa migration [years ago] (start of the simulation)')
@@ -90,6 +92,7 @@ if __name__ == '__main__':
     # start of the simulation
     out_of_africa   = years_to_gen(args.out_of_africa) + 1
     admixture_time  = out_of_africa - years_to_gen(args.admixture_time) + 1
+    admixture_end   = admixture_time if not args.admixture_end else out_of_africa - years_to_gen(args.admixture_end) + 1
 
     # set the appropriate growth rate and effective population size of the non-African
     # population after the out of Africa migration
@@ -141,9 +144,10 @@ if __name__ == '__main__':
         'dominance_coef'  : args.dominance_coef,
         'founder_size'    : founder_size,
         'admixture_rate'  : args.admixture_rate,
-        'out_of_africa'   : out_of_africa,
-        'prior_admixture' : admixture_time - 1,
         'admixture_time'  : admixture_time,
+        'admixture_end'   : admixture_end,
+        'before_admixture' : admixture_time - 1,
+        'after_admixture' : admixture_end + 1,
         'exp_growth'      : exp_growth,
         'sim_length'      : out_of_africa,
         'simulate_dilution' : 'T' if args.dilution else 'F',

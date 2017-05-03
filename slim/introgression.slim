@@ -22,13 +22,16 @@ initialize() {
     defineConstant("nonexonic_pos", $nonexonic_pos);
 
     defineConstant("trajectories_gen", sort(unique(c($sampling_times,
-                                                     seq(1, 100),
-                                                     seq(120, $sim_length, 20)))) + 1);
+                                                     seq(1, 100) + $admixture_time - 1,
+                                                     seq(120     + $admixture_time - 1, $sim_length, 20),
+						     $sim_length))));
 
-    defineConstant("dump_gen", c(seq(1, 50),
-                                 seq(100, $sim_length, 300)) + 1);
+    defineConstant("dump_gen", unique(c(seq(1, 50) + $admixture_time - 1,
+                                        seq(100    + $admixture_time - 1, $sim_length, 300),
+				        $sim_length)));
 
     defineConstant("simulate_dilution", $simulate_dilution);
+    defineConstant("single_pulse", $admixture_time == $admixture_end);
 
     defineConstant("tmp_file", "tmp/tmp" + getSeed() + ".txt");
 }
@@ -45,21 +48,26 @@ initialize() {
     }
 }
 
-// save the simulation state right before admixture in case it is
-// necessary to restart
-$prior_admixture late() {
-    cat(time() + " :: INFO :: Saving the simulation state before the admixture\n");
-    sim.outputFull(tmp_file);
+// save the simulation state right before the admixture in case it is
+// necessary to restart (makes sense just for the single pulse scenario)
+$before_admixture late() {
+    if (single_pulse) {
+        cat(time() + " :: INFO :: Saving the simulation state before the admixture\n");
+        sim.outputFull(tmp_file);
+    }
 }
 
-// start of the Neanderthal admixture
+// Neanderthal admixture
 $admixture_time {
-    cat(time() + " :: INFO :: Setting up migration.\n");
+    cat(time() + " :: INFO :: Starting the admixture.\n");
     p3.setMigrationRates(p2, $admixture_rate);
 }
 
 // make sure the simulated population received enough Neanderthal gene flow
+// (makes sense just for the single pulse scenario)
 $admixture_time late() {
+    if (single_pulse) {
+
     exonic_count = p3.genomes.countOfMutationsOfType(m1);
     nonexonic_count = p3.genomes.countOfMutationsOfType(m2);
     total = size(exonic_pos) + size(nonexonic_pos);
@@ -69,12 +77,20 @@ $admixture_time late() {
     if (abs(mean_nea - $admixture_rate) > ($admixture_rate * 0.025)) {
         cat(time() + " :: INFO :: Simulated gene flow NOT accepted (" + mean_nea + ") - restarting.\n");
         sim.readFromPopulationFile(tmp_file);
+        sim.generation = $before_admixture;
         setSeed(getSeed() + 1);
     } else {
         cat(time() + " :: INFO :: Simulated gene flow accepted (" + mean_nea + ") - continuing.\n");
         deleteFile(tmp_file);
-        p2.setSubpopulationSize(0);
     }
+
+    }
+}
+
+// end the Neanderthal admixture by deleting the Neanderthal population
+$after_admixture {
+    cat(time() + " :: INFO :: Ending the admixture, removing Neanderthals.\n");
+    p2.setSubpopulationSize(0);
 }
 
 // output Nea. ancestry trajectories calculated on exonic sites
@@ -82,7 +98,7 @@ $admixture_time:$sim_length late() {
     output_file = "$output_prefix" + "__exonic_sites.txt";
 
     if ($save_trajectories & any(sim.generation == trajectories_gen)) {
-        cat(time() + " :: INFO :: " + sim.generation + "/$out_of_africa generations\n");
+        cat(time() + " :: INFO :: " + sim.generation + "/$sim_length generations\n");
 
         nea_per_ind = apply(seq(0, p3.individualCount - 1),
                             "sum(p3.genomes[c(2 * applyValue, 2 * applyValue + 1)].countOfMutationsOfType(m1));") / (2 * size(exonic_pos));
@@ -90,7 +106,7 @@ $admixture_time:$sim_length late() {
         if (sim.generation == $admixture_time)
             writeFile(output_file, "gen\tmean\tsd\tmedian\tmin\tmax\tNe\n");
 
-            writeFile(output_file, paste(c(sim.generation - 1,
+            writeFile(output_file, paste(c(sim.generation - $admixture_time + 1,
                                            mean(nea_per_ind),
                                            sd(nea_per_ind),
                                            sort(nea_per_ind)[asInteger(size(nea_per_ind) / 2)],
@@ -112,7 +128,7 @@ $admixture_time:$sim_length late() {
         if (sim.generation == $admixture_time)
             writeFile(output_file, "gen\tmean\tsd\tmedian\tmin\tmax\tNe\n");
 
-            writeFile(output_file, paste(c(sim.generation - 1,
+            writeFile(output_file, paste(c(sim.generation - $admixture_time + 1,
                                            mean(nea_per_ind),
                                            sd(nea_per_ind),
                                            sort(nea_per_ind)[asInteger(size(nea_per_ind) / 2)],
@@ -126,7 +142,6 @@ $admixture_time:$sim_length late() {
 // save the simulation states at defined timepoints
 $admixture_time:$sim_length late() {
     if ($save_mutations & any(sim.generation == dump_gen)) {
-        sim.outputFull("$output_prefix" + "__dump_gen_" + asString(sim.generation - 1) + ".txt");
+        sim.outputFull("$output_prefix" + "__dump_gen_" + asString(sim.generation - $admixture_time + 1) + ".txt");
     }
 }
-
