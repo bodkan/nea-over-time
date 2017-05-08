@@ -4,5 +4,6 @@ clean_data/*
 simulations/*
 tests/*
 __pycache__/*
-results/*
+output/*
 raw_data/*
+
