@@ -3,7 +3,11 @@ initialize() {
     initializeMutationRate($mut_rate);
 
     // deleterious mutation type
-    initializeMutationType("m0", $dominance_coef, "g", -0.043, 0.23);
+    if ($fixed_s) {
+        initializeMutationType("m0", $dominance_coef, "f", $fixed_s);
+    } else {
+        initializeMutationType("m0", $dominance_coef, "g", -0.043, 0.23);
+    }
 
     // mutation type of exonic neutral markers
     initializeMutationType("m1", 0.5, "f", 0.0);
