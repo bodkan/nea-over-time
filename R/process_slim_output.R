@@ -77,7 +77,7 @@ read_slim_file <- function(path) {
 read_section_delims <- function(slim_file) {
     # get positions of the section headers
     section_pos <- c(which(slim_file %in% str_c(SECTION_HEADERS, ":")),
-                       length(slim_file))
+                       length(slim_file) + 1)
 
     # put information about starts/ends of individuals section
     # into a data frame
