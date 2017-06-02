@@ -57,6 +57,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--model', type=str, required=True, choices=['constant', 'gravel', 'linear'],
                         help='Demographic model to use in the simulation.')
+    parser.add_argument('--founder-size', type=int)
 
     parser.add_argument('--dilution', nargs=3, default=None,
                         help='Tuple of length 3, specifying the rate, start and end'
@@ -83,6 +84,10 @@ if __name__ == '__main__':
         parser.error('At least one output option must be chosen (either saving'
                      ' Nea. trajectories or whole SLiM output files).')
 
+    if args.founder_size and args.model != 'constant':
+        parser.error('Founder population size can be specified only for the constant'
+                     ' population size model.')
+
     # create the SLiM template file for a specified demographic model
     slim_template = Template(
         open('slim/introgression.slim', 'r').read() +
@@ -99,7 +104,7 @@ if __name__ == '__main__':
     # set the appropriate growth rate and effective population size of the non-African
     # population after the out of Africa migration
     if args.model == 'constant':
-        founder_size = 10000
+        founder_size = 10000 if not args.founder_size else args.founder_size
         exp_growth = -1
     elif args.model == 'gravel':
         founder_size = 1861
