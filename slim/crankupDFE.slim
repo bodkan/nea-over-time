@@ -1,0 +1,44 @@
+// this is a testing code for playing around in SLiM GUI
+// with cranking up the DFE
+initialize() {
+    initializeMutationRate(0);
+    initializeMutationType("m0", 0.5, "f", -0.00001); // deleterious mutations
+    initializeGenomicElementType("g1", m0, 1.0);
+    initializeGenomicElement(g1, 0, 99999);
+    initializeRecombinationRate(0);
+}
+
+1 {
+    sim.addSubpop("p1", 10000); // AMH
+    sim.addSubpop("p2", 1000);  // Nea
+}
+
+1 late() {
+    // add a new mutation that's weakly deleterious in Nea. but becomes
+    // deleterious after it's introgressed into AMH
+    for (i in seq(1, 1)) {
+        p2.genomes.addNewDrawnMutation(m0, i * 20000 - 1);
+    }
+}
+
+// Nea. introgression
+200 {
+    p1.setMigrationRates(p2, 0.5);
+}
+
+// stop the Nea. introgression after 1 generation and immediately crank-up
+// the selection coefficient
+200 late() {
+    p1.setMigrationRates(p2, 0.0);
+    
+    introgressed_muts = sim.mutationsOfType(m0)[sim.mutationsOfType(m0).subpopID == 2];
+    apply(introgressed_muts, "applyValue.setSelectionCoeff(applyValue.selectionCoeff * 1000);");
+}
+
+1:20 late() {
+    cat(sim.generation + "\t");
+    cat(sim.mutationsOfType(m0)[sim.mutationsOfType(m0).subpopID == 2].selectionCoeff);
+    cat("\n");
+}
+
+2200 late() { }

@@ -11,11 +11,9 @@ initialize() {
 
     // mutation type of exonic neutral markers
     initializeMutationType("m1", 0.5, "f", 0.0);
-    m1.convertToSubstitution = F;
 
     // mutation type of non-exonic neutral markers
     initializeMutationType("m2", 0.5, "f", 0.0);
-    m2.convertToSubstitution = F;
 
     initializeGenomicElementType("g1", m0, 1.0);
 
@@ -25,10 +23,15 @@ initialize() {
     defineConstant("exonic_pos", $exonic_pos);
     defineConstant("nonexonic_pos", $nonexonic_pos);
 
-    defineConstant("trajectories_gen", sort(unique(c($sampling_times,
-                                                     seq(1, 100) + $admixture_time - 1,
-                                                     seq(120     + $admixture_time - 1, $sim_length, 20),
-						     $sim_length))));
+    // if sampling times are specified, output Nea. ancestry metrics only
+    // at these generations
+    if (size($sampling_times) > 0) {
+        defineConstant("trajectories_gen", unique($sampling_times + $admixture_time - 1));
+    } else {
+        defineConstant("trajectories_gen", sort(unique(c(seq(1, 100) + $admixture_time - 1,
+                                                         seq(120     + $admixture_time - 1, $sim_length, 20),
+							 $sim_length))));
+    }
 
     defineConstant("dump_gen", unique(c(seq(1, 50) + $admixture_time - 1,
                                         seq(100    + $admixture_time - 1, $sim_length, 300),
@@ -97,6 +100,22 @@ $after_admixture {
     p2.setSubpopulationSize(0);
 }
 
+$modify_at:$sim_length late() {
+    all_muts = sim.mutations[sim.mutations.mutationType == m0 & sim.mutations.subpopID == 2];
+
+    if (sim.generation == $admixture_time) {
+        all_muts.tag = 0;
+    }
+
+    unmodified_muts = all_muts[all_muts.tag == 0];
+
+    // crank up s of selected Nea. fixed mutations
+    if ($modify_s & sim.generation >= $modify_at) {
+        apply(sample(all_muts, asInteger($modify_fraction * size(all_muts))),
+              "applyValue.setSelectionCoeff($modify_by); applyValue.tag = 1;");
+    }
+}
+
 // output Nea. ancestry trajectories calculated on exonic sites
 $admixture_time:$sim_length late() {
     output_file = "$output_prefix" + "__exonic_sites.txt";
@@ -148,4 +167,8 @@ $admixture_time:$sim_length late() {
     if ($save_mutations & any(sim.generation == dump_gen)) {
         sim.outputFull("$output_prefix" + "__dump_gen_" + asString(sim.generation - $admixture_time + 1) + ".txt");
     }
+}
+
+$terminate_after late() {
+    sim.simulationFinished();
 }

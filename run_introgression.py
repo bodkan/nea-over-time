@@ -32,6 +32,14 @@ if __name__ == '__main__':
     parser.add_argument('--mut-rate', metavar='FILE', default=7e-9,
                         help='Mutation rate')
 
+    group = parser.add_argument_group()
+    group.add_argument('--modify-fraction', type=float, help='What fraction of selection'
+                        ' coefficients to modify?')
+    group.add_argument('--modify-by', type=float, help='Selection coefficient of the modify'
+                       ' Nea. introgressed mutations')
+    group.add_argument('--modify-at', type=int, help='At what time to start modifying'
+                       ' the selection coefficient')
+
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--exonic-sites', metavar='FILE',
                         help='Positions of exonic sites from the archaic admixture array')
@@ -67,6 +75,9 @@ if __name__ == '__main__':
                         help='List of timepoints (in years BP) at which to sample'
                         ' Neanderthal ancestry in a population')
 
+    parser.add_argument('--terminate-after', type=int, help='How many generations to simulate?'
+                        ' (stop after "--out-of-africa" years by default)')
+
     parser.add_argument('--save-trajectories', action='store_true',
                         help='Save table with Neanderthal ancestry statistics')
     parser.add_argument('--save-mutations', action='store_true',
@@ -87,6 +98,10 @@ if __name__ == '__main__':
     if args.founder_size and args.model != 'constant':
         parser.error('Founder population size can be specified only for the constant'
                      ' population size model.')
+
+    if not (all([args.modify_fraction is not None, args.modify_by is not None, args.modify_at is not None]) or \
+            all([args.modify_fraction is None, args.modify_by is None, args.modify_at is None])):
+        parser.error('Either all or none of the s modification arguments have to be specified')
 
     # create the SLiM template file for a specified demographic model
     slim_template = Template(
@@ -145,6 +160,10 @@ if __name__ == '__main__':
         'recomb_ends'      : 'c(' + ','.join(str(i) for i in recomb_map.slim_end) + ')',
         'recomb_rates'     : 'c(' + ','.join(str(i) for i in recomb_map.recomb_rate) + ')',
         'mut_rate'         : float(args.mut_rate),
+        'modify_s'         : 'T' if args.modify_by is not None else 'F',
+        'modify_by'         : args.modify_by,
+        'modify_fraction'  : args.modify_fraction,
+        'modify_at'        : args.modify_at if args.modify_at else 1,
         'genomic_elements' : genomic_elements,
         'exonic_pos'       : 'c(' + ','.join(str(pos) for pos in exonic_sites_coords.slim_start) + ')',
         'nonexonic_pos'    : 'c(' + ','.join(str(pos) for pos in nonexonic_sites_coords.slim_start) + ')',
@@ -158,8 +177,10 @@ if __name__ == '__main__':
         'after_admixture' : admixture_end + 1,
         'exp_growth'      : exp_growth,
         'sim_length'      : out_of_africa,
-        'simulate_dilution' : 'T' if args.dilution else 'F',
+        'terminate_after' : args.terminate_after + 1 if args.terminate_after else min(out_of_africa, (sampling_times[-1] + admixture_time) if args.sampling_times else 1e9),
         'sampling_times'  : 'c(' + ','.join(str(i) for i in sampling_times) + ')',
+        'sim_length'        : out_of_africa,
+        'simulate_dilution' : 'T' if args.dilution else 'F',
         'save_trajectories' : 'T' if args.save_trajectories else 'F',
         'save_mutations'  : 'T' if args.save_mutations else 'F',
         'output_prefix'   : args.output_prefix
