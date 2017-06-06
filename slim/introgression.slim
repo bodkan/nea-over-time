@@ -3,11 +3,7 @@ initialize() {
     initializeMutationRate($mut_rate);
 
     // deleterious mutation type
-    if ($fixed_s) {
-        initializeMutationType("m0", $dominance_coef, "f", $fixed_s);
-    } else {
-        initializeMutationType("m0", $dominance_coef, "g", -0.043, 0.23);
-    }
+    initializeMutationType("m0", $dominance_coef, "g", -0.043, 0.23);
 
     // mutation type of exonic neutral markers
     initializeMutationType("m1", 0.5, "f", 0.0);
@@ -29,7 +25,7 @@ initialize() {
         defineConstant("trajectories_gen", unique($sampling_times + $admixture_time - 1));
     } else {
         defineConstant("trajectories_gen", sort(unique(c(seq(1, 100) + $admixture_time - 1,
-                                                         seq(120     + $admixture_time - 1, $sim_length, 20),
+                                                         seq(100     + $admixture_time - 1, $sim_length, 100),
 							 $sim_length))));
     }
 
@@ -113,6 +109,8 @@ $modify_at:$sim_length late() {
     if ($modify_s & sim.generation >= $modify_at) {
         apply(sample(all_muts, asInteger($modify_fraction * size(all_muts))),
               "applyValue.setSelectionCoeff($modify_by); applyValue.tag = 1;");
+    } else if ($fixed_nea_s != F) { // simulate fixed selective effect of Nea. mutations
+        apply(all_muts, "applyValue.setSelectionCoeff($fixed_nea_s);");
     }
 }
 

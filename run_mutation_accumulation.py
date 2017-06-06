@@ -39,8 +39,6 @@ if __name__ == '__main__':
 
     parser.add_argument('--dominance-coef', type=float, required=True,
                         help='Dominance coefficient of deleterious mutations')
-    parser.add_argument('--fixed-s', type=float,
-                        help='Use a fixed selection coefficient of the deleterious mutations')
 
     parser.add_argument('--anc-size', type=int, default=10000,
                         help='Effective population size of the ancestral population')
@@ -101,7 +99,6 @@ if __name__ == '__main__':
         'exonic_pos'       : 'c(' + ','.join(str(pos) for pos in exonic_sites_coords.slim_start) + ')',
         'nonexonic_pos'    : 'c(' + ','.join(str(pos) for pos in nonexonic_sites_coords.slim_start) + ')',
         'dominance_coef'   : args.dominance_coef,
-        'fixed_s'          : args.fixed_s if args.fixed_s is not None else 'F',
         'founder_size'     : args.founder_size,
         'anc_size'         : args.anc_size,
         'nea_size'         : args.nea_size,
