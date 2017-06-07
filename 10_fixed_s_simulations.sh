@@ -26,7 +26,7 @@ num_replicates=10
 
 # wrapper for submitting introgression simulations to SGE
 run_introgression() {
-    run_id=${5}__s_${4}__init_nea_${3}__rep_${1}
+    run_id=${5}__s_${4}__h__${2}__init_nea_${3}__rep_${1}
 
     ./run_introgression.py \
     	    --population-file ${sims_dir}/exome_and_sites__h_${2}__seed_*.txt \
@@ -56,25 +56,12 @@ init_nea=0.1
 
 h=0.5
 
-s=4.7e-4
-for model in gravel; do
+for s in 4.7e-4 4.7e-3 1e-3; do
+for model in constant gravel; do
     for rep_i in `seq 1 $num_replicates`; do
 	run_introgression $rep_i $h $init_nea $s $model &
     done
 done
+done
 
-# s=4.7e-3
-# for model in constant; do
-#     for rep_i in `seq 1 $num_replicates`; do
-# 	run_introgression $rep_i $h $init_nea $s $model &
-#     done
-# done
-
-# s=1e-3
-# for model in constant; do
-#     for rep_i in `seq 1 $num_replicates`; do
-# 	run_introgression $rep_i $h $init_nea $s $model &
-#     done
-# done
-
-# cp ${sims_dir}/different_models/{constant,gravel}__h_0.5_*sites.txt $traject_dir
+cp ${sims_dir}/different_models/{constant,gravel}__h_0.5_*sites.txt $traject_dir
