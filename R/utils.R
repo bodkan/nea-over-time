@@ -122,12 +122,12 @@ load_dataset <- function(ice_age_path,
 
     all_samples <-
         right_join(ice_age, archaics) %>% # join archaic data with EMH
-        { replace(., is.na(.), 9L) } %>%  # replace missing EMH data with 9 "alleles"
+        { replace(., is.na(.), -1L) } %>%  # replace missing EMH data with 9 "alleles"
         left_join(sgdp) %>%               # add variable SGDP sites
         { replace(., is.na(.), 0L) }      # fill in missing SGDP alleles as REF
 
     # replace all 9 values with NA
-    all_samples[all_samples == 9] <- NA
+    all_samples[all_samples == -1] <- NA
     
     # ice_age %>% {sapply(colnames(.)[5:ncol(.)], function(s) {table(.[[s]])})}
     # sgdp %>% {sapply(colnames(.)[5:ncol(.)], function(s) {table(.[[s]])})}
