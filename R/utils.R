@@ -89,7 +89,8 @@ load_dataset <- function(ice_age_path,
                          sgdp_path,
                          archaics_path,
                          filter_damage,
-                         metadata_path) {
+                         metadata_path,
+                         random_sample=T) {
     ## ice_age_path <- "clean_data/ice_age.tsv"
     ## sgdp_path <- "clean_data/sgdp.tsv"
     ## archaics_path <- "clean_data/archaics.tsv"
@@ -98,8 +99,8 @@ load_dataset <- function(ice_age_path,
     # load the genotypes from all individuals and call random alleles for
     # humans with diploid calls
     ice_age <-
-        read_tsv(ice_age_path, progress=FALSE) %>%
-        random_call(c("Loschbour", "Stuttgart", "UstIshim"))
+        read_tsv(ice_age_path, progress=FALSE)
+    if (random_sample) ice_age %<>% random_call(c("Loschbour", "Stuttgart", "UstIshim"))
 
     if (filter_damage) {
         ice_age <- remove_transitions(ice_age)
@@ -111,8 +112,8 @@ load_dataset <- function(ice_age_path,
     sgdp <-
         read_tsv(sgdp_path, progress=FALSE) %>%
         select(c(chrom, pos, ref, alt,
-                 one_of(sgdp_info$name))) %>%
-        random_call
+                 one_of(sgdp_info$name)))
+    if (random_sample) sgdp %<>% random_call
     names(sgdp)[-(1 : 4)] %<>% str_replace("^S_", "")
 
     archaics <-
@@ -122,16 +123,19 @@ load_dataset <- function(ice_age_path,
 
     all_samples <-
         right_join(ice_age, archaics) %>% # join archaic data with EMH
-        { replace(., is.na(.), -1L) } %>%  # replace missing EMH data with 9 "alleles"
+        { replace(., is.na(.), 9L) } %>%  # replace missing EMH data with 9 "alleles"
         left_join(sgdp) %>%               # add variable SGDP sites
         { replace(., is.na(.), 0L) }      # fill in missing SGDP alleles as REF
 
     # replace all 9 values with NA
-    all_samples[all_samples == -1] <- NA
+    pos_bases <- all_samples[, 1:4] # ignore the first 4 columns
+    snps <- all_samples[, -(1:4)]   # this is the part to modify
+    snps[snps == 9] <- -1   # first replace all 9s in the SNP matrix with -1
+    snps[snps == -1] <- NA  # then substitute for NA
     
     # ice_age %>% {sapply(colnames(.)[5:ncol(.)], function(s) {table(.[[s]])})}
     # sgdp %>% {sapply(colnames(.)[5:ncol(.)], function(s) {table(.[[s]])})}
     # archaics %>% {sapply(colnames(.)[5:ncol(.)], function(s) {table(.[[s]])})}
 
-    all_samples
+    bind_cols(pos_bases, snps)
 }
