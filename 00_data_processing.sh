@@ -8,14 +8,18 @@
 # download Fu et al. data
 mkdir -p raw_data
 cd raw_data
+
+mkdir Fu
+cd Fu
+
 wget https://reich.hms.harvard.edu/sites/reich.hms.harvard.edu/files/inline-files/FuQ.zip
 unzip FuQ.zip
-cd ../
+cd ../../
 
 mkdir -p clean_data
 
 # process Fu et al. data
-./R/process_eigenstrat.R raw_data/archaic.geno raw_data/archaic.snp raw_data/archaic.ind clean_data/ice_age.tsv
+./R/process_eigenstrat.R raw_data/Fu/archaic.geno raw_data/Fu/archaic.snp raw_data/Fu/archaic.ind clean_data/ice_age.tsv
 chmod -w clean_data/ice_age.tsv
 
 # format the Altai/Vindija/Denisovan VCFs into a simple 0/1/2 table
@@ -42,15 +46,17 @@ chmod -w clean_data/sgdp.tsv
 
 # annotate the SNPs using CADD
 # the SNPs were annotated "manually" by uploading the ice_age.tsv pseudo-VCF file
-# to the CADD online server and results were downloaded to raw_data/
+# to the CADD online server and results were downloaded to raw_data/annotations
 cd raw_data
+mkdir annotations
+cd annotations
 gunzip v1.3_anno*
 sed 's/#//;2q;d' v1.3_anno*.tsv > annotations.tsv_unsorted
 for file in v1.3_anno*.tsv; do
     tail -n+3 $file >> annotations.tsv_unsorted
 done
-sort -k1,1n -k2,2n annotations.tsv_unsorted > ../clean_data/annotations.tsv
-cd ../
+sort -k1,1n -k2,2n annotations.tsv_unsorted > ../../clean_data/annotations.tsv
+cd ../../
 chmod -w clean_data/annotations.tsv
 
 
@@ -72,8 +78,8 @@ mkdir -p $annotation_dir
 
 # download the GTF file and annotate SNPs with distances to the nearest
 # exon and densities of exons in different windows
-curl ftp://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz -o raw_data/gtf.gz
-python3 exon_annotations.py --input-file clean_data/ice_age.tsv --gtf-file raw_data/gtf.gz --window-sizes 10000 25000 50000 100000 200000 --output-dir $annotation_dir
+curl ftp://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz -o raw_data/annotations/gtf.gz
+python3 exon_annotations.py --input-file clean_data/ice_age.tsv --gtf-file raw_data/annotations/gtf.gz --window-sizes 10000 25000 50000 100000 200000 --output-dir $annotation_dir
 
 cadd_file=${annotation_dir}/genome_wide_cadd.bed.gz
 akey_file=${annotation_dir}/genome_wide_phylop_akey.bed.gz
