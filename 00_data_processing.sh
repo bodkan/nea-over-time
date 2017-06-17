@@ -124,3 +124,16 @@ for window_size in 10000 25000 50000 100000; do
     window_average bval           8 $window_size $cadd_file $snp_file &
     window_average phyloP_nohuman 4 $window_size $akey_file $snp_file &
 done
+
+
+
+
+
+
+
+# download and process the Mathieson et al. data
+cd raw_data
+wget https://reich.hms.harvard.edu/sites/reich.hms.harvard.edu/files/inline-files/MathiesonEtAl_genotypes_April2016.tar.gz
+tar xvf MathiesonEtAl_genotypes_April2016.tar.gz
+cd MathiesonEtAl_genotypes
+
