@@ -23,7 +23,7 @@ random_call <- function(df, sample_names=NULL) {
         # randomly sample hom REF/ALT alleles at het positions
         df[[s]] <- replace(df[[s]],
                            het_pos,
-                           2 * rbinom(sum(het_pos), 1, 0.5)) %>% as.integer
+                           2 * rbinom(sum(het_pos, na.rm=TRUE), 1, 0.5)) %>% as.integer
     }
 
     df
