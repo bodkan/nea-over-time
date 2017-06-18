@@ -81,6 +81,19 @@ load_annotations <- function(annotations_path) {
         rename(chrom=Chrom, pos=Pos, ref=Ref, alt=Alt)
 }
 
+
+# Replace the cumbersome EIGENSTRAT 9s with R-friendly NAs.
+fix_NA <- function(snps) {
+    pos_bases <- snps[, 1:4] # ignore the first 4 columns
+    alleles <- snps[, -(1:4)]   # this is the part to modify
+
+    alleles[alleles == 9] <- -1   # first replace all 9s in the SNP matrix with -1
+    alleles[alleles == -1] <- NA  # then substitute for NA
+
+    bind_cols(pos_bases, alleles)
+}
+
+
 #
 # Load the whole data set of EMH, SGDP and archaic human SNPs
 # and combine it with the CADD annotations.
@@ -127,15 +140,11 @@ load_dataset <- function(ice_age_path,
         left_join(sgdp) %>%               # add variable SGDP sites
         { replace(., is.na(.), 0L) }      # fill in missing SGDP alleles as REF
 
-    # replace all 9 values with NA
-    pos_bases <- all_samples[, 1:4] # ignore the first 4 columns
-    snps <- all_samples[, -(1:4)]   # this is the part to modify
-    snps[snps == 9] <- -1   # first replace all 9s in the SNP matrix with -1
-    snps[snps == -1] <- NA  # then substitute for NA
+    all_samples <- fix_NA(all_samples)
     
     # ice_age %>% {sapply(colnames(.)[5:ncol(.)], function(s) {table(.[[s]])})}
     # sgdp %>% {sapply(colnames(.)[5:ncol(.)], function(s) {table(.[[s]])})}
     # archaics %>% {sapply(colnames(.)[5:ncol(.)], function(s) {table(.[[s]])})}
 
-    bind_cols(pos_bases, snps)
+    all_samples
 }
