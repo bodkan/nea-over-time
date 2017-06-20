@@ -103,7 +103,8 @@ load_dataset <- function(ice_age_path,
                          archaics_path,
                          filter_damage,
                          metadata_path,
-                         random_sample=T) {
+                         random_sample=T,
+                         fix_archaics=T) {
     ## ice_age_path <- "clean_data/ice_age.tsv"
     ## sgdp_path <- "clean_data/sgdp.tsv"
     ## archaics_path <- "clean_data/archaics.tsv"
@@ -129,9 +130,9 @@ load_dataset <- function(ice_age_path,
     if (random_sample) sgdp %<>% random_call
     names(sgdp)[-(1 : 4)] %<>% str_replace("^S_", "")
 
-    archaics <-
-        read_tsv(archaics_path, progress=FALSE) %>%
-        filter(Altai == 2, Vindija == 2)
+    archaics <- read_tsv(archaics_path, progress=FALSE) %>% filter(Altai == 2)
+    if (fix_archaics) archaics %<>% filter(Vindija == 2)
+
     names(archaics)[-(1 : 4)] %<>% str_replace("^", "archaic_")    
 
     all_samples <-
