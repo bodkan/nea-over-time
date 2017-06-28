@@ -96,21 +96,17 @@ $after_admixture {
     p2.setSubpopulationSize(0);
 }
 
-$modify_at:$sim_length late() {
-    all_muts = sim.mutations[sim.mutations.mutationType == m0 & sim.mutations.subpopID == 2];
-
-    if (sim.generation == $admixture_time) {
-        all_muts.tag = 0;
-    }
-
-    unmodified_muts = all_muts[all_muts.tag == 0];
+// modify the DFE of Nea. introgressed mutations
+$modify_at late() {
+    muts = sim.mutations[sim.mutations.mutationType == m0 & sim.mutations.subpopID == 2];
 
     // crank up s of selected Nea. fixed mutations
-    if ($modify_s & sim.generation >= $modify_at) {
-        apply(sample(all_muts, asInteger($modify_fraction * size(all_muts))),
-              "applyValue.setSelectionCoeff($modify_by); applyValue.tag = 1;");
-    } else if ($fixed_nea_s != F) { // simulate fixed selective effect of Nea. mutations
-        apply(all_muts, "applyValue.setSelectionCoeff($fixed_nea_s);");
+    if ($multiply_s) {
+        apply(sample(muts, asInteger($modify_fraction * size(muts))),
+	      "s = applyValue.selectionCoeff; applyValue.setSelectionCoeff(s * $multiply_s);");
+    } else if ($fix_s) { // simulate fixed selective effect of Nea. mutations
+        apply(sample(muts, asInteger($modify_fraction * size(muts))),
+	      "applyValue.setSelectionCoeff($fix_s);");
     }
 }
 

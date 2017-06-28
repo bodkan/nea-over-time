@@ -35,10 +35,10 @@ if __name__ == '__main__':
     group = parser.add_argument_group()
     group.add_argument('--modify-fraction', type=float, help='What fraction of selection'
                         ' coefficients to modify?')
-    group.add_argument('--modify-by', type=float, help='Selection coefficient of the modify'
+    group.add_argument('--multiply-s', type=float, help='Selection coefficient multiplier of'
                        ' Nea. introgressed mutations')
-    group.add_argument('--modify-at', type=int, help='At what time to start modifying'
-                       ' the selection coefficient')
+    parser.add_argument('--fix-s', type=float,
+                        help='Use a fixed selection coefficient of the deleterious mutations')
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--exonic-sites', metavar='FILE',
@@ -50,8 +50,6 @@ if __name__ == '__main__':
 
     parser.add_argument('--dominance-coef', type=float, required=True,
                         help='Dominance coefficient of deleterious mutations')
-    parser.add_argument('--fixed-nea-s', type=float,
-                        help='Use a fixed selection coefficient of the deleterious mutations')
 
     parser.add_argument('--admixture-rate', type=float, default=0.1,
                         help='Neanderthal migration rate')
@@ -84,9 +82,8 @@ if __name__ == '__main__':
                         help='Save the data about deleterious mutations over'
                         ' the course of the simulation')
 
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--output-prefix', metavar='FILE', help='Prefix of output files')
-    group.add_argument('--dump-slim', metavar='FILE', help='Dump the SLiM config'
+    parser.add_argument('--output-prefix', metavar='FILE', help='Prefix of output files')
+    parser.add_argument('--dump-slim', metavar='FILE', help='Dump the SLiM config'
                         ' file without running the simulation')
 
     args = parser.parse_args()
@@ -98,10 +95,6 @@ if __name__ == '__main__':
     if args.founder_size and args.model != 'constant':
         parser.error('Founder population size can be specified only for the constant'
                      ' population size model.')
-
-    if not (all([args.modify_fraction is not None, args.modify_by is not None, args.modify_at is not None]) or \
-            all([args.modify_fraction is None, args.modify_by is None, args.modify_at is None])):
-        parser.error('Either all or none of the s modification arguments have to be specified')
 
     # create the SLiM template file for a specified demographic model
     slim_template = Template(
@@ -160,15 +153,14 @@ if __name__ == '__main__':
         'recomb_ends'      : 'c(' + ','.join(str(i) for i in recomb_map.slim_end) + ')',
         'recomb_rates'     : 'c(' + ','.join(str(i) for i in recomb_map.recomb_rate) + ')',
         'mut_rate'         : float(args.mut_rate),
-        'modify_s'         : 'T' if args.modify_by is not None else 'F',
-        'modify_by'         : args.modify_by,
+        'multiply_s'       : args.multiply_s if args.multiply_s is not None else 'F',
+        'fix_s'            : args.fix_s if args.fix_s is not None else 'F',
         'modify_fraction'  : args.modify_fraction,
-        'modify_at'        : args.modify_at if args.modify_at else 1,
+        'modify_at'        : admixture_time + 1,
         'genomic_elements' : genomic_elements,
         'exonic_pos'       : 'c(' + ','.join(str(pos) for pos in exonic_sites_coords.slim_start) + ')',
         'nonexonic_pos'    : 'c(' + ','.join(str(pos) for pos in nonexonic_sites_coords.slim_start) + ')',
         'dominance_coef'  : args.dominance_coef,
-        'fixed_nea_s'         : args.fixed_nea_s if args.fixed_nea_s is not None else 'F',
         'founder_size'    : founder_size,
         'admixture_rate'  : args.admixture_rate,
         'admixture_time'  : admixture_time,
