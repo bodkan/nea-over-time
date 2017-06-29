@@ -17,7 +17,7 @@ init_nea=0.1
 # number of replicates of each model
 num_replicates=10
 
-traject_dir=${sims_dir}/bump_up_dfe2
+traject_dir=${sims_dir}/bump_up_dfe
 mkdir -p $traject_dir
 
 mkdir -p ${tmp_dir}/sge
