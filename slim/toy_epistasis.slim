@@ -12,7 +12,7 @@ initialize() {
 
     initializeMutationRate(0);
         
-    // mutation type of epistatically-interacting neutral allele
+    // mutation type of epistatically-interacting neutral alleles
     // (before being orphaned by recombination - will be deleterious after that)
     initializeMutationType("m1", 0.5, "f", 0.0);
 
@@ -47,6 +47,7 @@ initialize() {
     //     }
     //     cat("Total number of epistatic loci: " + sim.countOfMutationsOfType(m1) + "\n");
     // }
+    sim.simulationFinished();
 }
 
 modifyChild() {
@@ -68,7 +69,7 @@ modifyChild() {
             childGenome1.removeMutations(orphan);
 
             // add a new mutation at it's position, with a given value of the selection coefficient
-            childGenome1.addNewMutation(orphan.mutationType, EPI_S, orphan.position);
+            childGenome1.addNewMutation(orphan.mutationType, -EPI_S, orphan.position);
         }
 
         // there is only 1 mutation from the original pair left on the second genome
@@ -79,19 +80,17 @@ modifyChild() {
             childGenome2.removeMutations(orphan);
 
             // add a new mutation at it's position, with a given value of the selection coefficient
-            childGenome2.addNewMutation(orphan.mutationType, EPI_S, orphan.position);
+            childGenome2.addNewMutation(orphan.mutationType, -EPI_S, orphan.position);
         }
     }
     return T;
 }
 
-1:1000 {
-    if (sim.generation == 1) cat("gen\tprop\n");
+3:1000 {
+    if (sim.generation == 1) writeFile(OUTPUT, "gen\tprop\n");
 
-    if ((sim.generation - 1) % 1 == 0) {
-        prop = sum(p1.genomes.countOfMutationsOfType(m1)) / (2 * POP_SIZE * size(epi_pos));
-        cat(sim.generation + "\t" + prop + "\n");
-    }
+    prop = sum(p1.genomes.countOfMutationsOfType(m1)) / (2 * POP_SIZE * size(epi_pos));
+    writeFile(OUTPUT, sim.generation + "\t" + prop + "\n", append=T);
 
     // for (ind in p1.individuals) {
     //     cat("individual ");
