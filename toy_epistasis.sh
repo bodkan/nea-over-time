@@ -1,12 +1,12 @@
 EPI_PAIRS=1000
 INIT_F=0.5
-REPS=20
+REPS=10
 
 OUTPUT_DIR=simulations/toy_epistasis
 mkdir -p $OUTPUT_DIR
 
-for EPI_S in 0.01 0.005 0.001 0.0005 0.0001 0.00005 0.00001; do
-    for EPI_REC in 1e-8 1e-7 1e-6 1e-5 1e-4 1e-3; do
+for EPI_S in 1e-7 1e-6 1e-5 1e-4 1e-3 1e-2; do
+    for EPI_REC in 1e-7 1e-6 1e-5 1e-4 1e-3 1e-2; do
         for rep in `seq 1 $REPS`; do
             run_id="n_${EPI_PAIRS}__s_${EPI_S}__r_${EPI_REC}__f_${INIT_F}__rep_${rep}"
             qsub -V -cwd -j y -S /bin/bash \
