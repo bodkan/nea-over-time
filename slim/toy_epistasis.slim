@@ -1,3 +1,4 @@
+
 // set up a simple neutral simulation
 initialize() {
     defineConstant("DEBUG", F);
@@ -61,7 +62,7 @@ initialize() {
 }
 
 
-1:1001 {
+1:2001 {
     if (sim.generation == 1) writeFile(OUTPUT, "gen\tf\tinit_f\ts\tr\n");
 
     if (sim.generation == 1 | sim.generation % 25 == 0) {
