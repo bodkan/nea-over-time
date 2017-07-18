@@ -1,3 +1,7 @@
+library(tidyverse)
+library(magrittr)
+library(stringr)
+
 #
 # Replace het calls in a set of samples with randomly called REF or
 # ALT hom calls.
@@ -69,11 +73,11 @@ estimate_nea <- function(snps, sample_names) {
 #
 load_sgdp_info <- function(path) {
     read_tsv(path) %>%
-        select(Panel, name=SGDP_ID, Region, Country, Latitude, Longitude) %>%
-        filter(complete.cases(.)) %>%
-        filter(Panel == "C") %>%
-        mutate(name=str_replace(name, "-", "_")) %>%
-        select(-Panel)
+        dplyr::select(Panel, name=SGDP_ID, Region, Country, Latitude, Longitude) %>%
+        dplyr::filter(complete.cases(.)) %>%
+        dplyr::filter(Panel == "C") %>%
+        dplyr::mutate(name=str_replace(name, "-", "_")) %>%
+        dplyr::select(-Panel)
 }
 
 load_annotations <- function(annotations_path) {
@@ -101,10 +105,9 @@ fix_NA <- function(snps) {
 load_dataset <- function(ice_age_path,
                          sgdp_path,
                          archaics_path,
-                         filter_damage,
-                         metadata_path,
-                         random_sample=T,
-                         fix_archaics=T) {
+                         filter_damage=FALSE,
+                         random_sample=TRUE,
+                         fix_archaics=TRUE) {
     ## ice_age_path <- "clean_data/ice_age.tsv"
     ## sgdp_path <- "clean_data/sgdp.tsv"
     ## archaics_path <- "clean_data/archaics.tsv"
@@ -120,13 +123,7 @@ load_dataset <- function(ice_age_path,
         ice_age <- remove_transitions(ice_age)
     }
 
-    # read the list of samples with available metadata
-    sgdp_info <- load_sgdp_info(metadata_path)
-
-    sgdp <-
-        read_tsv(sgdp_path, progress=FALSE) %>%
-        select(c(chrom, pos, ref, alt,
-                 one_of(sgdp_info$name)))
+    sgdp <- read_tsv(sgdp_path, progress=FALSE)
     if (random_sample) sgdp %<>% random_call
     names(sgdp)[-(1 : 4)] %<>% str_replace("^S_", "")
 
@@ -148,4 +145,18 @@ load_dataset <- function(ice_age_path,
     # archaics %>% {sapply(colnames(.)[5:ncol(.)], function(s) {table(.[[s]])})}
 
     all_samples
+}
+
+
+get_european_ids <- function(metadata_path) {
+    # process the SGDP metainformation table
+    load_sgdp_info(metadata_path) %>%
+        mutate(name=str_replace(name, "^S_", "")) %>%
+        dplyr::rename(pop=Region) %>%
+        filter(pop == "WestEurasia") %>%
+        filter(! Country %in% c('Iran', 'Iraq', 'Jordan', 'Israel(Central)',
+                                'Israel(Carmel)', 'Israel(Negev)', 'Israel', 'Tajikistan', 'Turkey', 'Yemen',
+                                'Abkhazia', 'Armenia')) %>%
+        dplyr::select(-c(Country, Latitude, Longitude)) %>%
+        .[["name"]]
 }
