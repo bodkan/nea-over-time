@@ -6,4 +6,4 @@ tests/*
 __pycache__/*
 output/*
 raw_data/*
-
+RData/*
