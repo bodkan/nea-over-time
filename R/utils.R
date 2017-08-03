@@ -160,3 +160,13 @@ get_european_ids <- function(metadata_path) {
         dplyr::select(-c(Country, Latitude, Longitude)) %>%
         .[["name"]]
 }
+
+
+get_pop_ids <- function(metadata_path, pop) {
+    # process the SGDP metainformation table
+    load_sgdp_info(metadata_path) %>%
+        mutate(name=str_replace(name, "^S_", "")) %>%
+        filter(Region == pop) %>%
+        dplyr::select(-c(Country, Latitude, Longitude)) %>%
+        .[["name"]]
+}
