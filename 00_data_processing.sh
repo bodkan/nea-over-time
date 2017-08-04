@@ -131,9 +131,11 @@ done
 
 
 
-# download and process the Mathieson et al. data
+# download the McVicker B values
 cd raw_data
-wget https://reich.hms.harvard.edu/sites/reich.hms.harvard.edu/files/inline-files/MathiesonEtAl_genotypes_April2016.tar.gz
-tar xvf MathiesonEtAl_genotypes_April2016.tar.gz
-cd MathiesonEtAl_genotypes
-
+wget http://www.phrap.org/software_dir/mcvicker_dir/bkgd.tar.gz
+tar xvf bkgd.tar.gz
+rm bkgd.tar.gz
+# download the hg18-to-hg19 liftover chain
+wget http://hgdownload.cse.ucsc.edu/goldenPath/hg18/liftOver/hg18ToHg19.over.chain.gz
+gunzip hg18ToHg19.over.chain.gz
