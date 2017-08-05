@@ -1,5 +1,9 @@
 library(GenomicRanges)
 library(rtracklayer)
+# this is an unnecessarily huge dependency - but Seqinfo(genome="hg18")
+# relies on the internet connection and did not seem to work in
+# Jupyter's IRkernel
+library(BSgenome.Hsapiens.UCSC.hg18)
 library(tidyverse)
 library(stringr)
 
@@ -17,7 +21,7 @@ assign_bvals <- function(sites, bval_path, chain_path) {
     # convert the list of dataframes into a GRanges hg18 object
     bval_regions_hg18 <- bind_rows(bval_df_list) %>%
         makeGRangesFromDataFrame(keep.extra.columns=TRUE)
-    seqinfo(bval_regions_hg18) <- Seqinfo(genome="hg18")
+    seqinfo(bval_regions_hg18) <- seqinfo(BSgenome.Hsapiens.UCSC.hg18)
 
     # perform the liftOver from hg18 to hg19
     chain <- import.chain(chain_path)
