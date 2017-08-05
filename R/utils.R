@@ -125,7 +125,7 @@ load_dataset <- function(ice_age_path,
 
     sgdp <- read_tsv(sgdp_path, progress=FALSE)
     if (random_sample) sgdp %<>% random_call
-    names(sgdp)[-(1 : 4)] %<>% str_replace("^S_", "")
+    # names(sgdp)[-(1 : 4)] %<>% str_replace("^S_", "")
 
     archaics <- read_tsv(archaics_path, progress=FALSE) %>% filter(Altai == 2)
     if (fix_archaics) archaics %<>% filter(Vindija == 2)
@@ -157,16 +157,6 @@ get_european_ids <- function(metadata_path) {
         filter(! Country %in% c('Iran', 'Iraq', 'Jordan', 'Israel(Central)',
                                 'Israel(Carmel)', 'Israel(Negev)', 'Israel', 'Tajikistan', 'Turkey', 'Yemen',
                                 'Abkhazia', 'Armenia')) %>%
-        dplyr::select(-c(Country, Latitude, Longitude)) %>%
-        .[["name"]]
-}
-
-
-get_pop_ids <- function(metadata_path, pop) {
-    # process the SGDP metainformation table
-    load_sgdp_info(metadata_path) %>%
-        mutate(name=str_replace(name, "^S_", "")) %>%
-        filter(Region == pop) %>%
         dplyr::select(-c(Country, Latitude, Longitude)) %>%
         .[["name"]]
 }
