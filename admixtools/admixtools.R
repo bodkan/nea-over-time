@@ -22,7 +22,8 @@ read_f4_ratios <- function(log_filename) {
         paste(collapse="\n") %>%
         textConnection %>%
         read.table %>%
-        setNames(c("A", "O", "X", "C", "A", "O", "B", "C", "alpha", "stderr", "z"))
+        setNames(c("A", "O", "X", "C", "A", "O", "B", "C", "alpha", "stderr", "z")) %>%
+        .[c("A", "B", "X", "C", "O", "alpha", "stderr", "z")]
 
     res
 }
