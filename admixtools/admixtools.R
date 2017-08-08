@@ -28,6 +28,28 @@ read_f4_ratios <- function(log_filename) {
     res
 }
 
+# read a table of D-statistic results
+read_dstats <- function(log_filename) {
+    log_lines <- readLines(log_filename)
+
+    # extract the number of analyzed test populations/individuals
+    # (corresponding to the number of rows of the results table)
+    n_quads <- length(log_lines) - (which(str_detect(log_lines, "^nrows, ncols:"))) - 1
+
+    # parse the lines of the results section and extract the names of
+    # tested populations/individuals, estimated admixture proportions
+    # alpha, std. errors and Z-score
+    res <- log_lines[(length(log_lines) - n_quads) : (length(log_lines) - 1)] %>%
+        str_replace_all(" +", " ") %>%
+        str_replace("result: ", "") %>%
+        paste(collapse="\n") %>%
+        textConnection %>%
+        read.table %>%
+        setNames(c("W", "X", "Y", "Z", "Dstat", "Zscore", "wtf", "BABA", "ABBA", "n_snps"))
+
+    res
+}
+
 # generate a vector of poplist entries, optionally saving it to a file
 create_f4_poplist_file <- function(X, A, B, C, O, filename) {
     lines <- sprintf("%s %s : %s %s :: %s %s : %s %s", A, O, X, C, A, O, B, C)
