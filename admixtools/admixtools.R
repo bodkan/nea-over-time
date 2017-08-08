@@ -15,7 +15,7 @@ read_f4_ratios <- function(log_filename) {
     # parse the lines of the results section and extract the names of
     # tested populations/individuals, estimated admixture proportions
     # alpha, std. errors and Z-score
-    res <- log_lines[(length(log_lines) - n_pops + 2) : (length(log_lines) - 1)] %>%
+    res <- log_lines[(length(log_lines) - n_pops) : (length(log_lines) - 1)] %>%
         str_replace_all(":", "") %>%
         str_replace_all(" +", " ") %>%
         str_replace("result", "") %>%
