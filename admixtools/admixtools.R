@@ -34,12 +34,21 @@ create_f4_poplist_file <- function(X, A, B, C, O, filename) {
     writeLines(lines, filename)
 }
 
-create_f4_param_file <- function(param_file, poplist_file, eigenstrat_prefix) {
+create_f4_param_file <- function(param_file, poplist_file,
+                                 eigenstrat_prefix=NULL,
+                                 geno_file=NULL, snp_file=NULL, ind_file= NULL) {
+    if (is.null(eigenstrat_prefix) & all(is.null(c(geno_file, snp_file, ind_file)))) {
+        stop("Either the eigenstrat_prefix or paths to geno/snp/ind files must be specified")
+    }
+
+    if (!is.null(eigenstrat_prefix)) {
+        geno_file <- paste0(eigenstrat_prefix, ".geno")
+        snp_file <- paste0(eigenstrat_prefix, ".snp")
+        ind_file <- paste0(eigenstrat_prefix, ".ind")
+    }
+
     writeLines(sprintf("genotypename: %s\nsnpname: %s\nindivname: %s\npopfilename: %s",
-                       paste0(eigenstrat_prefix, ".geno"),
-                       paste0(eigenstrat_prefix, ".snp"),
-                       paste0(eigenstrat_prefix, ".ind"),
-                       poplist_file),
+                       geno_file, snp_file, ind_file, poplist_file),
                con=param_file)
 }
 
@@ -50,3 +59,4 @@ run_f4 <- function(param_file, log_file, admixtools_path="/Users/martin_petr/loc
                          ">",
                          log_file))
 }
+
