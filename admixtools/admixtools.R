@@ -45,7 +45,8 @@ read_dstats <- function(log_filename) {
         paste(collapse="\n") %>%
         textConnection %>%
         read.table %>%
-        setNames(c("W", "X", "Y", "Z", "Dstat", "Zscore", "wtf", "BABA", "ABBA", "n_snps"))
+        .[c(1:6, ncol(.) - 2, ncol(.) - 1, ncol(.)] %>%
+        setNames(c("W", "X", "Y", "Z", "Dstat", "Zscore", "BABA", "ABBA", "n_snps"))
 
     res
 }
