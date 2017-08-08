@@ -15,60 +15,49 @@ source("../R/utils.R")
 
 fix_name <- function(str) {
     str_replace_all(str, "-|\\.", "_") %>%
-        str_replace_all("^S_|_[1-9]*", "")
+        str_replace_all("^S_|_[1-9]+", "")
 }
 
 
-# some small-scale testing
-create_f4_poplist(X=c("French", "Sardinian", "Han", "Dai", "Stuttgart", "Oase1", "UstIshim"),
-                  A="Yoruba", B="Dinka", C="Altai", O="Chimp",
-                  filename="test.pop")
-create_f4_parfile("test.par", "UPA.K.P.V1.3.2", "test.pop")
-
-
-
-
-# load names of SGDP West Eurasian subpopulations
-west_eurasians <-
-    load_sgdp_info("../raw_data/10_24_2014_SGDP_metainformation_update.txt") %>%
-    filter(Region == "WestEurasia") %>%
-    .[["name"]] %>%
-    str_replace("^S_", "") %>%
-    str_replace("_[0-9]+$", "") %>%
-    unique
-
-# load names of the Ice Age upper-paleolithic humans
-emhs <- read.table("../raw_data/Fu/archaic.ind",
-                   stringsAsFactors=FALSE) %>%
-    filter(V3 != "Oase1") %>%
-    .[["V3"]]
+## # some small-scale testing
+## create_f4_poplist(X=c("French", "Sardinian", "Han", "Dai", "Stuttgart", "Oase1", "UstIshim"),
+##                   A="Yoruba", B="Dinka", C="Altai", O="Chimp",
+##                   filename="test.pop")
+## create_f4_parfile("test.par", "UPA.K.P.V1.3.2", "test.pop")
 
 
 ############################################################
-# load sample ages
-emh_ages <-
-    read_delim("../clean_data/ages.txt", delim=" ") %>%
-    mutate(name=fix_name(name))
-sgdp_ages <- tibble(name=west_eurasians, age=0L)
-ages <- bind_rows(emh_ages, sgdp_ages)
+# prepare the tables with sample information (population
+# assignment, ages, etc)
+sgdp <- load_sgdp_info("../raw_data/10_24_2014_SGDP_metainformation_update.txt") %>%
+    filter(! Region %in% c("Africa", "Oceania")) %>%
+    select(-Country, pop=Region) %>%
+    mutate(age=0, name=fix_name(name)) %>%
+    group_by(name, age, pop) %>%
+    summarise(Latitude=mean(Latitude), Longitude=mean(Longitude)) %>%
+    ungroup
+    
+emhs <- read_delim("../emh_ages.txt", delim=" ", col_names=c("name", "age")) %>%
+    mutate(pop="EMH", Latitude=NA, Longitude=NA)
+
+samples <- bind_rows(emhs, sgdp)
 
 
 ############################################################
 # calculate Nea. ancestry proportions using f4
-create_f4_poplist_file(X=c(west_eurasians, emhs),
+create_f4_poplist_file(X=samples$name,
                        A="Yoruba", B="Dinka", C="Altai", O="Chimp",
-                       filename="nea_in_west_eurasians.pop")
+                       filename="nea_estimate.pop")
 
-create_f4_param_file("nea_in_west_eurasians.par",
-                     "nea_in_west_eurasians.pop",
+create_f4_param_file("nea_estimate.par",
+                     "nea_estimate.pop",
                      eigenstrat_prefix="UPA.K.P.V1.3.2")
 
-run_f4("nea_in_west_eurasians.par", "nea_in_west_eurasians.log")
+run_f4("nea_estimate.par", "nea_estimate.log")
 
-f4_res <- read_f4_ratios("nea_in_west_eurasians.log")
+f4_res <- read_f4_ratios("nea_estimate.log")
 f4_nea <- select(f4_res, name=X, alpha) %>%
     mutate(alpha=1 - alpha,
-           name=fix_name(name),
            method="f4")
 
 
@@ -90,8 +79,41 @@ direct_nea <- select(array_snps, -c(chrom, pos, ref, alt, contains("archaic"))) 
     mutate(method="direct")
 
 
-nea_estimates <- bind_rows(inner_join(ages, f4_nea), inner_join(ages, direct_nea))
+############################################################
+# plot the comparison of 
+nea_long <- bind_rows(inner_join(samples, f4_nea), inner_join(samples, direct_nea))
+nea_wide <- spread(nea_long, method, alpha) %>% filter(!is.na(direct))
 
-nea_cor <- spread(nea_estimates, method, alpha)
-plot(nea_cor$direct, nea_cor$f4, xlim=c(0, 0.1), ylim=c(0, 0.1))
-summary(lm(direct ~ f4, data=nea_cor))
+
+pdf("f4_vs_direct_props.pdf")
+
+# comparison of f4 vs direct Nea. estimates
+ggplot(nea_wide, aes(f4, direct)) +
+    geom_point() +
+    geom_smooth(method="lm", linetype=2, size=0.5) +
+    ggtitle("Correlation of Nea% estimates using f4 ratios or admixture array SNPs",
+            "f4 ratio = 1 - f4(YRI, Chimp; X, Altai) / f4(YRI, Chimp; Dinka, Altai)")
+
+ggplot(nea_wide, aes(f4, direct, color=pop, group=pop)) +
+    geom_point() +
+    geom_smooth(method="lm", linetype=2, size=0.5) +
+    ggtitle("Correlation of Nea% estimates using f4 ratios or admixture array SNPs",
+            "f4 ratio = 1 - f4(YRI, Chimp; X, Altai) / f4(YRI, Chimp; Dinka, Altai)")
+
+ggplot(filter(nea_wide, pop != "EMH"), aes(f4, direct, color=pop, group=pop)) +
+    geom_point() +
+    geom_smooth(method="lm", linetype=2, size=0.5) +
+    ggtitle("Correlation of Nea% estimates using f4 ratios or admixture array SNPs",
+            "f4 ratio = 1 - f4(YRI, Chimp; X, Altai) / f4(YRI, Chimp; Dinka, Altai)")
+
+# Nea over time in West Eurasians
+filter(nea_long, pop %in% c("EMH", "WestEurasia")) %>%
+ggplot(aes(age, alpha)) +
+    geom_point() +
+    geom_smooth(method="lm", linetype=2, fullrange=TRUE, size=0.5) +
+    facet_grid(method ~ .) +
+    xlim(55000, 0) + ylim(0, 0.06) +
+    ggtitle("Nea% (alpha) over time using Ice Age paper EMHs and SGDP West Eurasians",
+            "Upper panel - Nea. estimates using admixture array SNPs, bottom panel - ratio of f4 statistics")
+
+dev.off()
