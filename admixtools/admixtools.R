@@ -51,15 +51,26 @@ read_dstats <- function(log_filename) {
     res
 }
 
+
 # generate a vector of poplist entries, optionally saving it to a file
 create_f4_poplist_file <- function(X, A, B, C, O, filename) {
     lines <- sprintf("%s %s : %s %s :: %s %s : %s %s", A, O, X, C, A, O, B, C)
     writeLines(lines, filename)
 }
 
-create_f4_param_file <- function(param_file, poplist_file,
-                                 eigenstrat_prefix=NULL,
-                                 geno_file=NULL, snp_file=NULL, ind_file= NULL) {
+
+# generate a vector of poplist entries, optionally saving it to a file
+create_dstats_poplist_file <- function(W, X, Y, Z, filename) {
+    lines <- sprintf("%s %s %s %s", W, X, Y, Z)
+    writeLines(lines, filename)
+}
+
+
+create_param_file <- function(param_file, poplist_file,
+                              eigenstrat_prefix=NULL,
+                              geno_file=NULL, snp_file=NULL, ind_file= NULL,
+                              badsnp_file=NULL,
+                              f4mode=FALSE) {
     if (is.null(eigenstrat_prefix) & all(is.null(c(geno_file, snp_file, ind_file)))) {
         stop("Either the eigenstrat_prefix or paths to geno/snp/ind files must be specified")
     }
@@ -73,7 +84,16 @@ create_f4_param_file <- function(param_file, poplist_file,
     writeLines(sprintf("genotypename: %s\nsnpname: %s\nindivname: %s\npopfilename: %s",
                        geno_file, snp_file, ind_file, poplist_file),
                con=param_file)
+
+    if (!is.null(badsnp_file)) {
+        write(sprintf("badsnpname: %s", badsnp_file), file=param_file, append=TRUE)
+    }
+
+    if (f4mode) {
+        write("f4mode: YES", file=param_file, append=TRUE)
+    }
 }
+
 
 run_f4 <- function(param_file, log_file, admixtools_path="/Users/martin_petr/local/Admixtools/bin/") {
     system(command=paste(file.path(admixtools_path, "qpF4ratio"),
