@@ -10,7 +10,7 @@ library(tidyverse)
 library(stringr)
 
 source("~/projects/slim-neanderthal/R/utils.R")
-source("admixtools.R")
+source("admixr.R")
 source("../R/utils.R")
 
 fix_name <- function(str) {
@@ -19,16 +19,11 @@ fix_name <- function(str) {
 }
 
 
-## # some small-scale testing
-## create_f4_poplist(X=c("French", "Sardinian", "Han", "Dai", "Stuttgart", "Oase1", "UstIshim"),
-##                   A="Yoruba", B="Dinka", C="Altai", O="Chimp",
-##                   filename="test.pop")
-## create_f4_parfile("test.par", "UPA.K.P.V1.3.2", "test.pop")
 
 
-############################################################
-# prepare the tables with sample information (population
-# assignment, ages, etc)
+######################################################################
+# prepare the tables with the SGDP non-African populations (ages
+# geographical coordinates, etc.)
 sgdp <- load_sgdp_info("../raw_data/10_24_2014_SGDP_metainformation_update.txt") %>%
     filter(! Region %in% c("Africa", "Oceania")) %>%
     select(-Country, pop=Region) %>%
@@ -45,17 +40,26 @@ samples <- bind_rows(emhs, sgdp)
 
 ############################################################
 # calculate Nea. ancestry proportions using f4
-create_f4_poplist_file(X=samples$name,
-                       A="Yoruba", B="Dinka", C="Altai", O="Chimp",
-                       filename="nea_estimate.pop")
+create_qpF4ratio_pops(X=samples$name,
+                      A="Yoruba", B="Dinka", C="Altai", O="Chimp",
+                      file="nea_estimate.pop")
 
-create_f4_param_file("nea_estimate.par",
-                     "nea_estimate.pop",
-                     eigenstrat_prefix="UPA.K.P.V1.3.2")
+# generate a table of SNPs to filter out (transitions)
+read_fwf("UPA.K.P.V1.3.2.snp",
+         fwf_widths(c(20, 6, 16, 16, 2, 2),
+                    col_names=c("id", "chrom", "gen", "pos", "alt", "ref")),
+         progress=FALSE) %>%
+    keep_transitions %>%
+    write_tsv("UPA.K.P.V1.3.2.transitions.snp", col_names=FALSE)
 
-run_f4("nea_estimate.par", "nea_estimate.log")
+create_param_file("nea_estimate.par",
+                  "nea_estimate.pop",
+                  eigenstrat_prefix="UPA.K.P.V1.3.2",
+                  badsnp_file="UPA.K.P.V1.3.2.transitions.snp")
 
-f4_res <- read_f4_ratios("nea_estimate.log")
+run_cmd("qpF4ratio", param_file="nea_estimate.par", log_file="nea_estimate.log")
+
+f4_res <- read_qpF4ratio("nea_estimate.log")
 f4_nea <- select(f4_res, name=X, alpha) %>%
     mutate(alpha=1 - alpha,
            method="f4")
@@ -79,11 +83,13 @@ direct_nea <- select(array_snps, -c(chrom, pos, ref, alt, contains("archaic"))) 
     mutate(method="direct")
 
 
-############################################################
-# plot the comparison of 
-nea_long <- bind_rows(inner_join(samples, f4_nea), inner_join(samples, direct_nea))
+nea_long <- bind_rows(inner_join(samples, f4_nea), inner_join(samples, direct_nea)) %>% filter(name !=  "Oase1", alpha > 0, alpha < 0.08)
 nea_wide <- spread(nea_long, method, alpha) %>% filter(!is.na(direct))
 
+save.image("../RData/nea_estimate.RData")
+
+############################################################
+# plot the comparison of f4 and direct Nea. estimates
 
 pdf("f4_vs_direct_props.pdf")
 
@@ -112,8 +118,27 @@ ggplot(aes(age, alpha)) +
     geom_point() +
     geom_smooth(method="lm", linetype=2, fullrange=TRUE, size=0.5) +
     facet_grid(method ~ .) +
-    xlim(55000, 0) + ylim(0, 0.06) +
+    xlim(55000, 0) + ylim(0, 0.1) +
     ggtitle("Nea% (alpha) over time using Ice Age paper EMHs and SGDP West Eurasians",
             "Upper panel - Nea. estimates using admixture array SNPs, bottom panel - ratio of f4 statistics")
 
 dev.off()
+
+
+
+
+
+######################################################################
+# test for the presence of basal Eurasian ancestry, following the
+# approach outlined in Lazaridis et al. 2016 (supplementary
+# material page 18)
+
+
+
+
+
+############################################################
+# estimating the basal Eurasian ancestry, following the
+# approach outlined in Lazaridis et al. 2016 (supplementary
+# material page 23)
+

@@ -58,6 +58,18 @@ remove_transitions <- function(snps) {
 }
 
 #
+# Remove SNPs that could be enriched for aDNA errors.
+#
+keep_transitions <- function(snps) {
+    filter(snps, (
+        (ref == "C" & alt == "T") |
+        (ref == "T" & alt == "C") |
+        (ref == "G" & alt == "A") |
+        (ref == "A" & alt == "G")
+    ))
+}
+
+#
 # Estimate Neanderthal ancestry in a given set of samples.
 #
 estimate_nea <- function(snps, sample_names) {
