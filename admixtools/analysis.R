@@ -59,8 +59,8 @@ create_param_file("nea_estimate.par",
 
 run_cmd("qpF4ratio", param_file="nea_estimate.par", log_file="nea_estimate.log")
 
-f4_res <- read_qpF4ratio("nea_estimate.log")
-f4_nea <- select(f4_res, name=X, alpha) %>%
+nea_f4_ratios <- read_qpF4ratio("nea_estimate.log")
+nea_f4_df <- select(nea_f4_ratios, name=X, alpha) %>%
     mutate(alpha=1 - alpha,
            method="f4")
 
@@ -79,17 +79,19 @@ direct_nea <- select(array_snps, -c(chrom, pos, ref, alt, contains("archaic"))) 
     mutate(name=fix_name(name)) %>%
     group_by(name) %>%
     summarise(alpha=mean(alpha)) %>%
-    filter(name %in% f4_nea$name) %>%
+    filter(name %in% nea_f4_df$name) %>%
     mutate(method="direct")
 
 
-nea_long <- bind_rows(inner_join(samples, f4_nea), inner_join(samples, direct_nea)) %>% filter(name !=  "Oase1", alpha > 0, alpha < 0.08)
+nea_long <- bind_rows(inner_join(samples, nea_f4_df), inner_join(samples, direct_nea)) %>% filter(name !=  "Oase1", alpha > 0, alpha < 0.08)
 nea_wide <- spread(nea_long, method, alpha) %>% filter(!is.na(direct))
 
 save.image("../RData/nea_estimate.RData")
 
 ############################################################
 # plot the comparison of f4 and direct Nea. estimates
+
+load("../RData/nea_estimate.RData")
 
 pdf("f4_vs_direct_props.pdf")
 
