@@ -150,7 +150,7 @@ create_param_file <- function(param_file, pops_file,
     }
 
     writeLines(sprintf("genotypename: %s\nsnpname: %s\nindivname: %s\npopfilename: %s",
-                       geno_file, snp_file, ind_file, poplist_file),
+                       geno_file, snp_file, ind_file, pops_file),
                con=param_file)
 
     if (!is.null(badsnp_file)) {
