@@ -2,6 +2,11 @@ library(tidyverse)
 library(stringr)
 
 
+read_lines <- function(file) {
+    lines <- readLines(file)
+
+    lines[!str_detect(lines, "warning")]
+}
 
 # Reading output log files ====================================================
 
@@ -12,7 +17,7 @@ library(stringr)
 #'
 #' @return Tibble object with the parsed results.
 read_qpF4ratio <- function(logfile) {
-    log_lines <- readLines(logfile)
+    log_lines <- read_lines(logfile)
 
     # extract the number of analyzed test populations/individuals
     # (corresponding to the number of rows of the results table)
@@ -45,7 +50,7 @@ read_qpF4ratio <- function(logfile) {
 #'
 #' @return Tibble object with the parsed results.
 read_qpDstat <- function(logfile) {
-    log_lines <- readLines(logfile)
+    log_lines <- read_lines(logfile)
 
     # extract the number of analyzed population quadruples
     n_quads <- length(log_lines) - (which(str_detect(log_lines, "^nrows, ncols:"))) - 1
@@ -59,7 +64,7 @@ read_qpDstat <- function(logfile) {
         str_replace_all("^ | $", "")
 
     res_df <- res_lines %>%
-        paste(collapse="\n") %>%
+        paste0("\n", collapse="\n") %>%
         read_delim(delim=" ", col_names=FALSE) %>%
         .[c(1:6, ncol(.) - 2, ncol(.) - 1, ncol(.))] %>% # remove column with "best" if present
         setNames(c("W", "X", "Y", "Z", "Dstat", "Zscore", "BABA", "ABBA", "n_snps"))
