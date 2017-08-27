@@ -2,6 +2,9 @@ library(tidyverse)
 library(stringr)
 
 
+### TODO add function for "clumbing" together samples from subpopulations into bigger populations
+
+
 read_lines <- function(file) {
     lines <- readLines(file)
 
@@ -35,7 +38,7 @@ read_qpF4ratio <- function(logfile) {
         str_replace("^ ", "")
 
     res_df <- res_lines %>%
-        paste(collapse="\n") %>%
+        paste0("\n", collapse="\n") %>%
         read_delim(delim=" ", col_names=FALSE) %>%
         setNames(c("A", "O", "X", "C", "A", "O", "B", "C", "alpha", "stderr", "z")) %>%
         .[c("A", "B", "X", "C", "O", "alpha", "stderr", "z")]
