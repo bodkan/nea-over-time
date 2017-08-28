@@ -1,15 +1,9 @@
+## TODO add function for "clumping" together samples from subpopulations into bigger populations
+
 library(tidyverse)
 library(stringr)
 
 
-### TODO add function for "clumbing" together samples from subpopulations into bigger populations
-
-
-read_lines <- function(file) {
-    lines <- readLines(file)
-
-    lines[!str_detect(lines, "warning")]
-}
 
 # Reading output log files ====================================================
 
@@ -20,7 +14,7 @@ read_lines <- function(file) {
 #'
 #' @return Tibble object with the parsed results.
 read_qpF4ratio <- function(logfile) {
-    log_lines <- read_lines(logfile)
+    log_lines <- readLines(logfile) %>% .[!str_detect(., "warning")]
 
     # extract the number of analyzed test populations/individuals
     # (corresponding to the number of rows of the results table)
@@ -196,21 +190,73 @@ run_cmd <- function(cmd, param_file, log_file=NULL, admixtools_path="/Users/mart
 }
 
 
-test_f4 <- function() {
-    create_qpF4ratio_pops(
-        X=c("French", "Sardinian", "Han", "Dai", "Stuttgart", "Oase1", "UstIshim"),
-        A="Yoruba", B="Dinka", C="Altai", O="Chimp",
-        file="tests/xxxtest.pop")
-    create_param_file("tests/xxxtest.par", "tests/xxxtest.pop", "UPA.K.P.V1.3.2")
-    run_cmd("qpF4ratio", "tests/xxxtest.par", log_file="tests/xxxtest.log")
+#' Read an EIGENSTRAT `ind` file.
+#'
+#' @param file Path to the file.
+#'
+#' @return Data frame with the sample identifier, sex and label
+#'     columns.
+read_ind <- function(file) {
+    read_table2(file, col_names=c("id", "sex", "label"))
 }
 
 
-test_dstats <- function() {
-    create_qpF4ratio_poplist(
-        X=c("French", "Sardinian", "Han", "Dai", "Stuttgart", "Oase1", "UstIshim"),
-        A="Yoruba", B="Dinka", C="Altai", O="Chimp",
-        file="tests/xxxtest.pop")
-    create_param_file("tests/xxxtest.par", "tests/xxxtest.pop", "UPA.K.P.V1.3.2")
-    run_cmd("qpF4ratio", "tests/xxxtest.par", log_file="tests/xxxtest.log")
+
+# Reading three EIGENSTRAT files  =============================================
+
+
+#' Read an EIGENSTRAT `geno` file.
+#'
+#' @param file Path to the file.
+#'
+#' @return Data frame with columns containing "genotypes" of each
+#'     sample (0/1/9 as defined by the EIGENSTRAT format).
+read_geno <- function(file, inds=NULL) {
+    # get the number of samples in the geno file
+    n <- nchar(readLines(file, 1))
+    read_fwf(file, col_positions=fwf_widths(rep(1, n), inds))
+}
+
+
+#' Read an EIGENSTRAT `snp` file.
+#'
+#' @param file Path to the file.
+#'
+#' @return Data frame with information about each SNP (columns defined by the EIGENSTRAT format).
+read_snp <- function(snp_file) {
+    read_fwf(snp_file, fwf_widths(c(20, 6, 16, 16, 2, 2),
+                                  col_names=c("id", "chrom", "gen", "pos",
+                                              "alt", "ref")))
+}
+
+
+
+# Utility functions for filtering  ============================================
+
+
+#' Calculate the number (or proportion) of sites with an allele
+#' present (i.e. not 9) for each sample.
+#'
+#' @param geno EIGENSTRAT geno dataframe.
+#' @param prop Calculate the proportion of non-missing alleles
+#'     instead.
+#'
+#' @return A named vector of counts or proportions.
+snps_present <- function(geno, prop=FALSE) {
+    fn <- ifelse(prop, mean, sum)
+    summarise_all(geno, funs(fn(. != 9)))
+}
+
+
+#' Calculate the number (or proportion) of sites with an allele
+#' missing for each sample.
+#'
+#' @param geno EIGENSTRAT geno dataframe.
+#' @param prop Calculate the proportion of missing alleles
+#'     instead.
+#'
+#' @return A named vector of counts or proportions.
+snps_missing <- function(geno, prop=FALSE) {
+    fn <- ifelse(prop, mean, sum)
+    summarise_all(geno, funs(fn(. == 9)))
 }
