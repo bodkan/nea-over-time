@@ -47,7 +47,7 @@ read_qpF4ratio <- function(logfile) {
 #'
 #' @return Tibble object with the parsed results.
 read_qpDstat <- function(logfile) {
-    log_lines <- read_lines(logfile)
+    log_lines <- readLines(logfile) %>% .[!str_detect(., "warning")]
 
     # extract the number of analyzed population quadruples
     n_quads <- length(log_lines) - (which(str_detect(log_lines, "^nrows, ncols:"))) - 1
