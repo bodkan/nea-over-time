@@ -9,9 +9,8 @@
 library(tidyverse)
 library(stringr)
 
-source("~/projects/slim-neanderthal/R/utils.R")
+source("utils.R")
 source("admixr.R")
-source("../R/utils.R")
 
 fix_name <- function(str) {
     str_replace_all(str, "-|\\.", "_") %>%
@@ -19,7 +18,7 @@ fix_name <- function(str) {
 }
 
 
-
+setwd("../admixtools")
 
 ######################################################################
 # prepare the tables with the SGDP non-African populations (ages
@@ -250,30 +249,6 @@ dev.off()
 # material page 23)
 
 
-pdf("f4_basal_eurasian_ratios.pdf", width=8, height=5)
-
-
-create_qpF4ratio_pops(X=filter(samples, pop %in% c("EMH", "WestEurasia"),
-                               !name %in% c("UstIshim", "Kostenki14"))$name,
-                      A="UstIshim", B="Kostenki14", C="Mbuti", O="Mbuti",
-                      file="basal_ratios.pop")
-
-create_param_file("basal_ratios.par",
-                  "basal_ratios.pop",
-                  eigenstrat_prefix="UPA.K.P.V1.3.2",
-                  badsnp_file="UPA.K.P.V1.3.2.transitions.snp")
-
-run_cmd("qpF4ratio", param_file="basal_ratios.par", log_file="basal_ratios.log")
-
-nea_f4_ratios <- read_qpF4ratio("basal_ratios.log")
-nea_f4_ratios
-
-nea_f4_df <- select(nea_f4_ratios, name=X, alpha) %>%
-    mutate(alpha=1 - alpha,
-           method="f4")
-
-
-
 ## F4 ratio estimates using raw Dstats/f4
 
 ## denominator
@@ -340,6 +315,9 @@ basal_ratios <- mutate(blah2, alpha=Dstat/blah1$Dstat) %>%
     left_join(samples) %>%
     mutate(name=factor(name, levels=name[order(alpha, decreasing=TRUE)]))
 
+
+pdf("f4_basal_eurasian_ratios.pdf", width=8, height=5)
+
 ## basal Eurasian proportion over time
 ggplot(basal_ratios, aes(age, alpha)) +
     geom_point() +
@@ -370,3 +348,260 @@ dev.off()
 
 
 
+
+
+
+
+######################################################################
+## D statistic Near east affinity
+## Supplementary note 11 in the Ice Age paper
+
+
+
+pdf("near_east_dstats.pdf", width=10, height=5)
+
+
+## using modern day Near Easterners
+near_east_Y <- filter(samples, str_detect(name, "Iran|Jew|Jordan|Druze|Turkish|Bedouin|Palestinian"))$name
+ancient_X <- filter(emhs, name != "UstIshim")$name
+modern_X <- filter(samples, pop == "WestEurasia", ! name %in% near_east_Y)$name
+
+## Dstats on EMHs
+create_Dstats_pops(W="Kostenki14",
+                   X=ancient_X,
+                   Y=near_east_Y,
+                   Z="Mbuti",
+                   file="near_east_dstats_ancient.pop")
+create_param_file(
+    param_file="near_east_dstats_ancient.par",
+    pops_file="near_east_dstats_ancient.pop",
+    eigenstrat_prefix="UPA.K.P.V1.3.2",
+    badsnp_file="UPA.K.P.V1.3.2.transitions.snp"
+)
+run_cmd("qpDstat", param_file="near_east_dstats_ancient.par",
+        log_file="near_east_dstats_ancient.log")
+## Dstats on Europeans
+create_Dstats_pops(W="Kostenki14",
+                   X=modern_X,
+                   Y=near_east_Y,
+                   Z="Mbuti",
+                   file="near_east_dstats_modern.pop")
+create_param_file(
+    param_file="near_east_dstats_modern.par",
+    pops_file="near_east_dstats_modern.pop",
+    eigenstrat_prefix="UPA.K.P.V1.3.2",
+    badsnp_file="UPA.K.P.V1.3.2.transitions.snp"
+)
+run_cmd("qpDstat", param_file="near_east_dstats_modern.par",
+        log_file="near_east_dstats_modern.log")
+
+## join Dstat results for ancient and present-day humans
+near_east_Dstats <-
+    bind_rows(read_qpDstat("near_east_dstats_ancient.log"),
+              read_qpDstat("near_east_dstats_modern.log")) %>%
+    rename(name=X) %>%
+    inner_join(samples)
+
+## Dstats with Near east in present-day and UP humans
+near_east_Dstats %>%
+    group_by(name) %>% summarise(Dstat=mean(Dstat), Zscore=mean(Zscore)) %>%
+    mutate(name=factor(name, levels=name[order(Zscore)])) %>%
+    ggplot(aes(name, Zscore)) +
+    geom_bar(stat="identity") +
+    geom_hline(yintercept=c(2, -2), linetype=2, color="red") +
+    theme(axis.text.x=element_text(angle=45, hjust=1))
+
+## Dstats with Near east over time until present
+near_east_Dstats %>%
+    group_by(name, age) %>% summarise(Dstat=mean(Dstat), Zscore=mean(Zscore)) %>%
+    ggplot(aes(age, Zscore)) +
+    geom_point() +
+    geom_hline(yintercept=c(2, -2), linetype=2, color="red") +
+    geom_smooth(method="lm", linetype=2) + 
+    xlim(45000, 0) +
+    theme(axis.text.x=element_text(angle=45, hjust=1))
+
+
+
+## estimating near East admixture using ancient Levant and Natufians
+# subst="L+N"; sed "s/Levant_N/${subst}/; s/Natufian/${subst}/" UPA.K.P.V1.3.2.ind  > UPA.K.P.V1.3.2.ind.L+N
+# subst="Iran_ancient"; sed "s/Iran_N/${subst}/; s/Iran_ChL/${subst}/; s/Iran_LN/${subst}/" UPA.K.P.V1.3.2.ind  > UPA.K.P.V1.3.2.ind.Iran_ancient
+
+## Dstats on EMHs
+create_Dstats_pops(W="Kostenki14",
+                   X=ancient_X,
+                   Y="L+N",
+                   Z="Mbuti",
+                   file="near_east_dstats_ancient2.pop")
+create_param_file(
+    param_file="near_east_dstats_ancient2.par",
+    pops_file="near_east_dstats_ancient2.pop",
+    geno_file="UPA.K.P.V1.3.2.geno",
+    snp_file="UPA.K.P.V1.3.2.snp",
+    ind_file="UPA.K.P.V1.3.2.ind.L+N",
+    badsnp_file="UPA.K.P.V1.3.2.transitions.snp"
+)
+run_cmd("qpDstat", param_file="near_east_dstats_ancient2.par",
+        log_file="near_east_dstats_ancient2.log")
+## Dstats on present-day Europeans
+create_Dstats_pops(W="Kostenki14",
+                   X=modern_X,
+                   Y="L+N",
+                   Z="Mbuti",
+                   file="near_east_dstats_modern2.pop")
+create_param_file(
+    param_file="near_east_dstats_modern2.par",
+    pops_file="near_east_dstats_modern2.pop",
+    geno_file="UPA.K.P.V1.3.2.geno",
+    snp_file="UPA.K.P.V1.3.2.snp",
+    ind_file="UPA.K.P.V1.3.2.ind.L+N",
+    badsnp_file="UPA.K.P.V1.3.2.transitions.snp"
+)
+run_cmd("qpDstat", param_file="near_east_dstats_modern2.par",
+        log_file="near_east_dstats_modern2.log")
+
+## join Dstat results for ancient and present-day humans
+near_east_Dstats2 <-
+    bind_rows(read_qpDstat("near_east_dstats_ancient2.log"),
+              read_qpDstat("near_east_dstats_modern2.log")) %>%
+    rename(name=X) %>%
+    inner_join(samples)
+
+
+## raw Dstats with Near east in present-day and UP humans
+near_east_Dstats2 %>%
+    group_by(name) %>% summarise(Dstat=mean(Dstat), Zscore=mean(Zscore)) %>%
+    mutate(name=factor(name, levels=name[order(Zscore)])) %>%
+    ggplot(aes(name, Zscore)) +
+    geom_bar(stat="identity") +
+    geom_hline(yintercept=c(2, -2), linetype=2, color="red") +
+    theme(axis.text.x=element_text(angle=45, hjust=1))
+
+
+## Dstats with Near east over time until present
+near_east_Dstats2 %>%
+    group_by(name, age) %>% summarise(Dstat=mean(Dstat), Zscore=mean(Zscore)) %>%
+    ggplot(aes(age, Zscore)) +
+    geom_point() +
+    geom_hline(yintercept=c(2, -2), linetype=2, color="red") +
+    geom_smooth(method="lm", linetype=2) + 
+    xlim(45000, 0) +
+    theme(axis.text.x=element_text(angle=45, hjust=1))
+
+
+dev.off()
+
+
+
+
+
+
+
+
+
+######################################################################
+## Near east admixture proportion
+
+
+
+pdf("near_east_alpha.pdf", width=10, height=5)
+
+## ancient humans
+create_qpF4ratio_pops(X=ancient_X,
+                      A="Iraqi_Jew", B="Iranian", C="Kostenki14", O="Mbuti",
+                      file="near_east_alpha_ancient.pop")
+create_param_file("near_east_alpha_ancient.par",
+                  "near_east_alpha_ancient.pop",
+                  eigenstrat_prefix="UPA.K.P.V1.3.2",
+                  badsnp_file="UPA.K.P.V1.3.2.transitions.snp")
+run_cmd("qpF4ratio", param_file="near_east_alpha_ancient.par",
+        log_file="near_east_alpha_ancient.log")
+## modern humans
+create_qpF4ratio_pops(X=modern_X,
+                      A="Iraqi_Jew", B="Iranian", C="Kostenki14", O="Mbuti",
+                      file="near_east_alpha_modern.pop")
+create_param_file("near_east_alpha_modern.par",
+                  "near_east_alpha_modern.pop",
+                  eigenstrat_prefix="UPA.K.P.V1.3.2",
+                  badsnp_file="UPA.K.P.V1.3.2.transitions.snp")
+run_cmd("qpF4ratio", param_file="near_east_alpha_modern.par",
+        log_file="near_east_alpha_modern.log")
+
+near_east_alpha <-
+    bind_rows(read_qpF4ratio("near_east_alpha_ancient.log"),
+              read_qpF4ratio("near_east_alpha_modern.log")) %>%
+    rename(name=X) %>%
+    inner_join(samples) %>% filter(name != "Kostenki14")
+
+
+
+## F4 ratios of Near eastern ancestry in present-day and UP humans
+near_east_alpha %>% 
+    mutate(name=factor(name, levels=name[order(alpha)])) %>%
+    ggplot(aes(name, alpha)) +
+    geom_bar(stat="identity") +
+    theme(axis.text.x=element_text(angle=45, hjust=1))
+
+## F4 ratios of Near eastern ancestry in present-day and UP humans over time
+near_east_alpha %>%
+    mutate(name=factor(name, levels=name[order(alpha)])) %>%
+    ggplot(aes(age, alpha)) +
+    geom_point() + geom_smooth(method="lm", linetype=2) + 
+    xlim(45000, 0) +
+    theme(axis.text.x=element_text(angle=45, hjust=1))
+
+
+
+
+
+
+## ancient humans
+create_qpF4ratio_pops(X=ancient_X,
+                      A="Iraqi_Jew", B="L+N", C="Kostenki14", O="Mbuti",
+                      file="near_east_alpha_ancient2.pop")
+create_param_file("near_east_alpha_ancient2.par",
+                  "near_east_alpha_ancient2.pop",
+                  geno_file="UPA.K.P.V1.3.2.geno",
+                  snp_file="UPA.K.P.V1.3.2.snp",
+                  ind_file="UPA.K.P.V1.3.2.ind.L+N",  
+                  badsnp_file="UPA.K.P.V1.3.2.transitions.snp")
+run_cmd("qpF4ratio", param_file="near_east_alpha_ancient2.par",
+        log_file="near_east_alpha_ancient2.log")
+## modern humans
+create_qpF4ratio_pops(X=modern_X,
+                      A="Iraqi_Jew", B="L+N", C="Kostenki14", O="Mbuti",
+                      file="near_east_alpha_ancient2.pop")
+create_param_file("near_east_alpha_ancient2.par",
+                  "near_east_alpha_ancient2.pop",
+                  geno_file="UPA.K.P.V1.3.2.geno",
+                  snp_file="UPA.K.P.V1.3.2.snp",
+                  ind_file="UPA.K.P.V1.3.2.ind.L+N",                  
+                  badsnp_file="UPA.K.P.V1.3.2.transitions.snp")
+run_cmd("qpF4ratio", param_file="near_east_alpha_ancient2.par",
+        log_file="near_east_alpha_modern2.log")
+
+near_east_alpha2 <-
+    bind_rows(read_qpF4ratio("near_east_alpha_ancient2.log"),
+              read_qpF4ratio("near_east_alpha_modern2.log")) %>%
+    rename(name=X) %>%
+    inner_join(samples)
+
+
+
+## F4 ratios of Near eastern ancestry in present-day and UP humans
+near_east_alpha2 %>% filter(abs(alpha) < 2) %>%
+    mutate(name=factor(name, levels=name[order(alpha)])) %>%
+    ggplot(aes(name, alpha)) +
+    geom_bar(stat="identity") +
+    theme(axis.text.x=element_text(angle=45, hjust=1))
+
+## F4 ratios of Near eastern ancestry in present-day and UP humans over time
+near_east_alpha2 %>% filter(abs(alpha) < 2) %>%
+    mutate(name=factor(name, levels=name[order(alpha)])) %>%
+    ggplot(aes(age, alpha)) +
+    geom_point() + geom_smooth(method="lm") + 
+    xlim(45000, 0) + 
+    theme(axis.text.x=element_text(angle=45, hjust=1))
+
+
+dev.off()
