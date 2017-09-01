@@ -1,5 +1,3 @@
-## TODO add function for "clumping" together samples from subpopulations into bigger populations
-
 library(tidyverse)
 library(stringr)
 
@@ -259,4 +257,27 @@ snps_present <- function(geno, prop=FALSE) {
 snps_missing <- function(geno, prop=FALSE) {
     fn <- ifelse(prop, mean, sum)
     summarise_all(geno, funs(fn(. == 9)))
+}
+
+
+
+#' Merge populations from an EIGENSTRAT "ind" file under a single
+#' population label.
+#'
+#' @param file EIGENSTRAT ind file to modify.
+#' @param modified_file Modified EIGENSTRAT ind filename.
+#' @param merge List of labels to merge. List names specified labels
+#'     to merge into.
+merge_pops <- function(file, modified_file, merge) {
+    # merge=list(ancient_NearEast=merge_what, present_NearEast=c("Yemenite_Jew", "Jordan", "Samaritan", "Bedouin", "Palestinian"))
+    lines <- readLines(file)
+
+    # iterate over the lines in the "ind" file, replacing population
+    # labels with their substitutes
+    for (merge_into in names(merge)) {
+        regex <- paste0("(", paste(merge[[merge_into]], collapse="|"), ")$")
+        lines <- str_replace(lines, regex, merge_into)
+    }
+
+    writeLines(lines, modified_file)
 }
