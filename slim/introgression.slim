@@ -29,8 +29,8 @@ initialize() {
 							 $sim_length))));
     }
 
-    defineConstant("dump_gen", unique(c(seq(1, 50) + $admixture_time - 1,
-                                        seq(100    + $admixture_time - 1, $sim_length, 300),
+    defineConstant("dump_gen", unique(c(seq(1, 10) + $admixture_time - 1,
+                                        seq(100    + $admixture_time - 1, $sim_length, 200),
 				        $sim_length)));
 
     defineConstant("simulate_dilution", $simulate_dilution);
@@ -98,15 +98,22 @@ $after_admixture {
 
 // modify the DFE of Nea. introgressed mutations
 $modify_at late() {
-    muts = sim.mutations[sim.mutations.mutationType == m0 & sim.mutations.subpopID == 2];
+    muts = sim.mutations[sim.mutations.mutationType == $modify_what & sim.mutations.subpopID == 2];
+
+    if ($modify_fraction) {
+        mut_count = asInteger($modify_fraction * size(muts));
+    } else if ($modify_count) {
+        mut_count = $modify_count;
+    } else {
+        mut_count = 0;
+    }
+    mut_sample = sample(muts, mut_count);
 
     // crank up s of selected Nea. fixed mutations
     if ($multiply_s) {
-        apply(sample(muts, asInteger($modify_fraction * size(muts))),
-	      "s = applyValue.selectionCoeff; applyValue.setSelectionCoeff(s * $multiply_s);");
+        apply(mut_sample, "s = applyValue.selectionCoeff; applyValue.setSelectionCoeff(s * $multiply_s);");
     } else if ($fix_s) { // simulate fixed selective effect of Nea. mutations
-        apply(sample(muts, asInteger($modify_fraction * size(muts))),
-	      "applyValue.setSelectionCoeff($fix_s);");
+        apply(mut_sample, "applyValue.setSelectionCoeff($fix_s);");
     }
 }
 

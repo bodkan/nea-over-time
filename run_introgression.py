@@ -33,12 +33,14 @@ if __name__ == '__main__':
                         help='Mutation rate')
 
     group = parser.add_argument_group()
+    group.add_argument('--modify-at', type=int, help='At what time to modify selection'
+                       ' coefficients [generations]')
+    group.add_argument('--modify-what', type=str, help='Which mutation type to modify?', default='m0')
     group.add_argument('--modify-fraction', type=float, help='What fraction of selection'
                         ' coefficients to modify?')
-    group.add_argument('--multiply-s', type=float, help='Selection coefficient multiplier of'
-                       ' Nea. introgressed mutations')
-    parser.add_argument('--fix-s', type=float,
-                        help='Use a fixed selection coefficient of the deleterious mutations')
+    group.add_argument('--modify-count', type=int, help='What number of mutations to modify?')
+    group.add_argument('--multiply-s', type=float, help='Multiply each selection coefficient')
+    group.add_argument('--fix-s', type=float, help='Fix a selection coefficient to single value')
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--exonic-sites', metavar='FILE',
@@ -92,6 +94,9 @@ if __name__ == '__main__':
         parser.error('At least one output option must be chosen (either saving'
                      ' Nea. trajectories or whole SLiM output files).')
 
+    if args.modify_fraction and args.modify_count:
+        parser.error('Both fraction and count of mutations to modify cannot be specified')
+
     if args.founder_size and args.model != 'constant':
         parser.error('Founder population size can be specified only for the constant'
                      ' population size model.')
@@ -108,6 +113,10 @@ if __name__ == '__main__':
     out_of_africa   = years_to_gen(args.out_of_africa) + 1
     admixture_time  = out_of_africa - years_to_gen(args.admixture_time) + 1
     admixture_end   = admixture_time if not args.admixture_end else out_of_africa - years_to_gen(args.admixture_end) + 1
+
+    if args.modify_at and args.modify_at <= admixture_time:
+        parser.error('Time of mutation modification must occur at least one generation'
+                     ' after admixture')
 
     # set the appropriate growth rate and effective population size of the non-African
     # population after the out of Africa migration
@@ -153,10 +162,12 @@ if __name__ == '__main__':
         'recomb_ends'      : 'c(' + ','.join(str(i) for i in recomb_map.slim_end) + ')',
         'recomb_rates'     : 'c(' + ','.join(str(i) for i in recomb_map.recomb_rate) + ')',
         'mut_rate'         : float(args.mut_rate),
+        'modify_at'        : args.modify_at if args.modify_at else admixture_time + 1,
+        'modify_what'      : args.modify_what,
+        'modify_fraction'  : args.modify_fraction if args.modify_fraction is not None else 'F',
+        'modify_count'     : args.modify_count if args.modify_count is not None else 'F',
         'multiply_s'       : args.multiply_s if args.multiply_s is not None else 'F',
         'fix_s'            : args.fix_s if args.fix_s is not None else 'F',
-        'modify_fraction'  : args.modify_fraction,
-        'modify_at'        : admixture_time + 1,
         'genomic_elements' : genomic_elements,
         'exonic_pos'       : 'c(' + ','.join(str(pos) for pos in exonic_sites_coords.slim_start) + ')',
         'nonexonic_pos'    : 'c(' + ','.join(str(pos) for pos in nonexonic_sites_coords.slim_start) + ')',
