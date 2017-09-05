@@ -11,6 +11,9 @@ initialize() {
     // mutation type of non-exonic neutral markers
     initializeMutationType("m2", 0.5, "f", 0.0);
 
+    // mutation type of non-exonic neutral markers
+    initializeMutationType("m123", $dominance_coef, "f", 0.0);
+
     initializeGenomicElementType("g1", m0, 1.0);
 
     $genomic_elements
@@ -108,6 +111,7 @@ $modify_at late() {
         mut_count = 0;
     }
     mut_sample = sample(muts, mut_count);
+    mut_sample.setMutationType(m123);
 
     // crank up s of selected Nea. fixed mutations
     if ($multiply_s) {
