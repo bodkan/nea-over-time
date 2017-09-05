@@ -174,17 +174,17 @@ create_param_file <- function(param_file, pops_file,
 #' @param param_file Path to the parameter file.
 #' @param log_file Path to the output file. If NULL, output will be
 #'     printed to stdout.
-run_cmd <- function(cmd, param_file, log_file=NULL, admixtools_path="/Users/martin_petr/local/Admixtools/bin/") {
+run_cmd <- function(cmd, param_file, log_file=NULL, admixtools_path=NULL) {
     if (!cmd %in% c("qpDstat", "qpF4ratio")) {
         stop("ADMIXTOOLS command '", cmd, "' is not supported or does not exist")
     }
 
     output <- ifelse(!is.null(log_file), paste(">", log_file), "")
+
+    # construct the path to the ADMIXTOOLS command
+    cmd_path <- ifelse(!is.null(admixtools_path), cmd, file.path(admixtools_path, cmd))
  
-    system(command=paste(file.path(admixtools_path, cmd),
-                         "-p",
-                         param_file,
-                         output))
+    system(paste(command=cmd_path, "-p", param_file, output))
 }
 
 
@@ -222,9 +222,7 @@ read_geno <- function(file, inds=NULL) {
 #'
 #' @return Data frame with information about each SNP (columns defined by the EIGENSTRAT format).
 read_snp <- function(snp_file) {
-    read_fwf(snp_file, fwf_widths(c(20, 6, 16, 16, 2, 2),
-                                  col_names=c("id", "chrom", "gen", "pos",
-                                              "alt", "ref")))
+    read_table2(snp_file, col_names=c("id", "chrom", "gen", "pos", "alt", "ref"))
 }
 
 
