@@ -195,7 +195,7 @@ run_cmd <- function(cmd, param_file, log_file=NULL, admixtools_path=NULL) {
 #' @return Data frame with the sample identifier, sex and label
 #'     columns.
 read_ind <- function(file) {
-    read_table2(file, col_names=c("id", "sex", "label"))
+    read_table(file, col_names=c("id", "sex", "label"))
 }
 
 
@@ -222,7 +222,8 @@ read_geno <- function(file, inds=NULL) {
 #'
 #' @return Data frame with information about each SNP (columns defined by the EIGENSTRAT format).
 read_snp <- function(snp_file) {
-    read_table2(snp_file, col_names=c("id", "chrom", "gen", "pos", "alt", "ref"))
+    read_table(snp_file, col_names=c("id", "chrom", "gen", "pos", "alt", "ref"))
+
 }
 
 
