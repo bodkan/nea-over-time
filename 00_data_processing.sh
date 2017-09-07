@@ -5,18 +5,28 @@
 # Finally, it processes the CADD functional annotation data of SNPs
 # from the archaic admixture array.
 
-# download Fu et al. data
+
+
+
+
 mkdir -p raw_data
 cd raw_data
 
+
+
+
+# download Fu et al. data
 mkdir Fu
 cd Fu
-
 wget https://reich.hms.harvard.edu/sites/reich.hms.harvard.edu/files/inline-files/FuQ.zip
 unzip FuQ.zip
 cd ../../
 
+
+
+
 mkdir -p clean_data
+
 
 # process Fu et al. data
 ./R/process_eigenstrat.R raw_data/Fu/archaic.geno raw_data/Fu/archaic.snp raw_data/Fu/archaic.ind clean_data/ice_age.tsv
@@ -42,6 +52,52 @@ for chrom in `seq 1 22`; do
 done \
     | grep -v "," >> clean_data/sgdp.tsv # remove remaining triallelic sites
 chmod -w clean_data/sgdp.tsv
+
+
+
+
+
+
+# make a copy of Qiaomei's combined Eigenstrat dataset
+mkdir raw_data/eigenstrat_all; cd raw_data/eigenstrat_all
+cp /mnt/454/Carbon_beast_QM/TY/snp/UPA_all.{snp,ind,geno} .
+
+# generate the new high coverage Vindija "geno" and "snp" files
+more UPA_all.snp | tr -s ' ' | cut -d ' ' -f 3,5 | tr ' ' '\t' > 2.2M.pos
+seq 1 22 | xargs -P 22 -I {} bash -c "bcftools view -R 2.2M.pos -M 2 /mnt/454/Vindija/high_cov/genotypes/Vindija33.19/chr{}_mq25_mapab100.vcf.gz | bcftools query -f '%CHROM\t%POS\t[%GT]\n' | sed 's/0\/0/0/g; s/0\/1/1/g; s/1\/1/2/g' > chr{}.tmp"
+cat chr{1..22}.tmp > vindija.tmp
+rm chr*.tmp 2.2M.pos
+
+
+library(tidyverse)
+source("../../R/admixr.R")
+all <- read_table2("UPA_all.snp", col_names=c("id", "chrom", "gen", "pos", "alt", "ref"))
+vindija <- read_tsv("vindija.tmp", col_names=c("chrom", "pos", "geno"))
+merged <- left_join(all, vindija)
+merged$geno[is.na(merged$geno)] <- 9
+write_tsv(select(merged, -geno), "vindija.snp", col_names=FALSE)
+write_tsv(select(merged, geno), "vindija.geno", col_names=FALSE)
+
+
+# create 'ind' EIGENSTRAT file
+echo "new_Vindija F new_Vindija" > vindija.ind
+
+# generate a mergit parameter file
+echo "outputformat: EIGENSTRAT
+geno1: UPA_all.geno
+snp1: UPA_all.snp
+ind1: UPA_all.ind
+geno2: vindija.geno
+snp2: vindija.snp
+ind2: vindija.ind
+genooutfilename: UPA_merged.geno
+snpoutfilename: UPA_merged.snp
+indoutfilename: UPA_merged.ind" > mergeit.par
+
+mergeit -p mergeit.par
+
+
+
 
 
 # annotate the SNPs using CADD
@@ -139,3 +195,4 @@ rm bkgd.tar.gz
 # download the hg18-to-hg19 liftover chain
 wget http://hgdownload.cse.ucsc.edu/goldenPath/hg18/liftOver/hg18ToHg19.over.chain.gz
 gunzip hg18ToHg19.over.chain.gz
+
