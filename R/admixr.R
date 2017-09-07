@@ -174,17 +174,14 @@ create_param_file <- function(param_file, pops_file,
 #' @param param_file Path to the parameter file.
 #' @param log_file Path to the output file. If NULL, output will be
 #'     printed to stdout.
-run_cmd <- function(cmd, param_file, log_file=NULL, admixtools_path=NULL) {
+run_cmd <- function(cmd, param_file, log_file) {
     if (!cmd %in% c("qpDstat", "qpF4ratio")) {
         stop("ADMIXTOOLS command '", cmd, "' is not supported or does not exist")
     }
 
-    output <- ifelse(!is.null(log_file), paste(">", log_file), "")
+    output <- paste("> ", log_file)
 
-    # construct the path to the ADMIXTOOLS command
-    cmd_path <- ifelse(!is.null(admixtools_path), cmd, file.path(admixtools_path, cmd))
- 
-    system(paste(command=cmd_path, "-p", param_file, output))
+    system(paste(cmd, "-p", param_file, output))
 }
 
 
