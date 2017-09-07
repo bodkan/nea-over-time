@@ -150,8 +150,13 @@ $admixture_time:$sim_length late() {
     output_file = "$output_prefix" + "__nonexonic_sites.txt";
 
     if ($save_trajectories & any(sim.generation == trajectories_gen)) {
+        total_count = size(nonexonic_pos);
+        if ((sim.generation >= $modify_at) & ("$modify_what" == "m2")) {
+            total_count = total_count - $modify_count;
+        }
+
         nea_per_ind = apply(seq(0, p3.individualCount - 1),
-                            "sum(p3.genomes[c(2 * applyValue, 2 * applyValue + 1)].countOfMutationsOfType(m2));") / (2 * size(nonexonic_pos));
+                            "sum(p3.genomes[c(2 * applyValue, 2 * applyValue + 1)].countOfMutationsOfType(m2));") / (2 * total_count);
 
         if (sim.generation == $admixture_time)
             writeFile(output_file, "gen\tmean\tsd\tmedian\tmin\tmax\tNe\n");
