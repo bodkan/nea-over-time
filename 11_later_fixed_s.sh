@@ -10,9 +10,6 @@ exome_and_sites_recomb_map=${clean_dir}/exome_and_sites_recombination_map.txt
 exonic_array_sites=${clean_dir}/admixture_array_coordinates_exonic.txt
 nonexonic_array_sites=${clean_dir}/admixture_array_coordinates_nonexonic.txt
 
-# number of replicates of each model
-num_replicates=2
-
 traject_dir=${sims_dir}/delayed_fixed_s
 mkdir -p $traject_dir
 
@@ -30,7 +27,7 @@ run_introgression() {
 	    --nonexonic-sites $nonexonic_array_sites \
 	    --output-prefix ${traject_dir}/${run_id} \
 	    --model constant \
-            --founder-size 5000 \
+            --founder-size 2500 \
 	    --fix-s=-$3 \
             --modify-at 300 \
 	    --modify-count $4 \
@@ -51,11 +48,10 @@ run_introgression() {
 
 mut_type=m2
 init_nea=0.1
+rep_i=$1
 for mut_count in {100,500,1000,2000,3000,10000}; do
     for fix_s in {0.0001,0.001,0.005,0.01}; do
-        for rep_i in `seq 1 $num_replicates`; do
-            run_introgression $rep_i $init_nea $fix_s $mut_count $mut_type &
-        done
+        run_introgression $rep_i $init_nea $fix_s $mut_count $mut_type &
     done
 done
 
