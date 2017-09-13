@@ -2,6 +2,30 @@ library(tidyverse)
 library(magrittr)
 library(stringr)
 
+# Change the SGDP ID into a simple population ID.
+# Example: "S_French-1" -> "French"
+fix_name <- function(str) {
+    str_replace_all(str, "-|\\.", "_") %>%
+        str_replace_all("^S_|_[1-9]+", "")
+}
+
+load_samples <- function() {
+    suppressMessages({
+    sgdp <- load_sgdp_info("../raw_data/10_24_2014_SGDP_metainformation_update.txt") %>%
+        select(-Country, pop=Region) %>%
+        mutate(age=0, name=fix_name(name)) %>%
+        group_by(name, age, pop) %>%
+        summarise(Latitude=mean(Latitude), Longitude=mean(Longitude)) %>%
+        ungroup
+    emhs <- read_delim("../clean_data/emh_ages.txt", delim=" ", col_names=c("name", "age")) %>%
+        mutate(pop="EMH", Latitude=NA, Longitude=NA) %>%
+        filter(name != "Oase1")
+    })
+    samples <- bind_rows(emhs, sgdp) %>% select(-Latitude, -Longitude)
+
+    samples
+}
+
 #
 # Replace het calls in a set of samples with randomly called REF or
 # ALT hom calls.
