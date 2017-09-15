@@ -69,12 +69,11 @@ less UPA_all.snp | tr -s ' ' | cut -d ' ' -f 3,5 | tr ' ' '\t' > 2.2M.pos
 
 
 # generate the new high coverage Vindija "geno" and "snp" files
-seq 1 22 | xargs -P 22 -I {} bash -c "bcftools view -R 2.2M.pos -M 2 /mnt/454/Vindija/high_cov/genotypes/Vindija33.19/chr{}_mq25_mapab100.vcf.gz | bcftools query -f '%CHROM\t%POS\t[%GT]\n' | sed 's/0\/0/0/g; s/0\/1/1/g; s/1\/1/2/g' > chr{}.tmp"
+seq 1 22 | xargs -P 22 -I {} bash -c "bcftools view -R 2.2M.pos -M 2 /mnt/454/Vindija/high_cov/genotypes/Vindija33.19/chr{}_mq25_mapab100.vcf.gz | bcftools query -f '%CHROM\t%POS\t[%GT]\n' | sed 's/0\/0/2/g; s/0\/1/1/g; s/1\/1/0/g' > chr{}.tmp"
 cat chr{1..22}.tmp > vindija.tmp
 rm chr*.tmp
 
 library(tidyverse)
-source("../../R/admixr.R")
 all <- read_table2("UPA_all.snp", col_names=c("id", "chrom", "gen", "pos", "alt", "ref"))
 vindija <- read_tsv("vindija.tmp", col_names=c("chrom", "pos", "geno"))
 merged <- left_join(all, vindija)
@@ -105,7 +104,7 @@ mergeit -p mergeit.par
 
 
 # generate the new high coverage Altai "geno" and "snp" files
-seq 1 22 | xargs -P 22 -I {} bash -c "bcftools view -R 2.2M.pos -M 2 /mnt/454/Vindija/high_cov/genotypes/Altai/chr{}_mq25_mapab100.vcf.gz | bcftools query -f '%CHROM\t%POS\t[%GT]\n' | sed 's/0\/0/0/g; s/0\/1/1/g; s/1\/1/2/g' > chr{}.tmp"
+seq 1 22 | xargs -P 22 -I {} bash -c "bcftools view -R 2.2M.pos -M 2 /mnt/454/Vindija/high_cov/genotypes/Altai/chr{}_mq25_mapab100.vcf.gz | bcftools query -f '%CHROM\t%POS\t[%GT]\n' | sed 's/0\/0/2/g; s/0\/1/1/g; s/1\/1/0/g' > chr{}.tmp"
 cat chr{1..22}.tmp > altai.tmp
 rm chr*.tmp
 
