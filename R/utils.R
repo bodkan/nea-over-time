@@ -6,7 +6,7 @@ library(stringr)
 # Example: "S_French-1" -> "French"
 fix_name <- function(str) {
     str_replace_all(str, "-|\\.", "_") %>%
-        str_replace_all("^S_|_[0-9]+", "")
+        str_replace_all("^[A|B|S]_|_[0-9]+", "")
 }
 
 load_samples <- function() {
