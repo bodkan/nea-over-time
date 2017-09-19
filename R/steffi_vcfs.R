@@ -65,15 +65,19 @@ writeLines(apply(geno_all, 1, paste, collapse=""), "steffi.geno")
 ## names(geno) <- ind$id
 ## snp <- read_snp("steffi.snp")
 
-## qiaomei <- bind_cols(s, g) %>% select(chrom, pos, ref, alt, Ust_Ishim, new_Altai, new_Vindija, Chimp)
-## steffi <- bind_cols(snp, geno) %>% select(chrom, pos, ref, alt, Ust_Ishim, new_Altai, new_Vindija, Chimp)
+## qiaomei <- bind_cols(s, g)
+## steffi <- bind_cols(snp, geno)
 
 
 ## x <- inner_join(qiaomei, steffi, by=c("chrom", "pos"))
 
 
-## select(x, contains("Altai")) %>% table
-## select(x, contains("Vindija")) %>% table
+## select(x, contains("new_Altai")) %>% table
+## select(x, contains("new_Vindija")) %>% table
 ## select(x, contains("Ust_Ishim")) %>% table
 
 ## select(x, contains("Chimp")) %>% table
+
+## select(x, contains("S_French-1")) %>% table
+
+## select(x, chrom, pos, contains("S_French-1")) %>% filter(`S_French-1.x` ==  0, `S_French-1.y` ==  2)
