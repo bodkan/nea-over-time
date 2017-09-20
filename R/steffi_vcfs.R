@@ -54,30 +54,36 @@ writeLines(apply(geno_all, 1, paste, collapse=""), "steffi.geno")
 
 
 
-## i <- read_ind("../eigenstrat_all/UPA_merged_all.ind")
-## g <- read_geno("../eigenstrat_all/UPA_merged_all.geno")
-## names(g) <- i$id
-## s <- read_snp("../eigenstrat_all/UPA_merged_all.snp")
+## qiaomei_ind <- read_ind("../eigenstrat_all/UPA_merged_all.ind")
+## qiaomei_geno <- read_geno("../eigenstrat_all/UPA_merged_all.geno")
+## names(qiaomei_geno) <- qiaomei_ind$id
+## qiaomei_snp <- read_snp("../eigenstrat_all/UPA_merged_all.snp") %>% select(chrom, pos)
+## qiaomei_pos <- select(qiaomei_snp, chrom, pos)
+
+## steffi_geno <- read_geno("steffi.geno")
+## steffi_ind <- read_ind("steffi.ind")
+## names(steffi_geno) <- steffi_ind$id
+## steffi_snp <- read_snp("steffi.snp") %>% select(chrom, pos)
+## steffi_pos <- select(steffi_snp, chrom, pos)
+
+## shared_samples <- intersect(names(qiaomei_geno), names(steffi_geno))
+
+## steffi_geno <- select(steffi_geno, shared_samples)
+## qiaomei_geno <- select(qiaomei_geno, shared_samples)
+
+## steffi <- bind_cols(steffi_snp, steffi_geno) %>% inner_join(qiaomei_snp)
+## qiaomei <- bind_cols(qiaomei_snp, qiaomei_geno) %>% inner_join(select(steffi, chrom, pos))
 
 
-## geno <- read_geno("steffi.geno")
-## ind <- read_ind("steffi.ind")
-## names(geno) <- ind$id
-## snp <- read_snp("steffi.snp")
+## table(steffi$new_Altai)
+## table(qiaomei$new_Altai)
 
-## qiaomei <- bind_cols(s, g)
-## steffi <- bind_cols(snp, geno)
+## table(steffi$new_Vindija)
+## table(qiaomei$new_Vindija)
 
+## table(steffi$`S_French-1`)
+## table(qiaomei$`S_French-1`)
 
-## x <- inner_join(qiaomei, steffi, by=c("chrom", "pos"))
+## table(steffi$`S_French-1`)/sum(table(steffi$`S_French-1`))
+## table(qiaomei$`S_French-1`)/sum(table(qiaomei$`S_French-1`))
 
-
-## select(x, contains("new_Altai")) %>% table
-## select(x, contains("new_Vindija")) %>% table
-## select(x, contains("Ust_Ishim")) %>% table
-
-## select(x, contains("Chimp")) %>% table
-
-## select(x, contains("S_French-1")) %>% table
-
-## select(x, chrom, pos, contains("S_French-1")) %>% filter(`S_French-1.x` ==  0, `S_French-1.y` ==  2)
