@@ -12,17 +12,15 @@ snp_all <- data.frame()
 geno_all <- c()
 
 for (chrom in as.character(1:22)) {
-    vcf_file <- paste0("merged_arch_SGDP_chr", chrom, ".almostvcf.gz")
+    vcf_file <- paste0("merged_arch_SGDP_chr", chrom, ".vcf.gz")
 
     cat("Processing file: ", vcf_file, "...")
 
     # load the pseudo VCF file
     chrom_vcf <- read_tsv(vcf_file) %>%
-        mutate(PanTro4=toupper(PanTro4), PonAbe2=toupper(PonAbe2)) %>%
-        mutate(Chimp=as.integer(PanTro4 != REF), Orang=as.integer(PonAbe2 != REF)) %>%
         rename(chrom=`#CHROM`, pos=POS, ref=REF, alt=ALT, new_Altai=AltaiNeandertal,
-               new_Vindija=Vindija) %>%
-        select(-c(ID, QUAL, FILTER, INFO, FORMAT, PanTro4, PonAbe2))
+               new_Vindija=Vindija, Chimp=panTro4, Orang=ponAbe2) %>%
+        select(-c(ID, QUAL, FILTER, INFO, FORMAT))
 
     # generate dataframes with the 3 EIGENSTRAT info tables
     snp <- select(chrom_vcf, chrom, pos, ref, alt) %>%
