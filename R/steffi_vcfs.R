@@ -19,7 +19,7 @@ for (chrom in as.character(1:22)) {
     # load the pseudo VCF file
     chrom_vcf <- read_tsv(vcf_file) %>%
         rename(chrom=`#CHROM`, pos=POS, ref=REF, alt=ALT, new_Altai=AltaiNeandertal,
-               new_Vindija=Vindija, Chimp=panTro4, Orang=ponAbe2) %>%
+               new_Vindija=Vindija) %>%
         select(-c(ID, QUAL, FILTER, INFO, FORMAT))
 
     # generate dataframes with the 3 EIGENSTRAT info tables
