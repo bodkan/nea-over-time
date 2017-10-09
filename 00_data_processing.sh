@@ -62,8 +62,10 @@ chmod -w clean_data/sgdp.tsv
 mkdir raw_data/eigenstrat_all; cd raw_data/eigenstrat_all
 cp /mnt/454/Carbon_beast_QM/TY/snp/UPA_all.{snp,ind,geno} .
 
-less UPA_all.snp | tr -s ' ' | cut -d ' ' -f 3,5 | tr ' ' '\t' > 2.2M.pos
 
+# make a directory for different coordinate files
+mkdir ../coordinates
+less UPA_all.snp | awk -v OFS="\t" '{print $2, $4-1, $4}' > ../coordinates/2.2M.bed
 
 
 
@@ -138,9 +140,11 @@ mergeit -p mergeit_all.par
 
 
 
+# download the coordinates of the big Yoruba + Altai array (ref. in the Oase paper)
+scp bionc09.eva.mpg.de:/r1/people/public/AncientDNA/probe_designs/AA77-81_bigYoruba/big_yoruba_and_altai_filtN_printed_probes_with_annotation.txt raw_data/.
 
-
-
+# extract the coordinates of the big Yoruba+Altai array
+awk -v OFS="\t" '{print $1, $2-1, $2}' raw_data/big_yoruba_and_altai_filtN_printed_probes_with_annotation.txt > raw_data/coordinates/big_yoruba.bed
 
 
 
