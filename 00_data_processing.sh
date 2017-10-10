@@ -150,6 +150,14 @@ awk -v OFS="\t" '{print $1, $2-1, $2}' raw_data/big_yoruba_and_altai_filtN_print
 
 
 
+# get the merged VCFs of SGDP + archaics
+mkdir raw_data/merged_vcfs
+
+for f in /mnt/scratch/steffi/D/Vcfs/mergedArchaics_SGDP0/*chr{1..22}.vcf.gz; do zcat $f | ./filter_vcf_with_bed.py <(awk -vOFS="\t" '{print $2, $4-1, $4}' raw_data/eigenstrat_all/UPA_merged_all.snp); done | awk '($5 != "." && $5 != "-" && length($5) == 1) { print $0 }' | bgzip > raw_data/merged_vcfs/mergedArchaics_qual0.vcf.gz
+
+for f in /mnt/scratch/steffi/D/Vcfs/mergedArchaics/*chr{1..22}.vcf.gz; do zcat $f | ./filter_vcf_with_bed.py <(awk -vOFS="\t" '{print $2, $4-1, $4}' raw_data/eigenstrat_all/UPA_merged_all.snp); done | awk '($5 != "." && $5 != "-" && length($5) == 1) { print $0 }' | bgzip > raw_data/merged_vcfs/mergedArchaics_qual1.vcf.gz
+
+
 
 
 
