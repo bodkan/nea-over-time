@@ -1,11 +1,6 @@
 notebooks/.ipynb_checkpoints/*
 tmp/*
-clean_data/*
+data/*
 simulations/*
-tests/*
 __pycache__/*
-output/*
-raw_data/*
-RData/*
-admixtools/*
 .DS_Store
