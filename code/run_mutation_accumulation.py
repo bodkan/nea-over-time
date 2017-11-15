@@ -75,7 +75,7 @@ if __name__ == "__main__":
     recomb_map = pd.read_table(args.recomb_map)
 
     # read coordinates of sites from the archaic admixture array
-    sites_coords = pd.read_table(args.region_sites).slim_start
+    sites_coords = pd.read_table(args.sites).slim_start
 
     # values to fill in the SLiM template file
     mapping = {
@@ -83,7 +83,7 @@ if __name__ == "__main__":
         "recomb_rates"     : slim_vector(recomb_map.recomb_rate),
         "genomic_elements" : "\n".join("initializeGenomicElement(g1, {}, {});".format(s, e)
                                        for s, e in zip(region_coords.slim_start,
-                                                       region_coords.slim_end))
+                                                       region_coords.slim_end)),
         "mut_rate"         : args.mut_rate,
         "dominance_coef"   : args.dominance_coef,
         "positions"        : slim_vector(sites_coords),
@@ -92,7 +92,7 @@ if __name__ == "__main__":
         "nea_size"         : args.nea_size,
         "burnin"           : burnin,
         "out_of_africa"    : out_of_africa,
-        "output"           : args.output_prefix
+        "output"           : args.output
     }
 
     # fill in the SLiM template with simulation parameter values
