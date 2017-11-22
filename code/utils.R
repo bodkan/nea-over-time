@@ -11,14 +11,14 @@ fix_name <- function(str) {
 
 load_samples <- function() {
     suppressMessages({
-    sgdp <- load_sgdp_info("../raw_data/10_24_2014_SGDP_metainformation_update.txt") %>%
+    sgdp <- load_sgdp_info("../data/10_24_2014_SGDP_metainformation_update.txt") %>%
         select(-Country, pop=Region) %>%
         filter(pop != "Africa") %>%
         mutate(age=0, name=fix_name(name)) %>%
         group_by(name, age, pop) %>%
         summarise(Latitude=mean(Latitude), Longitude=mean(Longitude)) %>%
         ungroup
-    emhs <- read_delim("../clean_data/emh_ages.txt", delim=" ", col_names=c("name", "age")) %>%
+    emhs <- read_delim("../data/emh_ages.txt", delim=" ", col_names=c("name", "age")) %>%
         mutate(pop="EMH", Latitude=NA, Longitude=NA) %>%
         filter(name != "Oase1")
     })
