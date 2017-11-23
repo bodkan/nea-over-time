@@ -64,7 +64,7 @@ if __name__ == "__main__":
 
     # convert arguments specified in years BP to generations since the
     # start of the simulation
-    burnin          = 8 * args.anc_size  # SLiM 1.8 manual recommends 5xNe
+    burnin          = 7 * args.anc_size  # SLiM 1.8 manual recommends 5xNe
     hum_nea_split   = years_to_gen(args.hum_nea_split)
     out_of_africa   = burnin + hum_nea_split - years_to_gen(args.out_of_africa)
 
