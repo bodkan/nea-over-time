@@ -1,6 +1,6 @@
 mkdir data/burnins
 
-# chromosomes 1-5 only -------------------------------------------------------
+# chromosomes 1-3 only -------------------------------------------------------
 
 mkdir data/slim_coords/subset
 
