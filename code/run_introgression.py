@@ -80,6 +80,8 @@ if __name__ == "__main__":
                         "(stop after '--out-of-africa' years by default)")
 
     parser.add_argument("--output-prefix", metavar="FILE", help="Prefix of output VCF files")
+    parser.add_argument("--vcf-times", nargs="*", type=int, help="Generation times (in generations)"
+                        " for VCF output")
     parser.add_argument("--dump-slim", metavar="FILE", help="Dump the generated SLiM config "
                         "file without running the simulation")
 
@@ -125,6 +127,9 @@ if __name__ == "__main__":
     # the start of the simulation
     sampling_times = [out_of_africa - years_to_gen(t) for t in args.sampling_times]
 
+    # shift the VCF-dumping generation times appropriately
+    vcf_times = [t + for t in args.vcf_time]
+
     # load the SLiM 0-based coordinates of regions to simulate
     region_coords = pd.read_table(args.regions, sep="\t")
 
@@ -166,6 +171,7 @@ if __name__ == "__main__":
         "sim_length"        : out_of_africa,
         "simulate_dilution" : "T" if args.dilution else "F",
         "output_prefix"     : args.output_prefix
+        "vcf_times"         : slim_vector(vcf_times),
     }
 
     # if simulating dilution, add the necessary parameters

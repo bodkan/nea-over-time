@@ -143,6 +143,12 @@ $admixture_time:$sim_length late() {
   }
 }
 
+$admixture_time:$sim_length late() {
+    if (any(sim.generation == $vcf_times)) {
+        p3.outputVCFSample(100, outputMultiallelics=F, filePath="$output_prefix" + "_gen_" + asString(sim.generation - $admixture_time + 1) + ".vcf");
+    }
+}
+
 $terminate_after late() {
     sim.simulationFinished();
 }
