@@ -23,8 +23,8 @@ initialize() {
     if (size($sampling_times) > 0) {
         defineConstant("output_gen", unique($sampling_times + $admixture_time - 1));
     } else {
-        defineConstant("output_gen", sort(unique(c(seq(1, 100) + $admixture_time - 1,
-                                                   seq(100     + $admixture_time - 1, $sim_length, 100),
+        defineConstant("output_gen", sort(unique(c(seq(1, 20) + $admixture_time - 1,
+                                                   seq(100    + $admixture_time - 1, $sim_length, 100),
                                                    $sim_length))));
     }
 

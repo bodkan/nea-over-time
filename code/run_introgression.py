@@ -128,7 +128,7 @@ if __name__ == "__main__":
     sampling_times = [out_of_africa - years_to_gen(t) for t in args.sampling_times]
 
     # shift the VCF-dumping generation times appropriately
-    vcf_times = [t + for t in args.vcf_time]
+    vcf_times = [t + admixture_time  - 1 for t in args.vcf_times]
 
     # load the SLiM 0-based coordinates of regions to simulate
     region_coords = pd.read_table(args.regions, sep="\t")
@@ -170,7 +170,7 @@ if __name__ == "__main__":
         "sampling_times"    : slim_vector(sampling_times),
         "sim_length"        : out_of_africa,
         "simulate_dilution" : "T" if args.dilution else "F",
-        "output_prefix"     : args.output_prefix
+        "output_prefix"     : args.output_prefix,
         "vcf_times"         : slim_vector(vcf_times),
     }
 
@@ -199,6 +199,6 @@ if __name__ == "__main__":
             logger.info("Simulation from SLiM input file '{}' done (return code = {})".format(slim_file.name, slim_output.returncode))
 
             # gzip all generated VCF files
-            # for f in glob.glob(args.output_prefix + "*"):
-            #     gzip_return = subprocess.run(["gzip", f])
-            #     logger.info("Gzip'ing file '{}' done (return code = {})".format(f, gzip_return.returncode))
+            for f in glob.glob(args.output_prefix + "*"):
+                gzip_return = subprocess.run(["gzip", f])
+                logger.info("Gzip'ing file '{}' done (return code = {})".format(f, gzip_return.returncode))
