@@ -6,3 +6,4 @@ simulations/*
 __pycache__/*
 .DS_Store
 *.swp
+test/*
