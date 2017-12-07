@@ -208,3 +208,9 @@ for chr in `seq 1 22`; do
 done \
     | awk -v OFS="\t" '{ $2=$2-1"\t"$2; print $0 }' \
     >> data/genotypes/genload.bed
+
+
+
+less /mnt/expressions/benjamin_vernot/martin_neand_over_time_emh/1kg_p3_allele_freqs/YRI.freq \
+    | tr -s ' ' | tr '\t' ' ' | awk -v OFS="\t" '{print $4, $1, $8}' | sort -k1,1n -k2,2n | bgzip \
+    > data/YRI.freq.gz
