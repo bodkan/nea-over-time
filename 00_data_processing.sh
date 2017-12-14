@@ -47,6 +47,11 @@ chmod -w ${gt_dir}/archaics.tsv
 
 
 
+# ---------------------------------------------------------------------- 
+#  get the coordinates of the Big Yoruba array sites
+cp /r1/people/public/AncientDNA/probe_designs/AA77-81_bigYoruba/big_yoruba_and_altai_filtN_printed_probes_with_annotation.txt data/
+awk -v OFS="\t" '{print $1, $2 - 1, $2}' data/big_yoruba_and_altai_filtN_printed_probes_with_annotation.txt > data/bed/big_yoruba_array.bed
+
 
 
 # ---------------------------------------------------------------------- 
