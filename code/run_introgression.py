@@ -197,8 +197,3 @@ if __name__ == "__main__":
                                          universal_newlines=True)
 
             logger.info("Simulation from SLiM input file '{}' done (return code = {})".format(slim_file.name, slim_output.returncode))
-
-            # gzip all generated VCF files
-            for f in glob.glob(args.output_prefix + "*"):
-                gzip_return = subprocess.run(["gzip", f])
-                logger.info("Gzip'ing file '{}' done (return code = {})".format(f, gzip_return.returncode))
