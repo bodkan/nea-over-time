@@ -14,7 +14,7 @@ for h in 0.0 0.5 1.0; do
 done
 done
 
-for region in protein_coding promoter utr3 tf_binding_site; do
+for region in exon protein_coding promoter utr3 tf_binding_site; do
 for h in 0.5; do
     python3 code/run_mutation_accumulation.py \
         --regions data/slim_coords/${region}_regions.bed \
