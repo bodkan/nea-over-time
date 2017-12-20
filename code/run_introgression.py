@@ -80,8 +80,8 @@ if __name__ == "__main__":
                         "(stop after '--out-of-africa' years by default)")
 
     parser.add_argument("--output-prefix", metavar="FILE", help="Prefix of output VCF files")
-    parser.add_argument("--vcf-times", nargs="*", type=int, help="Generation times (in generations)"
-                        " for VCF output")
+    parser.add_argument("--vcf-times", nargs="+", type=int, help="Generation times (in generations)"
+                        " for VCF output", default=[])
     parser.add_argument("--dump-slim", metavar="FILE", help="Dump the generated SLiM config "
                         "file without running the simulation")
 
