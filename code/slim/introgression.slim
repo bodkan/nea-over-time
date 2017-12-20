@@ -27,6 +27,11 @@ initialize() {
                                                    seq(100    + $admixture_time - 1, $sim_length, 100),
                                                    $sim_length))));
     }
+    if (size($vcf_times) > 0) {
+        defineConstant("vcf_gen", $vcf_times);
+    } else {
+        defineConstant("vcf_gen", c(-1));
+    }
 
     defineConstant("simulate_dilution", $simulate_dilution);
     defineConstant("single_pulse", $admixture_time == $admixture_end);
@@ -38,6 +43,7 @@ initialize() {
 1 {
     cat(time() + " :: INFO :: Reading populations.\n");
     sim.readFromPopulationFile("$population_file");
+    sim.recalculateFitness();
     sim.generation = 1;
 
     // delete the African population when not simulating dilution
@@ -130,7 +136,7 @@ $admixture_time:$sim_length late() {
                             "sum(p3.genomes[c(2 * applyValue, 2 * applyValue + 1)].countOfMutationsOfType(m1));") / (2 * size(positions));
 
         if (sim.generation == $admixture_time)
-            writeFile(output_file, "gen\tmean\tsd\tmedian\tmin\tmax\tNe\n");
+            writeFile(output_file, "gen\tmean\tsd\tmedian\tmin\tmax\tNe");
 
             writeFile(output_file, paste(c(sim.generation - $admixture_time + 1,
                                            mean(nea_per_ind),
@@ -138,13 +144,13 @@ $admixture_time:$sim_length late() {
                                            sort(nea_per_ind)[asInteger(size(nea_per_ind) / 2)],
                                            min(nea_per_ind),
                                            max(nea_per_ind),
-                                           p3.individualCount), "\t") + "\n",
+                                           p3.individualCount), "\t"),
                       append=T);
   }
 }
 
 $admixture_time:$sim_length late() {
-    if (any(sim.generation == $vcf_times)) {
+    if (any(sim.generation == vcf_gen)) {
         path = "$output_prefix" + "_gen_" + asString(sim.generation - $admixture_time + 1) + ".vcf";
         p3.outputVCFSample(100, outputMultiallelics=F, filePath=path);
         system("bgzip " + path);
