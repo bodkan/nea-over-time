@@ -69,7 +69,8 @@ awk -v OFS="\t" '{print $1, $2 - 1, $2}' data/big_yoruba_and_altai_filtN_printed
 
 # ---------------------------------------------------------------------- 
 # generate updated EIGENSTRAT 2.2 M sites data that include the new
-# processing of Altai, Vindija and Denisova (genotyped using snpAD)
+# processing of Altai, Vindija and Denisova (genotyped using snpAD) and
+# the new Mezmaiskaya 1 random read data
 
 mkdir data/eigenstrat/bigyri_ho
 cd data/eigenstrat/bigyri_ho
@@ -80,41 +81,12 @@ cp /mnt/454/Carbon_beast_QM/TY/snp/UPA_all.{snp,ind,geno} .
 # make a directory for different coordinate files
 less UPA_all.snp | awk -v OFS="\t" '{print $2, $4-1, $4}' > ../../bed/2.2M.bed
 
+# convert the archaics' genotypes into a 0/1/2/9 format
 seq 1 22 | xargs -P 22 -I {} bash -c "bcftools view -a /mnt/scratch/steffi/D/Vcfs/mergedArchModernApes/merged_high_apes_low_sgdp1_chr{}.vcf.gz -R ../../bed/2.2M.bed -s AltaiNeandertal,Vindija33.19,Mezmais1Deam,Denisova | bcftools query -f '%CHROM\t%POS[\t%GT]\n' | sed 's/\.\/\./9/g; s/0\/0/0/g; s/0\/1/1/g; s/1\/1/2/g' | grep -v '/' > chr{}.tmp"
 cat chr{1..22}.tmp > all_chr.tmp
 rm chr*.tmp
 
-R --no-save < <(echo '
-library(tidyverse)
-library(admixr)
-all <- read_snp("UPA_all.snp")
-archaics <- read_tsv("asd.tmp", col_names=c("chrom", "pos", "Altai", "Vindija", "Mez1", "Denisovan"), col_types="ciiiii")
-joined <- left_join(all, archaics)
-joined$Altai[is.na(joined$Altai)] <- 9
-joined$Vindija[is.na(joined$Vindija)] <- 9
-joined$Mez1[is.na(joined$Mez1)] <- 9
-joined$Denisovan[is.na(joined$Denisovan)] <- 9
-
-write_geno("archaics.geno", select(joined, Altai:Denisovan))
-write_snp("archaics.snp", select(joined, -(Altai:Denisovan)))
-write_ind("archaics.ind", tibble(name=c("new_Altai", "new_Vindija", "new_Mez1", "new_Densiovan"), sex=rep("F", 4), pop=c("new_Altai", "new_Vindija", "new_Mez1", "new_Denisovan")))
-')
-
-# generate a mergit parameter file
-echo "outputformat: EIGENSTRAT
-geno1: UPA_all.geno
-snp1: UPA_all.snp
-ind1: UPA_all.ind
-geno2: archaics.geno
-snp2: archaics.snp
-ind2: archaics.ind
-genooutfilename: UPA_merged.geno
-snpoutfilename: UPA_merged.snp
-indoutfilename: UPA_merged.ind" > mergeit_archaics.par
-
-mergeit -p mergeit_archaics.par
-
-
+# perform a mergit operation (using R, not using ADMIXTOOLS' broken mergit command)
 R --no-save < <(echo '
 library(tidyverse)
 library(admixr)
