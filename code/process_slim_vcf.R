@@ -72,7 +72,7 @@ get_markers <- function(vcf, regions_bed) {
   all_sites <- mcols(real_sites) %>%
     as.data.frame %>% select(chrom=real_chrom, pos=real_end)
 
-  full_join(trans_sites, all_sites) %>%
+  full_join(trans_sites, all_sites, by=c("chrom", "pos")) %>%
     mutate(freq=ifelse(is.na(freq), 0, freq),
            chrom=factor(chrom, levels=paste0("chr", 1:22))) %>%
     arrange(chrom, pos)
