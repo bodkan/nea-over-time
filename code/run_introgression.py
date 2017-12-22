@@ -54,6 +54,8 @@ if __name__ == "__main__":
     group.add_argument("--modify-count", type=int, help="What number of mutations to modify?")
     group.add_argument("--multiply-s", type=float, help="Multiply each selection coefficient")
     group.add_argument("--fix-s", type=float, help="Fix a selection coefficient to single value")
+    group.add_argument("--force-neutral", action="store_true", help="Simulate neutrality "
+                       "(set all deleterious mutations to s=0)")
 
     parser.add_argument("--admixture-rate", type=float, default=0.1,
                         help="Neanderthal migration rate")
@@ -165,6 +167,7 @@ if __name__ == "__main__":
         "multiply_s"        : "T" if args.multiply_s is not None else "F",
         "fix_s"             : "T" if args.fix_s is not None else "F",
         "modifier"          : modifier,
+        "neutral_sim"       : "T" if args.force_neutral else "F",
 
         "founder_size"      : founder_size,
         "admixture_rate"    : args.admixture_rate,

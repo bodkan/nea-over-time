@@ -55,6 +55,10 @@ initialize() {
 // save the simulation state right before the admixture in case it is
 // necessary to restart (makes sense just for the single pulse scenario)
 $before_admixture late() {
+    if ($neutral_sim) {
+        apply(sim.mutations[sim.mutations.mutationType == 0], "applyValue.setSelectionCoeff(0.0);");
+    }
+
     if (single_pulse) {
         cat(time() + " :: INFO :: Saving the simulation state before the admixture\n");
         sim.outputFull(tmp_file);
