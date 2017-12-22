@@ -13,7 +13,6 @@ load_samples <- function() {
     suppressMessages({
     sgdp <- load_sgdp_info("../data/10_24_2014_SGDP_metainformation_update.txt") %>%
         select(-Country, pop=Region) %>%
-        filter(pop != "Africa") %>%
         mutate(age=0, name=fix_name(name)) %>%
         group_by(name, age, pop) %>%
         summarise(Latitude=mean(Latitude), Longitude=mean(Longitude)) %>%
