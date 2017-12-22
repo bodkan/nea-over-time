@@ -68,7 +68,7 @@ get_markers <- function(vcf, regions_bed) {
   trans_sites <- transpose_sites(sim_sites, real_sites) %>% as.data.frame %>% select(chrom=seqnames, pos=start, freq) %>% mutate(chrom=as.character(chrom))
   all_sites <- mcols(real_sites) %>% as.data.frame %>% select(chrom=real_chrom, pos=real_end)
 
-  full_join(trans_sites, all_sites) %>% mutate(freq=ifelse(is.na(freq), 0, freq))
+  full_join(trans_sites, all_sites) %>% mutate(freq=ifelse(is.na(freq), 0, freq), chrom=as.factor(chrom, paste0("chr", 1:22), levels=paste0("chr", 1:22)))
 }
 
 #' Calculate the number of Nea. mutations (given in a GRanges object) in all
