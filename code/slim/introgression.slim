@@ -111,9 +111,9 @@ $modify_at late() {
 
     // crank up s of selected Nea. fixed mutations
     if ($multiply_s) {
-        apply(mut_sample, "s = applyValue.selectionCoeff; applyValue.setSelectionCoeff(s * $multiply_s);");
+        apply(mut_sample, "s = applyValue.selectionCoeff; applyValue.setSelectionCoeff(s * $modifier);");
     } else if ($fix_s) { // simulate fixed selective effect of Nea. mutations
-        apply(mut_sample, "applyValue.setSelectionCoeff($fix_s);");
+        apply(mut_sample, "applyValue.setSelectionCoeff($modifier);");
     }
 }
 

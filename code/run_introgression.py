@@ -139,6 +139,13 @@ if __name__ == "__main__":
     # read coordinates of sites from the archaic admixture array
     sites_coords = pd.read_table(args.sites).slim_start
 
+    if args.multiply_s is not None:
+        modifier = args.multiply_s
+    elif args.fix_s is not None:
+        modifier = args.fix_s
+    else:
+        modifier = "NULL"
+
     # values to fill in the SLiM template file
     mapping = {
         "population_file"   : args.population_file,
@@ -155,8 +162,9 @@ if __name__ == "__main__":
         "modify_what"       : args.modify_what,
         "modify_fraction"   : args.modify_fraction if args.modify_fraction is not None else "F",
         "modify_count"      : args.modify_count if args.modify_count is not None else "F",
-        "multiply_s"        : args.multiply_s if args.multiply_s is not None else "F",
-        "fix_s"             : args.fix_s if args.fix_s is not None else "F",
+        "multiply_s"        : "T" if args.multiply_s is not None else "F",
+        "fix_s"             : "T" if args.fix_s is not None else "F",
+        "modifier"          : modifier,
 
         "founder_size"      : founder_size,
         "admixture_rate"    : args.admixture_rate,
