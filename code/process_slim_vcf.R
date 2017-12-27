@@ -75,7 +75,8 @@ get_markers <- function(vcf, regions_bed) {
   full_join(trans_sites, all_sites, by=c("chrom", "pos")) %>%
     mutate(freq=ifelse(is.na(freq), 0, freq),
            chrom=factor(chrom, levels=paste0("chr", 1:22))) %>%
-    arrange(chrom, pos)
+    arrange(chrom, pos) %>%
+    inner_join(as.data.frame(import.bed("/mnt/scratch/mp/nea-over-time/data/bed/regions/gap_sites.bed")) %>% select(chrom=seqnames, pos=end))
 }
 
 #' Calculate the number of Nea. mutations (given in a GRanges object) in all
