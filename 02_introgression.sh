@@ -5,8 +5,8 @@ mkdir -p $sim_dir
 
 for region in exon promoter tf_binding_site protein_coding utr3; do
 for h in 0.5; do #0.0 0.5 1.0; do
-for rep in `seq 1`; do
-    if [ $rep -eq 1 ]; then vcf_opt="--vcf-times 2200"; fi
+for rep in `seq 2 5`; do
+#    if [ $rep -eq 1 ]; then vcf_opt="--vcf-times 2200"; fi
     python3 code/run_introgression.py \
         --regions data/slim_coords/${region}_regions.bed \
         --sites data/slim_coords/${region}_all_sites.bed \
@@ -16,10 +16,12 @@ for rep in `seq 1`; do
         --model constant \
         --output-prefix ${sim_dir}/${region}_h_${h}_rep_${rep} \
         --population-file ${burnin_dir}/${region}_h_${h}.txt \
-        $vcf_opt &
+        --vcf-times 2200 &
+#        $vcf_opt &
 done
 done
 done
+
 
 # cd ../slim-neanderthal
 # for h in 0.5; do
