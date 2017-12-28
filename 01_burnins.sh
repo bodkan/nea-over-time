@@ -25,3 +25,13 @@ for h in 0.5; do
         --output data/burnins/uniform_${region}_h_${h}.txt &
 done
 done
+
+# "regression test"
+region="exon"; h=0.5
+python3 code/run_mutation_accumulation.py \
+    --regions data/slim_coords/${region}_regions.bed \
+    --sites data/slim_coords/${region}_all_sites.bed \
+    --recomb-map data/slim_coords/uniform_${region}_recomb_map.bed \
+    --mut-rate 7e-9 \
+    --dominance-coef $h \
+    --output data/burnins/nonsyn_uniform_${region}_h_${h}.txt &
