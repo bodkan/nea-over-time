@@ -76,7 +76,7 @@ get_markers <- function(vcf, regions_bed) {
     mutate(freq=ifelse(is.na(freq), 0, freq),
            chrom=factor(chrom, levels=paste0("chr", 1:22))) %>%
     arrange(chrom, pos) %>%
-    inner_join(as.data.frame(import.bed("/mnt/scratch/mp/nea-over-time/data/bed/regions/gap_sites.bed")) %>% select(chrom=seqnames, pos=end))
+    inner_join(as.data.frame(import.bed("../data/bed/regions/gap_sites.bed")) %>% select(chrom=seqnames, pos=end))
 }
 
 #' Calculate the number of Nea. mutations (given in a GRanges object) in all
@@ -92,3 +92,24 @@ nea_per_ind <- function(gr) {
   
   ind_counts
 }
+
+#' Extract coordinates of deserts from a given VCF file.
+get_desert_endpoints <- function(markers) {
+    all_chrom <- list()
+    for (chrom in paste0("chr", 1:22)) {
+        sites <- markers[markers$chrom == chrom, ]
+        desert_runs <- rle(as.integer(sites$freq > 0))
+
+        block_idx <- c(0, desert_runs$lengths %>% cumsum)
+        block_start <- block_idx[-length(block_idx)]
+        block_end <- block_idx[2:length(block_idx)]
+
+        desert_start <- block_start[desert_runs$values == 0]
+        desert_end <- block_end[desert_runs$values == 0]
+
+        all_chrom[[chrom]] <- GRanges(chrom, IRanges(start=sites[desert_start + 1, ]$pos,
+                                                     end=sites[desert_end, ]$pos))
+    }
+    Reduce(c, GRangesList(all_chrom))
+}
+
