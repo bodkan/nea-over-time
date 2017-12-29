@@ -3,10 +3,9 @@ sim_dir=data/simulations
 
 mkdir -p $sim_dir
 
+h=0.5
 for region in exon promoter tf_binding_site protein_coding utr3; do
-for h in 0.5; do #0.0 0.5 1.0; do
-for rep in `seq 2 5`; do
-#    if [ $rep -eq 1 ]; then vcf_opt="--vcf-times 2200"; fi
+for rep in `seq 1 5`; do
     python3 code/run_introgression.py \
         --regions data/slim_coords/${region}_regions.bed \
         --sites data/slim_coords/${region}_all_sites.bed \
@@ -17,8 +16,6 @@ for rep in `seq 2 5`; do
         --output-prefix ${sim_dir}/${region}_h_${h}_rep_${rep} \
         --population-file ${burnin_dir}/${region}_h_${h}.txt \
         --vcf-times 2200 &
-#        $vcf_opt &
-done
 done
 done
 
@@ -43,47 +40,3 @@ done
 # $ 2017-12-01 09:29:29 :: INFO :: Running simulation from SLiM input file "/tmp/tmpzvgjkb93"
 # 2017-12-01 09:29:29 :: INFO :: Running simulation from SLiM input file "/tmp/tmpm77c43ut"
 # 2017-12-01 09:29:29 :: INFO :: Running simulation from SLiM input file "/tmp/tmpzcza_60d"
-
-
-
-
-
-
-
-# for region in protein_coding promoter utr3 tf_binding_site; do
-# for h in 0.5; do
-# for rep in `seq 4 10`; do
-# python3 code/run_introgression.py \
-#     --regions data/slim_coords/subset/${region}_regions.bed \
-#     --sites data/slim_coords/subset/${region}_all_sites.bed \
-#     --recomb-map data/slim_coords/subset/${region}_recomb_map.bed \
-#     --mut-rate 1e-8 \
-#     --dominance-coef $h \
-#     --model constant \
-#     --terminate-after 500 \
-#     --output-prefix ${sim_dir}/subset_${region}_h_${h}_rep_${rep} \
-#     --population-file ${burnin_dir}/subset_${region}_h_${h}.txt &
-# done
-# done
-# done
-
-# for region in protein_coding promoter utr3 tf_binding_site; do
-# for h in 0.5; do
-# for rep in `seq 4 10`; do
-# python3 code/run_introgression.py \
-#     --regions data/slim_coords/subset/${region}_regions.bed \
-#     --sites data/slim_coords/subset/${region}_all_sites.bed \
-#     --recomb-map data/slim_coords/subset/uniform_${region}_recomb_map.bed \
-#     --mut-rate 1e-8 \
-#     --dominance-coef $h \
-#     --model constant \
-#     --terminate-after 500 \
-#     --output-prefix ${sim_dir}/uniform_subset_${region}_h_${h}_rep_${rep} \
-#     --population-file ${burnin_dir}/uniform_subset_${region}_h_${h}.txt &
-# done
-# done
-# done
-
-
-
-
