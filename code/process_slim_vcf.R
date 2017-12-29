@@ -76,7 +76,8 @@ get_markers <- function(vcf, regions_bed) {
     mutate(freq=ifelse(is.na(freq), 0, freq),
            chrom=factor(chrom, levels=paste0("chr", 1:22))) %>%
     arrange(chrom, pos) %>%
-    inner_join(as.data.frame(import.bed("../data/bed/regions/gap_sites.bed")) %>% select(chrom=seqnames, pos=end))
+    inner_join(as.data.frame(import.bed("../data/bed/regions/gap_sites.bed")) %>% select(chrom=seqnames, pos=end),
+               by=c("chrom", "pos"))
 }
 
 #' Calculate the number of Nea. mutations (given in a GRanges object) in all
@@ -94,7 +95,7 @@ nea_per_ind <- function(gr) {
 }
 
 #' Extract coordinates of deserts from a given VCF file.
-get_desert_endpoints <- function(markers) {
+get_deserts <- function(markers) {
     all_chrom <- list()
     for (chrom in paste0("chr", 1:22)) {
         sites <- markers[markers$chrom == chrom, ]
@@ -113,3 +114,17 @@ get_desert_endpoints <- function(markers) {
     Reduce(c, GRangesList(all_chrom))
 }
 
+
+#' Download the coordinates of centromeres.
+get_centromeres <- function() {
+    session <- browserSession("UCSC")
+    genome(session) <- "hg19"
+    query <- ucscTableQuery(session, "gap", GRangesForUCSCGenome("hg19", chrom=paste0("chr", 1:22)))
+
+    tbl <- getTable(query)
+
+    gaps <- filter(tbl, type %in% c("centromere"), chrom %in% paste0("chr", 1:22)) %>%
+        makeGRangesFromDataFrame(keep.extra.columns=TRUE)
+
+    gaps
+}
