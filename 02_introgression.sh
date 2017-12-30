@@ -3,6 +3,7 @@ sim_dir=data/simulations
 
 mkdir -p $sim_dir
 
+# simulations for analysis of deserts after 2200 generations
 h=0.5
 for region in exon promoter tf_binding_site protein_coding utr3; do
 for rep in `seq 1 5`; do
@@ -19,19 +20,39 @@ for rep in `seq 1 5`; do
 done
 done
 
+# simulations for analysis of frequency derivatives over time
 region="exon"; h=0.5
 for rep in `seq 1 5`; do
     python3 code/run_introgression.py \
         --regions data/slim_coords/${region}_regions.bed \
         --sites data/slim_coords/${region}_all_sites.bed \
         --recomb-map data/slim_coords/${region}_recomb_map.bed \
-        --mut-rate 0.0 \
+        --mut-rate 1e-8 \
         --dominance-coef $h \
         --model constant \
         --output-prefix ${sim_dir}/af_changes_${region}_h_${h}_rep_${rep} \
         --population-file ${burnin_dir}/${region}_h_${h}.txt \
         --vcf-times 1 5 10 20 50 `seq 100 100 2200` &
 done
+
+# # neutral control
+# region="exon"
+# for Ne in 500 1000 2500 5000 7500 10000; do
+# for rep in `seq 1`; do
+#     if [ $rep -eq 1 ]; then vcf_opt="--vcf-times 2200"; fi
+#     echo python3 code/run_introgression.py \
+#         --regions data/slim_coords/${region}_regions.bed \
+#         --sites data/slim_coords/${region}_all_sites.bed \
+#         --recomb-map data/slim_coords/${region}_recomb_map.bed \
+#         --mut-rate 0 --force-neutral \
+#         --dominance-coef $h \
+#         --model constant \
+#         --founder-size $Ne \
+#         --output-prefix ${sim_dir}/${region}_Ne_${Ne}_rep_${rep} \
+#         --population-file ${burnin_dir}/${region}_h_${h}.txt \
+#         $vcf_opt &
+# done
+# done
 
 # cd ../slim-neanderthal
 # for h in 0.5; do
