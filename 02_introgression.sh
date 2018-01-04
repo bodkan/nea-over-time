@@ -22,7 +22,7 @@ done
 
 # simulations for analysis of frequency derivatives over time
 region="exon"; h=0.5
-for rep in `seq 1 5`; do
+for rep in `seq 1 3`; do
     python3 code/run_introgression.py \
         --regions data/slim_coords/${region}_regions.bed \
         --sites data/slim_coords/${region}_all_sites.bed \

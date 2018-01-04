@@ -156,7 +156,7 @@ $admixture_time:$sim_length late() {
 $admixture_time:$sim_length late() {
     if (any(sim.generation == vcf_gen)) {
         path = "$output_prefix" + "_gen_" + asString(sim.generation - $admixture_time + 1) + ".vcf";
-        p3.outputVCFSample(100, outputMultiallelics=F, filePath=path);
+        p3.outputVCFSample(1000, outputMultiallelics=F, filePath=path);
         system("bgzip " + path);
     }
 }
