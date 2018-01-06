@@ -57,8 +57,7 @@ initialize() {
 $before_admixture late() {
     if ($neutral_sim) {
         del_muts = sim.mutations[sim.mutations.mutationType == m0];
-        p2.genomes.removeMutations(del_muts);
-        p3.genomes.removeMutations(del_muts);
+        apply(del_muts, "applyValue.setSelectionCoeff(0.0);");
     }
 
     if (single_pulse) {
