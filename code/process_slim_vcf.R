@@ -1,9 +1,24 @@
 library(VariantAnnotation)
 library(tidyverse)
 
-#' Read a VCF file simulated by SLiM. Return as a GRanges object.
-read_vcf <- function(path) {
-  readVcf(path, param=ScanVcfParam(info=c("S", "DOM", "PO", "GO", "MT"), geno="GT"))
+#' Load mutation info about a given mutation type.
+mut_info <- function(vcf, mut_type, pop_origin=NULL, t_min=-Inf, t_max=Inf) {
+  mut_pos <- info(vcf)$MT == mut_type &
+    info(vcf)$GO >= t_min &
+    info(vcf)$GO <= t_max
+
+  if (!is.null(pop_origin)) {
+    mut_pos <- mut_pos & (info(vcf)$PO == pop_origin)
+  }
+
+  gr <- granges(vcf)[mut_pos]
+  names(gr) <- NULL
+
+  mcols(gr) <- as.data.frame(info(vcf)) %>%
+    filter(mut_pos) %>%
+    mutate(freq = AC / (2 * length(samples(header(vcf)))))
+
+  gr
 }
 
 #' Load mutations of a given type from SLiM.
