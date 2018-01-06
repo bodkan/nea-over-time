@@ -56,7 +56,9 @@ initialize() {
 // necessary to restart (makes sense just for the single pulse scenario)
 $before_admixture late() {
     if ($neutral_sim) {
-        apply(sim.mutations[sim.mutations.mutationType == m0], "applyValue.setSelectionCoeff(0.0);");
+        del_muts = sim.mutations[sim.mutations.mutationType == m0];
+        p2.genomes.removeMutations(del_muts);
+        p3.genomes.removeMutations(del_muts);
     }
 
     if (single_pulse) {
