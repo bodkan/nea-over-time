@@ -40,7 +40,7 @@ if __name__ == "__main__":
                         help="Table  with the SLiM recombination map (0-based SLiM end "
                         "position, recombination rate)")
 
-    parser.add_argument("--mut-rate", metavar="FILE", type=float, required=True,
+    parser.add_argument("--mut-rate", metavar="FILE", type=float, default=0.0,
                         help="Mutation rate in the simulated region")
     parser.add_argument("--dominance-coef", type=float, required=True,
                         help="Dominance coefficient of deleterious mutations")
