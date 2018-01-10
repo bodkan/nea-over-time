@@ -35,6 +35,7 @@ for rep in `seq 1`; do
         --founder-size $Ne \
         --output-prefix ${sim_dir}/neutral_Ne_${Ne}_rep_${rep} \
         --population-file ${burnin_dir}/${region}_h_${h}.txt \
+        --vcf-sample 500 \
         --vcf-times 2200 &
 done
 done
