@@ -14,6 +14,16 @@ for h in 0.0 0.5 1.0; do
 done
 done
 
+region="merged"; h="0.5"
+python3 code/run_mutation_accumulation.py \
+    --regions data/slim_coords/${region}_regions.bed \
+    --sites data/slim_coords/${region}_all_sites.bed \
+    --recomb-map data/slim_coords/${region}_recomb_map.bed \
+    --mut-rate 1e-8 \
+    --dominance-coef $h \
+    --output data/burnins/${region}_h_${h}.txt &
+
+# uniform recombination rate test
 for region in exon protein_coding promoter utr3 tf_binding_site; do
 for h in 0.5; do
     python3 code/run_mutation_accumulation.py \
@@ -26,7 +36,7 @@ for h in 0.5; do
 done
 done
 
-# "regression test"
+# "regression test" - uniform recombination rate and lower mutation rate (7e-9)
 region="exon"; h=0.5
 python3 code/run_mutation_accumulation.py \
     --regions data/slim_coords/${region}_regions.bed \
