@@ -122,15 +122,6 @@ $modify_at late() {
     }
 }
 
-// save the VCF outputs at defined timepoints
-$admixture_time:$sim_length late() {
-    //if (any(sim.generation == output_gen)) {
-    if (F) {
-        cat(time() + " :: INFO :: " + sim.generation + "/$sim_length generations - saving VCF\n");
-        p3.outputVCFSample(100, outputMultiallelics=F, filePath="$output_prefix" + "_gen_" + asString(sim.generation - $admixture_time + 1) + ".vcf");
-    }
-}
-
 // output Nea. ancestry trajectories calculated on informative sites
 $admixture_time:$sim_length late() {
     output_file = "$output_prefix" + "_trajectory.txt";
@@ -154,6 +145,7 @@ $admixture_time:$sim_length late() {
   }
 }
 
+// save the VCF outputs at defined timepoints
 $admixture_time:$sim_length late() {
     if (any(sim.generation == vcf_gen)) {
         path = "$output_prefix" + "_gen_" + asString(sim.generation - $admixture_time + 1) + ".vcf";
