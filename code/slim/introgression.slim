@@ -28,7 +28,7 @@ initialize() {
                                                    $sim_length))));
     }
     if (size($vcf_times) > 0) {
-        defineConstant("vcf_gen", $vcf_times);
+        defineConstant("vcf_gen", $vcf_times + $admixture_time - 1);
     } else {
         defineConstant("vcf_gen", c(-1));
     }

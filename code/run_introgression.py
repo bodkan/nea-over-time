@@ -130,9 +130,6 @@ if __name__ == "__main__":
     # the start of the simulation
     sampling_times = [out_of_africa - years_to_gen(t) for t in args.sampling_times]
 
-    # shift the VCF-dumping generation times appropriately
-    vcf_times = [t + admixture_time  - 1 for t in args.vcf_times]
-
     # load the SLiM 0-based coordinates of regions to simulate
     region_coords = pd.read_table(args.regions, sep="\t")
 
@@ -183,7 +180,7 @@ if __name__ == "__main__":
         "sim_length"        : out_of_africa,
         "simulate_dilution" : "T" if args.dilution else "F",
         "output_prefix"     : args.output_prefix,
-        "vcf_times"         : slim_vector(vcf_times),
+        "vcf_times"         : slim_vector(args.vcf_times),
         "vcf_sample"        : args.vcf_sample
     }
 
