@@ -32,6 +32,10 @@ chmod -w ${gt_dir}/ice_age.tsv
 
 ########
 # fix this to use the newest merge of archaics & SGDP data from Steffi
+#
+# TODO - now she has proper VCF files so I can use bcftools to subset
+# to the positions from the admixture array (without writing a custom
+# Python script to filter for non-Chimp-unique sites)
 
 # get the list of SGDP (C-team)
 sgdp_samples=`bcftools query -l /mnt/sequencedb/SGDP_May2016/combined_vcf/c_team_chr1.vcf.gz | grep "^S_" | tr '\n' ' '`
