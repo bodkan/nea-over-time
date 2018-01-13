@@ -78,12 +78,13 @@ cd data/eigenstrat/bigyri_ho
 # make a copy of Qiaomei's combined Eigenstrat dataset
 cp /mnt/454/Carbon_beast_QM/TY/snp/UPA_all.{snp,ind,geno} .
 
-# make a directory for different coordinate files
+# save the coordinates of all 2.2M sites
 less UPA_all.snp | awk -v OFS="\t" '{print $2, $4-1, $4}' > ../../bed/2.2M.bed
 
 # convert the archaics' genotypes into a 0/1/2/9 format
-seq 1 22 | xargs -P 22 -I {} bash -c "bcftools view -a /mnt/scratch/steffi/D/Vcfs/mergedArchModernApes/merged_high_apes_low_sgdp1_chr{}.vcf.gz -R ../../bed/2.2M.bed -s AltaiNeandertal,Vindija33.19,Mezmais1Deam,Denisova | bcftools query -f '%CHROM\t%POS[\t%GT]\n' | sed 's/\.\/\./9/g; s/0\/0/0/g; s/0\/1/1/g; s/1\/1/2/g' | grep -v '/' > chr{}.tmp"
-cat chr{1..22}.tmp > all_chr.tmp
+# - remember that this is using a VCF file containing Chagyrskaya - lower # of SNPs
+echo 22 | xargs -P 22 -I {} bash -c "bcftools view -a /mnt/scratch/steffi/D/Vcfs/mergedArchModernApes/merged_high_low_apes_sgdp1_chr{}.vcf.gz -R ../../bed/2.2M.bed -s AltaiNeandertal,Vindija33.19,Mezmais1Deam,Denisova | bcftools query -f '%CHROM\t%POS[\t%GT]\n' | sed 's/\.\/\./9/g; s/0\/0/2/g; s/0\/1/1/g; s/1\/1/0/g' | grep -v '/' > chr{}.tmp"
+cat chr{1..22}.tmp > archaics.tmp
 rm chr*.tmp
 
 # perform a mergit operation (using R, not using ADMIXTOOLS' broken mergit command)
@@ -92,17 +93,17 @@ library(tidyverse)
 library(admixr)
 
 all_data <- read_eigenstrat("UPA_all")
-archaics <- read_tsv("archaics.tmp", col_names=c("chrom", "pos", "Altai", "Vindija", "Mez1", "Denisovan"), col_types="ciiiii")
+archaics <- read_tsv("archaics.tmp", col_names=c("chrom", "pos", "Altai", "Vindija", "Mez1", "Denisova"), col_types="ciiiii")
 
 joined <- left_join(all_data$snp, archaics)
 joined$Altai[is.na(joined$Altai)] <- 9
 joined$Vindija[is.na(joined$Vindija)] <- 9
 joined$Mez1[is.na(joined$Mez1)] <- 9
-joined$Denisovan[is.na(joined$Denisovan)] <- 9
+joined$Denisova[is.na(joined$Denisova)] <- 9
 
-write_geno("archaics.geno", select(joined, Altai:Denisovan))
+write_geno("archaics.geno", select(joined, Altai:Denisova))
 write_snp("all.snp", all_data$snp)
-write_ind("all.ind", bind_rows(all_data$ind, tibble(id=c("new_Altai", "new_Vindija", "new_Mez1", "new_Densiovan"), sex=rep("F", 4), label=c("new_Altai", "new_Vindija", "new_Mez1", "new_Denisovan"))))
+write_ind("all.ind", bind_rows(all_data$ind, tibble(id=c("new_Altai", "new_Vindija", "new_Mez1", "new_Denisova"), sex=rep("F", 4), label=c("new_Altai", "new_Vindija", "new_Mez1", "new_Denisova"))))
 ')
 
 paste -d '' UPA_all.geno archaics.geno > all.geno
