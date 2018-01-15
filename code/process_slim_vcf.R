@@ -82,8 +82,18 @@ transpose_sites <- function(sim_sites, real_sites) {
 
 #' Load the simulated Neanderthal fixed markers and their frequencies.
 #' Return as a GRanges object.
-get_markers <- function(vcf, real_sites) {
+#' The argument names are kind of confusing :(
+#'    - real_coords = table of coordinates of both region & gap sites
+#'                    (in realistic coordinate system & SLiM system)
+#'    - gap_coords = table of coordinates of gap sites in realistic system
+#' Both are needed because the real_coord files don't specify which are gaps
+#' and which are not :/
+get_markers <- function(vcf, real_coords, gap_coords) {
+  # coordinates of all sites (region and gap sites) - real & SLiM coords
   real_sites <- read_sites(real_sites)
+  # gap sites
+  gap_sites <- import.bed(gap_sites) %>% as.data.frame %>% select(chrom=seqnames, pos=end)
+  # simulated data
   sim_sites <- mut_info(vcf, mut_typ=1) %>% shift(shift=-1)
   
   trans_sites <- transpose_sites(sim_sites, real_sites) %>%
@@ -97,8 +107,7 @@ get_markers <- function(vcf, real_sites) {
     mutate(freq=ifelse(is.na(freq), 0, freq),
            chrom=factor(chrom, levels=paste0("chr", 1:22))) %>%
     arrange(chrom, pos) %>%
-    inner_join(as.data.frame(import.bed("../data/bed/regions/gap_sites.bed")) %>% select(chrom=seqnames, pos=end),
-               by=c("chrom", "pos"))
+    inner_join(gap_sites, by=c("chrom", "pos"))
 }
 
 #' Calculate the number of Nea. mutations (given in a GRanges object) in all
