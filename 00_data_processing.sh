@@ -87,7 +87,7 @@ less UPA_all.snp | awk -v OFS="\t" '{print $2, $4-1, $4}' > ../../bed/2.2M.bed
 
 # convert the archaics' genotypes into a 0/1/2/9 format
 # - remember that this is using a VCF file containing Chagyrskaya - lower # of SNPs
-echo 22 | xargs -P 22 -I {} bash -c "bcftools view -a /mnt/scratch/steffi/D/Vcfs/mergedArchModernApes/merged_high_low_apes_sgdp1_chr{}.vcf.gz -R ../../bed/2.2M.bed -s AltaiNeandertal,Vindija33.19,Mezmais1Deam,Denisova | bcftools query -f '%CHROM\t%POS[\t%GT]\n' | sed 's/\.\/\./9/g; s/0\/0/2/g; s/0\/1/1/g; s/1\/1/0/g' | grep -v '/' > chr{}.tmp"
+seq 1 22 | xargs -P 22 -I {} bash -c "bcftools view -a /mnt/scratch/steffi/D/Vcfs/mergedArchModernApes_wo_Chag/merged_high_low_apes_sgdp1_chr{}.vcf.gz -R ../../bed/2.2M.bed -s AltaiNeandertal,Vindija33.19,Mezmais1Deam,Denisova | bcftools query -f '%CHROM\t%POS[\t%GT]\n' | sed 's/\.\/\./9/g; s/0\/0/2/g; s/0\/1/1/g; s/1\/1/0/g' | grep -v '/' > chr{}.tmp"
 cat chr{1..22}.tmp > archaics.tmp
 rm chr*.tmp
 
@@ -104,6 +104,8 @@ joined$Altai[is.na(joined$Altai)] <- 9
 joined$Vindija[is.na(joined$Vindija)] <- 9
 joined$Mez1[is.na(joined$Mez1)] <- 9
 joined$Denisova[is.na(joined$Denisova)] <- 9
+
+joined <- filter(joined, chrom %in% 1:22)
 
 write_geno("archaics.geno", select(joined, Altai:Denisova))
 write_snp("all.snp", all_data$snp)
