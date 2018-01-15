@@ -1,9 +1,56 @@
-burnin_dir=data/burnins
-sim_dir=data/simulations
+mkdir data/simulations
 
-mkdir -p $sim_dir
 
-# simulations for analysis of deserts after 2200 generations
+
+# ----------------------------------------------------------------------
+# simulations for trajectories of different regions over time
+# TODO
+
+for model in gravel linear constant; do
+for region in exon promoter tf_binding_site protein_coding utr3; do
+for h in 0.0 0.5 1.0; do
+for rep in `seq 1 5`; do
+    python3 code/run_introgression.py \
+        --regions data/slim_coords/${region}_regions.bed \
+        --sites data/slim_coords/${region}_all_sites.bed \
+        --recomb-map data/slim_coords/${region}_recomb_map.bed \
+        --mut-rate 1e-8 \
+        --dominance-coef $h \
+        --model $model \
+        --terminate-after 2200 \
+        --output-prefix data/simulations/traj_${model}_${region}_h_${h}_rep_${rep} \
+        --population-file data/burnins/${region}_h_${h}.txt &
+done
+done
+done
+done
+
+
+
+# ----------------------------------------------------------------------
+# simulations for analysis of frequency derivatives over time
+
+region="exon"; h=0.5
+for rep in `seq 1 3`; do
+    python3 code/run_introgression.py \
+        --regions data/slim_coords/${region}_regions.bed \
+        --sites data/slim_coords/${region}_all_sites.bed \
+        --recomb-map data/slim_coords/${region}_recomb_map.bed \
+        --mut-rate 1e-8 \
+        --dominance-coef $h \
+        --model constant \
+        --output-prefix data/simulations/${region}_h_${h}_rep_${rep} \
+        --population-file data/burnins/${region}_h_${h}.txt \
+        --vcf-times 1 2 3 4 5 6 7 8 9 10 20 50 100 `seq 200 200 2200` \
+        --vcf-sample 500 &
+done
+
+
+
+# ----------------------------------------------------------------------
+# analysis of desert sizes in the present based on different amount of
+# deleterious sequence
+
 h=0.5
 for region in exon promoter tf_binding_site protein_coding utr3; do
 for rep in `seq 1 5`; do
@@ -14,17 +61,22 @@ for rep in `seq 1 5`; do
         --mut-rate 1e-8 \
         --dominance-coef $h \
         --model constant \
-        --output-prefix ${sim_dir}/${region}_h_${h}_rep_${rep} \
-        --population-file ${burnin_dir}/${region}_h_${h}.txt \
-        --vcf-times 2200 &
+        --output-prefix data/simulations/deserts_${region}_h_${h}_rep_${rep} \
+        --population-file data/burnins/${region}_h_${h}.txt \
+        --vcf-times 2200 \
+        --vcf-sample 500 &
 done
 done
 
-# deserts - neutral control
-region="tf_binding_site" # size of deleterious regions doesn't matter here
+
+
+# ----------------------------------------------------------------------
+# analysis of desert sizes in the present under neutrality
+
+region="tf_binding_site" # size of deleterious region doesn't matter here
 h=0.5
-for Ne in 500 1000 5000 10000; do
-for rep in `seq 1`; do
+for Ne in 10000; do
+for rep in `seq 1 5`; do
     python3 code/run_introgression.py \
         --regions data/slim_coords/${region}_regions.bed \
         --sites data/slim_coords/${region}_all_sites.bed \
@@ -33,27 +85,13 @@ for rep in `seq 1`; do
         --dominance-coef $h \
         --model constant \
         --founder-size $Ne \
-        --output-prefix ${sim_dir}/neutral_Ne_${Ne}_rep_${rep} \
-        --population-file ${burnin_dir}/${region}_h_${h}.txt \
+        --output-prefix data/simulations/deserts_neutral_Ne_${Ne}_h_${h}_rep_${rep} \
+        --population-file data/burnins/${region}_h_${h}.txt \
         --vcf-sample 500 \
         --vcf-times 2200 &
 done
 done
 
-# simulations for analysis of frequency derivatives over time
-region="exon"; h=0.5
-for rep in `seq 1 3`; do
-    python3 code/run_introgression.py \
-        --regions data/slim_coords/${region}_regions.bed \
-        --sites data/slim_coords/${region}_all_sites.bed \
-        --recomb-map data/slim_coords/${region}_recomb_map.bed \
-        --mut-rate 1e-8 \
-        --dominance-coef $h \
-        --model constant \
-        --output-prefix ${sim_dir}/af_changes_${region}_h_${h}_rep_${rep} \
-        --population-file ${burnin_dir}/${region}_h_${h}.txt \
-        --vcf-times 1 5 10 20 50 `seq 100 100 2200` &
-done
 
 
 # cd ../slim-neanderthal
