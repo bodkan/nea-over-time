@@ -1,4 +1,5 @@
 library(VariantAnnotation)
+library(rtracklayer)
 library(tidyverse)
 
 #' Load mutation info about a given mutation type.
@@ -24,18 +25,24 @@ mut_info <- function(vcf, mut_type, pop_origin=NULL, t_min=-Inf, t_max=Inf) {
 #' Load mutations of a given type from SLiM.
 #' Mutation type 0 are deleterious mutations, mutation type 1 are neutral
 #' markers.
-get_muts <- function(vcf, mut_type) {
-  mut_pos <- info(vcf)$MT == mut_type
+mut_gt <- function(vcf, mut_type, pop_origin=NULL, t_min=-Inf, t_max=Inf) {
+  mut_pos <- info(vcf)$MT == mut_type &
+    info(vcf)$GO >= t_min &
+    info(vcf)$GO <= t_max
+
+  if (!is.null(pop_origin)) {
+    mut_pos <- mut_pos & (info(vcf)$PO == pop_origin)
+  }
+
   gr <- granges(vcf)[mut_pos]
   
   gt_mat <- geno(vcf)$GT[mut_pos, ]
   
   ind_gts <- apply(gt_mat, 2, function(gt) { str_count(gt, "1") })
-  freq <- apply(ind_gts, 1, sum) / (2 * ncol(ind_gts))
   
   info_cols <- as.data.frame(info(vcf)[mut_pos, c("S", "DOM", "PO", "GO")])
   
-  mcols(gr) <- bind_cols(info_cols, as.data.frame(freq), as.data.frame(ind_gts))
+  mcols(gr) <- bind_cols(info_cols, as.data.frame(ind_gts))
   names(gr) <- NULL
   
   # shift VCF coordinates back to the SLiM 0-based system
@@ -76,9 +83,9 @@ transpose_sites <- function(sim_sites, real_sites) {
 
 #' Load the simulated Neanderthal fixed markers and their frequencies.
 #' Return as a GRanges object.
-get_markers <- function(vcf, regions_bed) {
-  real_sites <- read_sites(regions_bed)
-  sim_sites <- get_muts(vcf, mut_type=1)
+get_markers <- function(vcf, real_sites) {
+  real_sites <- read_sites(real_sites)
+  sim_sites <- mut_info(vcf, mut_typ=1) %>% shift(shift=-1)
   
   trans_sites <- transpose_sites(sim_sites, real_sites) %>%
     as.data.frame %>% select(chrom=seqnames, pos=start, freq) %>%
