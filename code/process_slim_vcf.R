@@ -52,7 +52,6 @@ mut_gt <- function(vcf, mut_type, pop_origin=NULL, t_min=-Inf, t_max=Inf) {
 }
 
 #' Read BED file with coordinates of a given type of genomic elements.
-#' Allowed regions are: exon, promoter, protein_coding, tf_binding_site and utr3.
 read_regions <- function(regions_bed) {
   gr <- read_tsv(regions_bed, col_types="ciicdiii") %>%
     makeGRangesFromDataFrame(starts.in.df.are.0based=TRUE)
