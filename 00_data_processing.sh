@@ -105,8 +105,6 @@ joined$Vindija[is.na(joined$Vindija)] <- 9
 joined$Mez1[is.na(joined$Mez1)] <- 9
 joined$Denisova[is.na(joined$Denisova)] <- 9
 
-joined <- filter(joined, chrom %in% 1:22)
-
 write_geno("archaics.geno", select(joined, Altai:Denisova))
 write_snp("all.snp", all_data$snp)
 write_ind("all.ind", bind_rows(all_data$ind, tibble(id=c("new_Altai", "new_Vindija", "new_Mez1", "new_Denisova"), sex=rep("F", 4), label=c("new_Altai", "new_Vindija", "new_Mez1", "new_Denisova"))))
