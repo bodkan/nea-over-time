@@ -105,6 +105,7 @@ for rep in `seq 1 5`; do
         --dominance-coef $h \
         --model constant \
         --founder-size $Ne \
+        --admixture-rate 0.0025 \
         --admixture-end 54000 \
         --output-prefix data/simulations/deserts_continuous_neutral_Ne_${Ne}_h_${h}_rep_${rep} \
         --population-file data/burnins/${region}_h_${h}.txt \
