@@ -2,15 +2,20 @@ library(VariantAnnotation)
 library(rtracklayer)
 library(tidyverse)
 
-#' Load mutation info about a given mutation type.
-mut_info <- function(vcf, mut_type, pop_origin=NULL, t_min=-Inf, t_max=Inf) {
-  mut_pos <- info(vcf)$MT == mut_type &
-    info(vcf)$GO >= t_min &
-    info(vcf)$GO <= t_max
+#' Split the GT matrix into haplotype GT matrix.
+split_chromosomes <- function(gt_mat) {
+    hap_mat <- matrix(, nrow=nrow(gt_mat), ncol=ncol(gt_mat) * 2)
+    colnames(hap_mat) <- paste0("h", 1:ncol(hap_mat))
+    for (i in seq_len(ncol(gt_mat))) {
+        k <- (2 * i) - 1
+        hap_mat[, c(k, k + 1)] <- str_split_fixed(gt_mat[, i], "\\|", 2) %>% as.integer
+    }
+    hap_mat
+}
 
-  if (!is.null(pop_origin)) {
-    mut_pos <- mut_pos & (info(vcf)$PO == pop_origin)
-  }
+#' Load mutation info about a given mutation type.
+mut_info <- function(vcf, mut_type=NULL, pop_origin=NULL, t_min=-Inf, t_max=Inf) {
+  mut_pos <- filter_muts(vcf, mut_type, pop_origin, t_min, t_max)
 
   gr <- granges(vcf)[mut_pos]
   names(gr) <- NULL
@@ -25,24 +30,16 @@ mut_info <- function(vcf, mut_type, pop_origin=NULL, t_min=-Inf, t_max=Inf) {
 #' Load mutations of a given type from SLiM.
 #' Mutation type 0 are deleterious mutations, mutation type 1 are neutral
 #' markers.
-mut_gt <- function(vcf, mut_type, pop_origin=NULL, t_min=-Inf, t_max=Inf) {
-  mut_pos <- info(vcf)$MT == mut_type &
-    info(vcf)$GO >= t_min &
-    info(vcf)$GO <= t_max
-
-  if (!is.null(pop_origin)) {
-    mut_pos <- mut_pos & (info(vcf)$PO == pop_origin)
-  }
+mut_haplotypes <- function(vcf, mut_type=NULL, pop_origin=NULL, t_min=-Inf, t_max=Inf) {
+  mut_pos <- filter_muts(vcf, mut_type, pop_origin, t_min, t_max)
 
   gr <- granges(vcf)[mut_pos]
   
   gt_mat <- geno(vcf)$GT[mut_pos, ]
+  hap_mat <- split_chromosomes(gt_mat)
+  info_cols <- as.data.frame(info(vcf)[mut_pos, ])
   
-  ind_gts <- apply(gt_mat, 2, function(gt) { str_count(gt, "1") })
-  
-  info_cols <- as.data.frame(info(vcf)[mut_pos, c("S", "DOM", "PO", "GO")])
-  
-  mcols(gr) <- bind_cols(info_cols, as.data.frame(ind_gts))
+  mcols(gr) <- bind_cols(info_cols, as.data.frame(hap_mat))
   names(gr) <- NULL
   
   # shift VCF coordinates back to the SLiM 0-based system
@@ -51,63 +48,34 @@ mut_gt <- function(vcf, mut_type, pop_origin=NULL, t_min=-Inf, t_max=Inf) {
   sort(gr)
 }
 
-#' Read BED file with coordinates of a given type of genomic elements.
-read_regions <- function(regions_bed) {
-  gr <- read_tsv(regions_bed, col_types="ciicdiii") %>%
-    makeGRangesFromDataFrame(starts.in.df.are.0based=TRUE)
-  gr
-}
+#' Load the simulated Neanderthal fixed markers and their frequencies
+#' (either all, or the ones within regions or gaps). Return as a GRanges
+#' object.
+get_markers <- function(vcf, sites_coords, within_region=NULL) {
+  if (!(is.null(within_region) || within_region %in% c("region", "gap")))
+      stop("Invalid region specified")
 
-#' Read the real coordinates of Neanderthal fixed sites.
-read_sites <- function(sites_bed) {
-  gr <- read_tsv(sites_bed, col_types="ciiii") %>%
-    select(real_chrom=chrom, real_start=start, real_end=end, start=slim_start, end=slim_end) %>%
-    mutate(chrom=1) %>% 
-    makeGRangesFromDataFrame(keep.extra.columns=TRUE)
-  gr
-}
-
-#' Transpose the simulated sites in the SLiM 0-based coordinate system into
-#' the realistic coordinates.
-transpose_sites <- function(sim_sites, real_sites) {
-  hits <- findOverlaps(real_sites, sim_sites)
-  transposed <- as.data.frame(mcols(real_sites)) %>%
-    setNames(c("chrom", "start", "end")) %>%
-    makeGRangesFromDataFrame(starts.in.df.are.0based=TRUE) %>%
-    .[queryHits(hits)]
-  mcols(transposed) <- mcols(sim_sites)["freq"]
-  
-  transposed
-}
-
-#' Load the simulated Neanderthal fixed markers and their frequencies.
-#' Return as a GRanges object.
-#' The argument names are kind of confusing :(
-#'    - real_coords = table of coordinates of both region & gap sites
-#'                    (in realistic coordinate system & SLiM system)
-#'    - gap_coords = table of coordinates of gap sites in realistic system
-#' Both are needed because the real_coord files don't specify which are gaps
-#' and which are not :/
-get_markers <- function(vcf, real_coords, gap_coords) {
-  # coordinates of all sites (region and gap sites) - real & SLiM coords
-  real_sites <- read_sites(real_sites)
-  # gap sites
-  gap_sites <- import.bed(gap_sites) %>% as.data.frame %>% select(chrom=seqnames, pos=end)
+  # coordinates of all sites (real & SLiM coords)
+  real_sites <- read_sites(sites_coords)
   # simulated data
-  sim_sites <- mut_info(vcf, mut_typ=1) %>% shift(shift=-1)
+  sim_sites <- mut_info(vcf, mut_type=1) %>% shift(shift=-1)
   
   trans_sites <- transpose_sites(sim_sites, real_sites) %>%
     as.data.frame %>% select(chrom=seqnames, pos=start, freq) %>%
     mutate(chrom=as.character(chrom))
 
   all_sites <- mcols(real_sites) %>%
-    as.data.frame %>% select(chrom=real_chrom, pos=real_end)
+    as.data.frame %>% select(chrom=real_chrom, pos=real_end, within)
 
-  full_join(trans_sites, all_sites, by=c("chrom", "pos")) %>%
+  markers <- full_join(trans_sites, all_sites, by=c("chrom", "pos")) %>%
     mutate(freq=ifelse(is.na(freq), 0, freq),
            chrom=factor(chrom, levels=paste0("chr", 1:22))) %>%
-    arrange(chrom, pos) %>%
-    inner_join(gap_sites, by=c("chrom", "pos"))
+    arrange(chrom, pos)
+
+  if (!is.null(within_region))
+    markers <- markers[markers$within == within_region, ]
+
+  markers
 }
 
 #' Calculate the number of Nea. mutations (given in a GRanges object) in all
@@ -116,7 +84,7 @@ get_markers <- function(vcf, real_coords, gap_coords) {
 #' Nea. ancestry proportion can be calculated as: result / (2 * mut_count)
 nea_per_ind <- function(gr) {
   ind_counts <- as.data.frame(mcols(gr)) %>%
-    select(starts_with("i")) %>%
+    select(-c(S, DOM, PO, GO)) %>%
     summarise_all(sum) %>%
     t %>%
     as.vector
@@ -144,7 +112,6 @@ get_deserts <- function(markers) {
     Reduce(c, GRangesList(all_chrom))
 }
 
-
 #' Download the coordinates of centromeres.
 get_centromeres <- function() {
     session <- browserSession("UCSC")
@@ -158,3 +125,48 @@ get_centromeres <- function() {
 
     gaps
 }
+
+#' Read BED file with coordinates of a given type of genomic elements.
+read_regions <- function(regions_bed) {
+  gr <- read_tsv(regions_bed, col_types="ciicdiii") %>%
+    makeGRangesFromDataFrame(starts.in.df.are.0based=TRUE)
+  gr
+}
+
+#' Read the real coordinates of Neanderthal fixed sites.
+read_sites <- function(sites_bed) {
+  gr <- read_tsv(sites_bed, col_types="ciiiic") %>%
+    select(real_chrom=chrom, real_start=start, real_end=end, start=slim_start, end=slim_end, within) %>%
+    mutate(chrom=1) %>% 
+    makeGRangesFromDataFrame(keep.extra.columns=TRUE)
+  gr
+}
+
+#' Transpose the simulated sites in the SLiM 0-based coordinate system into
+#' the realistic coordinates.
+transpose_sites <- function(sim_sites, real_sites) {
+  hits <- findOverlaps(real_sites, sim_sites)
+  transposed <- as.data.frame(mcols(real_sites)) %>%
+    setNames(c("chrom", "start", "end")) %>%
+    makeGRangesFromDataFrame(starts.in.df.are.0based=TRUE) %>%
+    .[queryHits(hits)]
+  mcols(transposed) <- mcols(sim_sites)
+  
+  transposed
+}
+
+#' Filter mutations' positions based on given criteria.
+filter_muts <- function(vcf, mut_type=NULL, pop_origin=NULL, t_min=-Inf, t_max=Inf) {
+  mut_pos <- info(vcf)$GO >= t_min & info(vcf)$GO <= t_max
+
+  if (!is.null(mut_type)) {
+    mut_pos <- mut_pos & info(vcf)$MT == mut_type
+  }
+
+  if (!is.null(pop_origin)) {
+    mut_pos <- mut_pos & (info(vcf)$PO == pop_origin)
+  }
+
+  mut_pos
+}
+
