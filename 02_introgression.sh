@@ -90,6 +90,28 @@ for rep in `seq 1 5`; do
 done
 done
 
+# ----------------------------------------------------------------------
+# influence of continuous admixture (as opposed to a "single pulse")
+# on the distribution of desert sizes
+region="tf_binding_site" # size of deleterious region doesn't matter here
+h=0.5
+for Ne in 10000; do
+for rep in `seq 1 5`; do
+    python3 code/run_introgression.py \
+        --regions data/slim_coords/${region}_regions.bed \
+        --sites data/slim_coords/${region}_all_sites.bed \
+        --recomb-map data/slim_coords/${region}_recomb_map.bed \
+        --force-neutral \
+        --dominance-coef $h \
+        --model constant \
+        --founder-size $Ne \
+        --admixture-end 54000 \
+        --output-prefix data/simulations/deserts_continuous_neutral_Ne_${Ne}_h_${h}_rep_${rep} \
+        --population-file data/burnins/${region}_h_${h}.txt \
+        --vcf-sample 500 \
+        --vcf-times 2200 &
+done
+done
 
 
 # cd ../slim-neanderthal
