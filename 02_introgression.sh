@@ -4,12 +4,11 @@ mkdir data/simulations
 
 # ----------------------------------------------------------------------
 # simulations for trajectories of different regions over time
-# TODO
 
 for model in gravel linear constant; do
 for region in exon promoter tf_binding_site protein_coding utr3; do
 for h in 0.0 0.5 1.0; do
-for rep in `seq 1 5`; do
+for rep in `seq 1 3`; do
     python3 code/run_introgression.py \
         --regions data/slim_coords/${region}_regions.bed \
         --sites data/slim_coords/${region}_all_sites.bed \
@@ -17,7 +16,6 @@ for rep in `seq 1 5`; do
         --mut-rate 1e-8 \
         --dominance-coef $h \
         --model $model \
-        --terminate-after 2200 \
         --output-prefix data/simulations/traj_${model}_${region}_h_${h}_rep_${rep} \
         --population-file data/burnins/${region}_h_${h}.txt &
 done
