@@ -90,13 +90,40 @@ for rep in `seq 1 5`; do
 done
 done
 
+
 # ----------------------------------------------------------------------
 # influence of continuous admixture (as opposed to a "single pulse")
 # on the distribution of desert sizes
+
+#
+# analysis of desert sizes under weak negative selection model
+#
+h=0.5
+for region in exon promoter tf_binding_site protein_coding utr3; do
+for rep in `seq 1 3`; do
+    python3 code/run_introgression.py \
+        --regions data/slim_coords/${region}_regions.bed \
+        --sites data/slim_coords/${region}_all_sites.bed \
+        --recomb-map data/slim_coords/${region}_recomb_map.bed \
+        --mut-rate 1e-8 \
+        --dominance-coef $h \
+        --model constant \
+        --admixture-rate 0.0025 \
+        --admixture-end 54000 \
+        --output-prefix data/simulations/continuous_deserts_${region}_h_${h}_rep_${rep} \
+        --population-file data/burnins/${region}_h_${h}.txt \
+        --vcf-times 2200 \
+        --vcf-sample 500 &
+done
+done
+
+#
+# analysis of desert sizes in the present under neutrality
+#
 region="tf_binding_site" # size of deleterious region doesn't matter here
 h=0.5
 for Ne in 10000; do
-for rep in `seq 1 5`; do
+for rep in `seq 1 3`; do
     python3 code/run_introgression.py \
         --regions data/slim_coords/${region}_regions.bed \
         --sites data/slim_coords/${region}_all_sites.bed \
@@ -107,7 +134,7 @@ for rep in `seq 1 5`; do
         --founder-size $Ne \
         --admixture-rate 0.0025 \
         --admixture-end 54000 \
-        --output-prefix data/simulations/deserts_continuous_neutral_Ne_${Ne}_h_${h}_rep_${rep} \
+        --output-prefix data/simulations/continuous_deserts_neutral_Ne_${Ne}_h_${h}_rep_${rep} \
         --population-file data/burnins/${region}_h_${h}.txt \
         --vcf-sample 500 \
         --vcf-times 2200 &
