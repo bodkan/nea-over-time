@@ -31,19 +31,22 @@ find_mh_haps <- function(chrom_id, nea_haps, markers, mh_muts) {
   # find already detected N haplotypes overlapping this chromosome
   chrom_markers <- markers[, chrom_id]
   hits <- findOverlaps(chrom_markers, nea_haps)
+
   nea_states_per_hap <- !sapply(split(mcols(chrom_markers[queryHits(hits)])[[chrom_id]], subjectHits(hits)), all)
+  if (!any(nea_states_per_hap)) return(NULL)
   nea_haps_overlap <- nea_hap_loads[nea_states_per_hap]
 
   # find deleterious mutations falling within pure MH haplotypes
   mh_muts_hits <- findOverlaps(mh_muts[mcols(mh_muts)[[chrom_id]] == 1, chrom_id], nea_haps_overlap)
   nea_haps_overlap$mh_genload <- exp(sum(split(mh_muts[mcols(mh_muts)[[chrom_id]] == 1][queryHits(mh_muts_hits)]$S, subjectHits(mh_muts_hits))[[1]]))
+  nea_haps_overlap$mh_chrom_id <- chrom_id
 
-  as_tibble(as.data.frame(nea_haps_overlap)[c("hap_id", "nea_genload", "mh_genload")])
+  as_tibble(as.data.frame(nea_haps_overlap)[c("nea_hap_id", "nea_genload", "mh_genload", "mh_chrom_id")])
 }
 
 
-loads_in_gen <- function(gen) {
-  vcf <- readVcf(paste0("../data/simulations/exon_h_0.5_rep_1_gen_", gen, ".vcf.gz"))
+loads_in_gen <- function(gen, vcf_path) {
+  vcf <- readVcf(vcf_path)
   
   # load the GTs of neutral markers on each simulated chromosome
   markers <- mut_genotypes(vcf=vcf, mut_type=1)
@@ -59,11 +62,11 @@ loads_in_gen <- function(gen) {
   nea_hap_loads <- Reduce(c, nea_haps) %>% as.data.frame %>% as_tibble %>%
     mutate(nea_genload=map_dbl(S, ~ exp(sum(.x)))) %>%
     arrange(seqnames, start, end) %>% select(-S) %>% distinct %>%
-    rownames_to_column("hap_id") %>% 
+    rownames_to_column("nea_hap_id") %>% mutate(nea_hap_id=as.integer(nea_hap_id)) %>% 
     makeGRangesFromDataFrame(keep.extra.columns=TRUE)
   
   chrom_ids(markers)[1:3] %>%
-    lapply(function(chrom_id) find_nea_haps(chrom_id, nea_hap_loads, markers, nea_muts)) %>%
+    lapply(function(chrom_id) find_mh_haps(chrom_id, nea_hap_loads, markers, mh_muts)) %>%
     setNames(chrom_ids(markers)[1:3]) %>% bind_rows
 }
 
