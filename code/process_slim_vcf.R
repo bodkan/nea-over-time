@@ -4,8 +4,8 @@ library(tidyverse)
 
 #' Split the GT matrix into haplotype GT matrix.
 split_chromosomes <- function(gt_mat) {
-    hap_mat <- matrix(, nrow=nrow(gt_mat), ncol=ncol(gt_mat) * 2)
-    colnames(hap_mat) <- paste0("h", 1:ncol(hap_mat))
+    hap_mat <- matrix(nrow=nrow(gt_mat), ncol=ncol(gt_mat) * 2)
+    colnames(hap_mat) <- paste0("chr", 1:ncol(hap_mat))
     for (i in seq_len(ncol(gt_mat))) {
         k <- (2 * i) - 1
         hap_mat[, c(k, k + 1)] <- str_split_fixed(gt_mat[, i], "\\|", 2) %>% as.integer
@@ -30,14 +30,14 @@ mut_info <- function(vcf, mut_type=NULL, pop_origin=NULL, t_min=-Inf, t_max=Inf)
 #' Load mutations of a given type from SLiM.
 #' Mutation type 0 are deleterious mutations, mutation type 1 are neutral
 #' markers.
-mut_haplotypes <- function(vcf, mut_type=NULL, pop_origin=NULL, t_min=-Inf, t_max=Inf) {
+mut_genotypes <- function(vcf, mut_type=NULL, pop_origin=NULL, t_min=-Inf, t_max=Inf) {
   mut_pos <- filter_muts(vcf, mut_type, pop_origin, t_min, t_max)
 
   gr <- granges(vcf)[mut_pos]
   
   gt_mat <- geno(vcf)$GT[mut_pos, ]
   hap_mat <- split_chromosomes(gt_mat)
-  info_cols <- as.data.frame(info(vcf)[mut_pos, ])
+  info_cols <- as.data.frame(mcols(mut_info(vcf, mut_type, pop_origin, t_min, t_max)))
   
   mcols(gr) <- bind_cols(info_cols, as.data.frame(hap_mat))
   names(gr) <- NULL
@@ -127,10 +127,14 @@ get_centromeres <- function() {
 }
 
 #' Read BED file with coordinates of a given type of genomic elements.
-read_regions <- function(regions_bed) {
-  gr <- read_tsv(regions_bed, col_types="ciicdiii") %>%
-    makeGRangesFromDataFrame(starts.in.df.are.0based=TRUE)
-  gr
+read_regions <- function(regions_bed, slim=FALSE) {
+  df <- read_tsv(regions_bed, col_types="ciicdiii")
+  if (slim) {
+    df %>% mutate(chrom="1") %>% select(chrom, slim_start, slim_end) %>%
+      makeGRangesFromDataFrame(starts.in.df.are.0based=TRUE)
+  } else {
+      makeGRangesFromDataFrame(df, starts.in.df.are.0based=TRUE)
+  }
 }
 
 #' Read the real coordinates of Neanderthal fixed sites.
@@ -170,3 +174,7 @@ filter_muts <- function(vcf, mut_type=NULL, pop_origin=NULL, t_min=-Inf, t_max=I
   mut_pos
 }
 
+#' Get names of haplotypes in a given GT GRanges object.
+chrom_ids <- function(gr) {
+  keep(colnames(mcols(gr)), str_detect, "^chr")
+}
