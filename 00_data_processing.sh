@@ -151,7 +151,8 @@ snpoutfilename: all.snp
 indoutfilename: all.ind" > mergeit_Altai.par
 mergeit -p mergeit_Altai.par
 
-
+# ------------------------------
+chmod -w all.{ind,geno,snp}
 
 # ---------------------------------------------------------------------- 
 # download the McVicker B values
