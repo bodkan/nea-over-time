@@ -26,10 +26,6 @@ chmod -w ${gt_dir}/ice_age.tsv
 
 
 
-
-
-
-
 ########
 # fix this to use the newest merge of archaics & SGDP data from Steffi
 #
@@ -60,10 +56,6 @@ chmod -w ${gt_dir}/archaics.tsv
 
 
 
-
-
-
-
 # ---------------------------------------------------------------------- 
 #  get the coordinates of the Big Yoruba array sites
 cp /r1/people/public/AncientDNA/probe_designs/AA77-81_bigYoruba/big_yoruba_and_altai_filtN_printed_probes_with_annotation.txt data/
@@ -73,8 +65,7 @@ awk -v OFS="\t" '{print $1, $2 - 1, $2}' data/big_yoruba_and_altai_filtN_printed
 
 # ---------------------------------------------------------------------- 
 # generate updated EIGENSTRAT 2.2 M sites data that include the new
-# processing of Altai, Vindija and Denisova (genotyped using snpAD) and
-# the new Mezmaiskaya 1 random read data
+# processing of Altai and Vindija (genotyped using snpAD)
 
 mkdir data/eigenstrat/bigyri_ho
 cd data/eigenstrat/bigyri_ho
@@ -85,34 +76,80 @@ cp /mnt/454/Carbon_beast_QM/TY/snp/UPA_all.{snp,ind,geno} .
 # save the coordinates of all 2.2M sites
 less UPA_all.snp | awk -v OFS="\t" '{print $2, $4-1, $4}' > ../../bed/2.2M.bed
 
-# convert the archaics' genotypes into a 0/1/2/9 format
-# - remember that this is using a VCF file containing Chagyrskaya - lower # of SNPs
-seq 1 22 | xargs -P 22 -I {} bash -c "bcftools view -a /mnt/scratch/steffi/D/Vcfs/mergedArchModernApes_wo_Chag/merged_high_low_apes_sgdp1_chr{}.vcf.gz -R ../../bed/2.2M.bed -s AltaiNeandertal,Vindija33.19,Mezmais1Deam,Denisova | bcftools query -f '%CHROM\t%POS[\t%GT]\n' | sed 's/\.\/\./9/g; s/0\/0/2/g; s/0\/1/1/g; s/1\/1/0/g' | grep -v '/' > chr{}.tmp"
-cat chr{1..22}.tmp > archaics.tmp
-rm chr*.tmp
+# ------------------------------
+# VCF processing
 
-# perform a mergit operation (using R, not using ADMIXTOOLS' broken mergit command)
+# Vindija
+seq 1 22 | xargs -P 22 -I {} bash -c "bcftools view -R ../../bed/2.2M.bed -M 2 /mnt/454/Vindija/high_cov/genotypes/Vindija33.19/chr{}_mq25_mapab100.vcf.gz | bcftools query -f '%CHROM\t%POS\t[%GT]\n' | sed 's/0\/0/2/g; s/0\/1/1/g; s/1\/1/0/g' > vindija_chr{}.tmp"
+cat vindija_chr{1..22}.tmp > vindija.tmp
+rm vindija_chr*.tmp
+
+# Altai
+seq 1 22 | xargs -P 22 -I {} bash -c "bcftools view -R ../../bed/2.2M.bed -M 2 /mnt/454/Vindija/high_cov/genotypes/Altai/chr{}_mq25_mapab100.vcf.gz | bcftools query -f '%CHROM\t%POS\t[%GT]\n' | sed 's/0\/0/2/g; s/0\/1/1/g; s/1\/1/0/g' > altai_chr{}.tmp"
+cat altai_chr{1..22}.tmp > altai.tmp
+rm altai_chr*.tmp
+
+# ------------------------------
+# conversion to EIGENSTRAT
+
+# Vindija
 R --no-save < <(echo '
 library(tidyverse)
-library(admixr)
-
-all_data <- read_eigenstrat("UPA_all")
-archaics <- read_tsv("archaics.tmp", col_names=c("chrom", "pos", "Altai", "Vindija", "Mez1", "Denisova"), col_types="ciiiii")
-
-joined <- left_join(all_data$snp, archaics)
-joined$Altai[is.na(joined$Altai)] <- 9
-joined$Vindija[is.na(joined$Vindija)] <- 9
-joined$Mez1[is.na(joined$Mez1)] <- 9
-joined$Denisova[is.na(joined$Denisova)] <- 9
-
-write_geno("archaics.geno", select(joined, Altai:Denisova))
-write_snp("all.snp", all_data$snp)
-write_ind("all.ind", bind_rows(all_data$ind, tibble(id=c("new_Altai", "new_Vindija", "new_Mez1", "new_Denisova"), sex=rep("F", 4), label=c("new_Altai", "new_Vindija", "new_Mez1", "new_Denisova"))))
+all <- read_table2("UPA_all.snp", col_names=c("id", "chrom", "gen", "pos", "alt", "ref"))
+vindija <- read_tsv("vindija.tmp", col_names=c("chrom", "pos", "geno"))
+merged <- left_join(all, vindija)
+merged$geno[is.na(merged$geno)] <- 9
+write_tsv(select(merged, -geno), "vindija.snp", col_names=FALSE)
+write_tsv(select(merged, geno), "vindija.geno", col_names=FALSE)
 ')
 
-paste -d '' UPA_all.geno archaics.geno > all.geno
+# Altai
+R --no-save < <(echo '
+library(tidyverse)
+all <- read_table2("UPA_all.snp", col_names=c("id", "chrom", "gen", "pos", "alt", "ref"))
+altai <- read_tsv("altai.tmp", col_names=c("chrom", "pos", "geno"))
+merged <- left_join(all, altai)
+merged$geno[is.na(merged$geno)] <- 9
+write_tsv(select(merged, -geno), "altai.snp", col_names=FALSE)
+write_tsv(select(merged, geno), "altai.geno", col_names=FALSE)
+')
 
+# ------------------------------
+# mergeit runs
 
+# merging Vindija
+
+# create 'ind' EIGENSTRAT file
+echo "new_Vindija F new_Vindija" > vindija.ind
+# generate a mergit parameter file
+echo "outputformat: EIGENSTRAT
+geno1: UPA_all.geno
+snp1: UPA_all.snp
+ind1: UPA_all.ind
+geno2: vindija.geno
+snp2: vindija.snp
+ind2: vindija.ind
+genooutfilename: UPA_Vindija.geno
+snpoutfilename: UPA_Vindija.snp
+indoutfilename: UPA_Vindija.ind" > mergeit_Vindija.par
+mergeit -p mergeit_Vindija.par
+
+# merging Altai
+
+# create 'ind' EIGENSTRAT file
+echo "new_Altai F new_Altai" > altai.ind
+# generate a mergit parameter file
+echo "outputformat: EIGENSTRAT
+geno1: UPA_Vindija.geno
+snp1: UPA_Vindija.snp
+ind1: UPA_Vindija.ind
+geno2: altai.geno
+snp2: altai.snp
+ind2: altai.ind
+genooutfilename: all.geno
+snpoutfilename: all.snp
+indoutfilename: all.ind" > mergeit_Altai.par
+mergeit -p mergeit_Altai.par
 
 
 
@@ -124,14 +161,11 @@ tar xvf bkgd.tar.gz
 rm bkgd.tar.gz
 
 
+
 # ---------------------------------------------------------------------- 
 # download the hg18-to-hg19 liftover chain
 wget http://hgdownload.cse.ucsc.edu/goldenPath/hg18/liftOver/hg18ToHg19.over.chain.gz
 gunzip hg18ToHg19.over.chain.gz
-
-
-
-
 
 
 
