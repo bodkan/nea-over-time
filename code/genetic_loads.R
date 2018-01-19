@@ -1,6 +1,3 @@
-library(microbenchmark)
-source("code/process_slim_vcf.R")
-
 #' Find all Neanderthal haplotypes on a given chromosome using the fixed
 #' neutral Neanderthal markers.
 find_nea_haps <- function(chrom_id, markers, nea_muts) {
@@ -41,31 +38,34 @@ find_mh_haps <- function(chrom_id, nea_haps, markers, mh_muts) {
   mh_muts_hits <- findOverlaps(mh_muts[mcols(mh_muts)[[chrom_id]] == 1, chrom_id], nea_haps_overlap)
   nea_haps_overlap$mh_genload <- exp(sum(split(mh_muts[mcols(mh_muts)[[chrom_id]] == 1][queryHits(mh_muts_hits)]$S, subjectHits(mh_muts_hits))[[1]]))
 
-  nea_haps_overlap
+  as_tibble(as.data.frame(nea_haps_overlap)[c("hap_id", "nea_genload", "mh_genload")])
 }
 
 
-vcf <- readVcf("data/simulations/exon_h_0.5_rep_1_gen_5.vcf.gz")
-
-# load the GTs of neutral markers on each simulated chromosome
-markers <- mut_genotypes(vcf=vcf, mut_type=1)
-# load the GTs of MH and N deleterious mutations
-mh_muts <- mut_genotypes(vcf=vcf, mut_type=0, pop_origin=1, t_min=70000)
-nea_muts <- mut_genotypes(vcf=vcf, mut_type=0, pop_origin=2)
-
-# find N haplotypes on each simulated chromosome
-nea_haps <- chrom_ids(markers) %>%
-  lapply(function(id) find_nea_haps(id, markers, nea_muts)) %>%
-  setNames(chrom_ids(markers)) %>% compact
-# calculate the genetic load of each N haplotype in the population
-nea_hap_loads <- Reduce(c, nea_haps) %>% as.data.frame %>% as_tibble %>%
-  mutate(nea_genload=map_dbl(S, ~ exp(sum(.x)))) %>%
-  arrange(seqnames, start, end) %>% select(-S) %>% distinct %>%
-  makeGRangesFromDataFrame(keep.extra.columns=TRUE)
-
-nea_haps <- chrom_ids(markers) %>%
-  lapply(function(id) find_nea_haps(id, nea_hap_loads, markers, nea_muts)) %>%
-  setNames(chrom_ids(markers))
+loads_in_gen <- function(gen) {
+  vcf <- readVcf(paste0("../data/simulations/exon_h_0.5_rep_1_gen_", gen, ".vcf.gz"))
+  
+  # load the GTs of neutral markers on each simulated chromosome
+  markers <- mut_genotypes(vcf=vcf, mut_type=1)
+  # load the GTs of MH and N deleterious mutations
+  mh_muts <- mut_genotypes(vcf=vcf, mut_type=0, pop_origin=1, t_min=70000)
+  nea_muts <- mut_genotypes(vcf=vcf, mut_type=0, pop_origin=2)
+  
+  # find N haplotypes on each simulated chromosome
+  nea_haps <- chrom_ids(markers) %>%
+    lapply(function(chrom_id) find_nea_haps(chrom_id, markers, nea_muts)) %>%
+    setNames(chrom_ids(markers)) %>% compact
+  # calculate the genetic load of each N haplotype in the population
+  nea_hap_loads <- Reduce(c, nea_haps) %>% as.data.frame %>% as_tibble %>%
+    mutate(nea_genload=map_dbl(S, ~ exp(sum(.x)))) %>%
+    arrange(seqnames, start, end) %>% select(-S) %>% distinct %>%
+    rownames_to_column("hap_id") %>% 
+    makeGRangesFromDataFrame(keep.extra.columns=TRUE)
+  
+  chrom_ids(markers)[1:3] %>%
+    lapply(function(chrom_id) find_nea_haps(chrom_id, nea_hap_loads, markers, nea_muts)) %>%
+    setNames(chrom_ids(markers)[1:3]) %>% bind_rows
+}
 
 
 
