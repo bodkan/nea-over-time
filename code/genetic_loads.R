@@ -65,9 +65,9 @@ loads_in_gen <- function(gen, vcf_path) {
     rownames_to_column("nea_hap_id") %>% mutate(nea_hap_id=as.integer(nea_hap_id)) %>% 
     makeGRangesFromDataFrame(keep.extra.columns=TRUE)
   
-  chrom_ids(markers)[1:3] %>%
+  chrom_ids(markers) %>%
     lapply(function(chrom_id) find_mh_haps(chrom_id, nea_hap_loads, markers, mh_muts)) %>%
-    setNames(chrom_ids(markers)[1:3]) %>% bind_rows
+    setNames(chrom_ids(markers)) %>% bind_rows
 }
 
 
