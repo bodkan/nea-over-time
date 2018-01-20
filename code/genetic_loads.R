@@ -34,7 +34,7 @@ find_mh_haps <- function(chrom_id, nea_haps, markers, mh_muts) {
 
   nea_states_per_hap <- !sapply(split(mcols(chrom_markers[queryHits(hits)])[[chrom_id]], subjectHits(hits)), all)
   if (!any(nea_states_per_hap)) return(NULL)
-  nea_haps_overlap <- nea_hap_loads[nea_states_per_hap]
+  nea_haps_overlap <- nea_haps[nea_states_per_hap]
 
   # find deleterious mutations falling within pure MH haplotypes
   mh_muts_hits <- findOverlaps(mh_muts[mcols(mh_muts)[[chrom_id]] == 1, chrom_id], nea_haps_overlap)
