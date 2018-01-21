@@ -93,11 +93,11 @@ nea_per_ind <- function(gr) {
 }
 
 #' Extract coordinates of deserts from a given VCF file.
-get_deserts <- function(markers) {
+get_deserts <- function(markers, cutoff=0) {
     all_chrom <- list()
     for (chrom in paste0("chr", 1:22)) {
         sites <- markers[markers$chrom == chrom, ]
-        desert_runs <- rle(as.integer(sites$freq > 0))
+        desert_runs <- rle(as.integer(sites$freq > cutoff))
 
         block_idx <- c(0, desert_runs$lengths %>% cumsum)
         block_start <- block_idx[-length(block_idx)]
