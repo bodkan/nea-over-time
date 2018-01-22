@@ -98,6 +98,10 @@ get_deserts <- function(markers, cutoff=0) {
     for (chrom in paste0("chr", 1:22)) {
         sites <- markers[markers$chrom == chrom, ]
         desert_runs <- rle(as.integer(sites$freq > cutoff))
+        if (length(desert_runs$values) < 2) {
+            all_chrom[[chrom]] <- NULL
+            next
+        }
 
         block_idx <- c(0, desert_runs$lengths %>% cumsum)
         block_start <- block_idx[-length(block_idx)]
