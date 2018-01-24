@@ -8,7 +8,7 @@ mkdir data/simulations
 for model in gravel linear constant; do
 for region in exon promoter tf_binding_site protein_coding utr3; do
 for h in 0.0 0.5 1.0; do
-for rep in `seq 1 3`; do
+for rep in `seq 1 5`; do
     python3 code/run_introgression.py \
         --regions data/slim_coords/${region}_regions.bed \
         --sites data/slim_coords/${region}_all_sites.bed \
