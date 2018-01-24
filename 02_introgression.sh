@@ -50,7 +50,7 @@ done
 # deleterious sequence
 
 h=0.5
-for region in exon promoter tf_binding_site protein_coding utr3; do
+for region in merged exon promoter tf_binding_site protein_coding utr3; do
 for rep in `seq 1 5`; do
     python3 code/run_introgression.py \
         --regions data/slim_coords/${region}_regions.bed \
