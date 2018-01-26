@@ -6,7 +6,7 @@ mkdir data/simulations
 # simulations for trajectories of different regions over time
 
 for model in gravel linear constant; do
-for region in exon promoter tf_binding_site protein_coding utr3; do
+for region in merged exon promoter tf_binding_site protein_coding utr3; do # not all h for merged simulated
 for h in 0.0 0.5 1.0; do
 for rep in `seq 1 5`; do
     python3 code/run_introgression.py \
