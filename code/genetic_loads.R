@@ -21,59 +21,72 @@ find_nea_haps <- function(chrom_id, markers, nea_muts) {
   
   hits <- findOverlaps(nea_muts[mcols(nea_muts)[[chrom_id]] == 1], haps)
   func_haps <- haps[unique(subjectHits(hits))]
-  func_haps$S <- split(nea_muts[mcols(nea_muts)[[chrom_id]] == 1][queryHits(hits)]$S, subjectHits(hits))
+  func_haps$nea_fit <- sapply(split(nea_muts[mcols(nea_muts)[[chrom_id]] == 1][queryHits(hits)]$S, subjectHits(hits)),
+                                  function(muts) exp(sum(muts)))
   func_haps
 }
 
 #' Given a Neanderthal haplotype, find a set of overlapping modern human
 #' haplotypes and calculate their genetic loads.
-find_mh_haps <- function(chrom_id, nea_haps, markers, mh_muts) {
-  # find already detected N haplotypes overlapping this chromosome
-  chrom_markers <- markers[, chrom_id]
-  hits <- findOverlaps(chrom_markers, nea_haps)
-
-  nea_states_per_hap <- !sapply(split(mcols(chrom_markers[queryHits(hits)])[[chrom_id]], subjectHits(hits)), all)
-  if (!any(nea_states_per_hap)) return(NULL)
-  nea_haps_overlap <- nea_haps[nea_states_per_hap]
-
-  # find deleterious mutations falling within pure MH haplotypes
-  mh_muts_hits <- findOverlaps(mh_muts[mcols(mh_muts)[[chrom_id]] == 1, chrom_id], nea_haps_overlap)
-  nea_haps_overlap$mh_genload <- exp(sum(split(mh_muts[mcols(mh_muts)[[chrom_id]] == 1][queryHits(mh_muts_hits)]$S, subjectHits(mh_muts_hits))[[1]]))
-  nea_haps_overlap$mh_chrom_id <- chrom_id
-
-  as_tibble(as.data.frame(nea_haps_overlap)[c("nea_hap_id", "nea_genload", "mh_genload", "mh_chrom_id")])
+matching_mh_hap <- function(nea_hap, markers, mh_muts) {
+  for (chrom_id in sample(chrom_ids(markers))) {
+    # get the sites of fixed markers overlapping this N haplotype
+    marker_sites <- subsetByOverlaps(markers[, chrom_id], nea_hap)
+    # this MH chromosome doesn't overlap any fixed N markers - it's pure MH
+    if (sum(mcols(marker_sites)[[chrom_id]]) == 0) {
+      # => find deleterious MH mutations of the MH haplotype overlapping a N hap
+      mh_del_muts <- mh_muts[mcols(mh_muts)[[chrom_id]] == 1, c("S", chrom_id)]
+      overlap_del_muts <- subsetByOverlaps(mh_del_muts, nea_hap)
+      # calculate the fitness of that haplotype caused by these mutations
+      nea_hap$mh_fit <- exp(sum(overlap_del_muts$S))
+      return(nea_hap)
+    }
+  }
+  stop("This should never happen!")
 }
 
 
-loads_in_gen <- function(gen, vcf_path) {
+
+nea_mh_fitness <- function(vcf_path) {
+  # vcf_path <- "data/simulations/exon_h_0.5_rep_1_gen_1.vcf.gz"
   vcf <- readVcf(vcf_path)
   
   # load the GTs of neutral markers on each simulated chromosome
   markers <- mut_genotypes(vcf=vcf, mut_type=1)
-  # load the GTs of MH and N deleterious mutations
-  mh_muts <- mut_genotypes(vcf=vcf, mut_type=0, pop_origin=1, t_min=70000)
-  nea_muts <- mut_genotypes(vcf=vcf, mut_type=0, pop_origin=2)
+  # load the GTs of new non-African mutations
+  new_muts <- mut_genotypes(vcf, mut_type=0, pop_origin=3)
+  # load the GTs of MH and N deleterious mutations and merge them with
+  # the new non-African mutations
+  mh_muts <- c(mut_genotypes(vcf=vcf, mut_type=0, pop_origin=1, t_min=70000), new_muts) %>% sort
+  nea_muts <- c(mut_genotypes(vcf=vcf, mut_type=0, pop_origin=2), new_muts) %>% sort
   
-  # find N haplotypes on each simulated chromosome
+  # find N haplotypes on each simulated chromosome and calculate their fitness
   nea_haps <- chrom_ids(markers) %>%
-    lapply(function(chrom_id) find_nea_haps(chrom_id, markers, nea_muts)) %>%
-    setNames(chrom_ids(markers)) %>% compact
-  # calculate the genetic load of each N haplotype in the population
-  nea_hap_loads <- Reduce(c, nea_haps) %>% as.data.frame %>% as_tibble %>%
-    mutate(nea_genload=map_dbl(S, ~ exp(sum(.x)))) %>%
-    arrange(seqnames, start, end) %>% select(-S) %>% distinct %>%
-    rownames_to_column("nea_hap_id") %>% mutate(nea_hap_id=as.integer(nea_hap_id)) %>% 
-    makeGRangesFromDataFrame(keep.extra.columns=TRUE)
+    lapply(find_nea_haps, markers, nea_muts) %>%
+    compact %>%
+    Reduce(c, .)
   
-  chrom_ids(markers) %>%
-    lapply(function(chrom_id) find_mh_haps(chrom_id, nea_hap_loads, markers, mh_muts)) %>%
-    setNames(chrom_ids(markers)) %>% bind_rows
+  # find "competing" MH haplotypes for each identified N haplotype
+  nea_vs_mh_hap <-
+      lapply(nea_haps, matching_mh_hap, markers, mh_muts) %>%
+      Reduce(c, .) %>%
+      as.data.frame %>%
+      select(nea_fit, mh_fit) %>%
+      as_tibble
+  
+  nea_vs_mh_hap
 }
 
-
+# 
+# ggplot(fits, aes(nea_fit, mh_mean)) +
+#     geom_point() +
+#     geom_errorbar(aes(ymin=lower_ci, ymax=upper_ci)) +
+#     geom_abline(slope=1) +
+#     xlim(0, 1) + ylim(0, 1)
 
 # mutation frequencies before introgression
 # ggplot() +
 #   geom_point(aes(log10(-mh_muts$S), mh_muts$freq / max(mh_muts$freq), color="blue"), alpha=1/10) +
 #   geom_point(aes(log10(-nea_muts$S), nea_muts$freq / max(nea_muts$freq), color="red"), alpha=1/10) +
 #   xlim(-15, 0)
+
