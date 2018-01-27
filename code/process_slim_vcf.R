@@ -73,7 +73,7 @@ get_markers <- function(vcf, sites_coords, within_region=NULL, fill_freq=TRUE) {
              chrom=factor(chrom, levels=paste0("chr", 1:22))) %>%
       arrange(chrom, pos)
   } else {
-    markers <- inner_join(trans_sites, all_sites)
+    markers <- inner_join(trans_sites, all_sites, by=c("chrom", "pos"))
   }
 
   if (!is.null(within_region))
