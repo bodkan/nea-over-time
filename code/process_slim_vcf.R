@@ -51,7 +51,7 @@ mut_genotypes <- function(vcf, mut_type=NULL, pop_origin=NULL, t_min=-Inf, t_max
 #' Load the simulated Neanderthal fixed markers and their frequencies
 #' (either all, or the ones within regions or gaps). Return as a GRanges
 #' object.
-get_markers <- function(vcf, sites_coords, within_region=NULL) {
+get_markers <- function(vcf, sites_coords, within_region=NULL, fill_freq=TRUE) {
   if (!(is.null(within_region) || within_region %in% c("region", "gap")))
       stop("Invalid region specified")
 
@@ -67,10 +67,14 @@ get_markers <- function(vcf, sites_coords, within_region=NULL) {
   all_sites <- mcols(real_sites) %>%
     as.data.frame %>% select(chrom=real_chrom, pos=real_end, within)
 
-  markers <- full_join(trans_sites, all_sites, by=c("chrom", "pos")) %>%
-    mutate(freq=ifelse(is.na(freq), 0, freq),
-           chrom=factor(chrom, levels=paste0("chr", 1:22))) %>%
-    arrange(chrom, pos)
+  if (fill_freq) {
+    markers <- full_join(trans_sites, all_sites, by=c("chrom", "pos")) %>%
+      mutate(freq=ifelse(is.na(freq), 0, freq),
+             chrom=factor(chrom, levels=paste0("chr", 1:22))) %>%
+      arrange(chrom, pos)
+  } else {
+    markers <- inner_join(trans_sites, all_sites)
+  }
 
   if (!is.null(within_region))
     markers <- markers[markers$within == within_region, ]
