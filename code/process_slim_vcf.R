@@ -63,7 +63,8 @@ get_markers <- function(vcf, sites_coords, within_region=NULL, fill_freq=TRUE) {
   trans_sites <- transpose_sites(sim_sites, real_sites) %>%
     as.data.frame %>% select(chrom=seqnames, pos=start, freq) %>%
     mutate(chrom=as.character(chrom),
-           MID=sim_sites$MID)
+           MID=sim_sites$MID,
+           S=0)
 
   all_sites <- mcols(real_sites) %>%
     as.data.frame %>% select(chrom=real_chrom, pos=real_end, within)
