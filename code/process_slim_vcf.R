@@ -61,7 +61,7 @@ get_markers <- function(vcf, sites_coords, within_region=NULL) {
   sim_sites <- mut_info(vcf, mut_type=1) %>% shift(shift=-1)
   
   trans_sites <- transpose_sites(sim_sites, real_sites) %>%
-    as.data.frame %>% select(chrom=seqnames, pos=start, freq) %>%
+    as.data.frame %>% select(chrom=seqnames, pos=start, freq, MID, S) %>%
     mutate(chrom=as.character(chrom))
 
   all_sites <- mcols(real_sites) %>%
