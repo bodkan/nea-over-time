@@ -28,6 +28,7 @@ done
 # ----------------------------------------------------------------------
 # simulations for analysis of frequency derivatives over time
 
+# constant model
 region="exon"; h=0.5
 for rep in `seq 1 3`; do
     python3 code/run_introgression.py \
@@ -37,7 +38,23 @@ for rep in `seq 1 3`; do
         --mut-rate 1e-8 \
         --dominance-coef $h \
         --model constant \
-        --output-prefix data/simulations/${region}_h_${h}_rep_${rep} \
+        --output-prefix data/simulations/delta_constant_${region}_h_${h}_rep_${rep} \
+        --population-file data/burnins/${region}_h_${h}.txt \
+        --vcf-times 1 2 3 4 5 6 7 8 9 10 20 50 100 `seq 200 200 2200` \
+        --vcf-sample 500 &
+done
+
+# gravel model
+region="exon"; h=0.5
+for rep in `seq 1 3`; do
+    python3 code/run_introgression.py \
+        --regions data/slim_coords/${region}_regions.bed \
+        --sites data/slim_coords/${region}_all_sites.bed \
+        --recomb-map data/slim_coords/${region}_recomb_map.bed \
+        --mut-rate 1e-8 \
+        --dominance-coef $h \
+        --model gravel \
+        --output-prefix data/simulations/delta_gravel_${region}_h_${h}_rep_${rep} \
         --population-file data/burnins/${region}_h_${h}.txt \
         --vcf-times 1 2 3 4 5 6 7 8 9 10 20 50 100 `seq 200 200 2200` \
         --vcf-sample 500 &
