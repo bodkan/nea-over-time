@@ -4,64 +4,17 @@ library(glue)
 library(data.table)
 })
 
-real_path <- "data/admixture_array_nea.tsv"
-p0 <- 0.03
-m <- 1e-4
-t <- 15000
-d <- 15000
-
 gen_time <- 25
 Ne0 <- 10000
-
-plot_nea <- function(df, real_lm=NULL, sim_lm=NULL) {
-  p <- ggplot(df, aes(t_admix, nea)) + geom_point(size=5) + xlim(0, 55000) + ylim(0, 0.05)
-  if (!is.null(real_lm)) {
-    p <- p + geom_abline(intercept=coef(real_lm)[1], slope=coef(real_lm)[2], linetype=2, color="blue")
-  }
-  if (!is.null(sim_lm)) {
-    p <- p + geom_abline(intercept=coef(sim_lm)[1], slope=coef(sim_lm)[2], linetype=2, color="red")
-  }
-  p
-}
-
-# read admixture array estimates and ages
-real_data <- function(path) {
-  read_tsv(path, col_types="cidci") %>%
-  filter(name != "Oase1") %>%
-  group_by(pop) %>% 
-  mutate(name=ifelse(pop == "EMH", paste0("emh_", 1:n()), paste0("eur_", 1:n())),
-         t_admix=55000 - age) %>% 
-  ungroup
-}
-
-# calculate Neanderthal and African allele frequencies
-pop_freq <- function(dt, pop) {
-  dt[, rowSums(.SD) / length(.SD), .SDcols=colnames(dt)[str_detect(colnames(dt), pop)]]
-}
-
-admixture_array <- function(all_sites) {
-  afr_freq <- pop_freq(all_sites, "afr")
-  nea_freq <- pop_freq(all_sites, "nea")
-  
-  # process the sites based on the archaic admixture array conditioning
-  afr_cutoff <- 1.0
-  array_sites <- all_sites[(afr_freq == 0 | afr_freq >= afr_cutoff) &
-                           (nea_freq == 0 | nea_freq == 1) &
-                           (abs(afr_freq - nea_freq) > 0.5)]
-  
-  array_sites
-}
-
-big_yoruba_array <- function(all_sites) {
-  all_sites[(nea_1 != nea_2) | (afr_1 != afr_2) | (afr_3 != afr_4)]
-}
-
-real_eur <- real_data("data/admixture_array_nea.tsv")
 
 scale_t <- function(t) { t / gen_time / (4 * Ne0) }
 scale_Ne <- function(Ne) { Ne / Ne0 }
 scale_m <- function(m) { 4 * m * Ne0 }
 
+make_names <- function(prefix, num) {
+  if (!num) return(NULL)
+  paste0(prefix, "_", 1 : num)
+}
 
 simulate_sites <- function(p0, m, t, d,
                            n_afr=0, n_nea=0, n_eur=0, n_asn=0, n_chimp=0,
@@ -75,11 +28,6 @@ simulate_sites <- function(p0, m, t, d,
   # probability of cross-over between adjacent bases per generation 
   recomb_rate <- 1e-8
   
-  gen_time <- 25
-
-  # effective population size used for scaling below
-  Ne0 <- 20000
-
   # how old are the sampled Neanderthal haplotypes?
   T_nea_age <- 70000
   
@@ -156,10 +104,12 @@ simulate_sites <- function(p0, m, t, d,
   ") %>% str_replace_all("\n", " ") %>% str_replace_all("  +", " ")
   
   # generate column names for the output df
-  col_names <- c(paste0("nea_", 1 : n_nea),
-                 paste0("emh_", 1 : length(emh_ages)),
-                 paste0("afr_", 1 : n_afr),
-                 paste0("eur_", 1 : n_eur))
+  col_names <- c(make_names("nea",   n_nea),
+                 make_names("emh",   length(emh_ages)),
+                 make_names("afr",   n_afr),
+                 make_names("eur",   n_eur),
+                 make_names("asn",   n_asn),
+                 make_names("chimp", n_chimp))
   
   # run scrm and parse all simulated segregating sites
   all_sites <- fread(scrm_cmd, col.names=col_names, showProgress=FALSE)
@@ -167,12 +117,3 @@ simulate_sites <- function(p0, m, t, d,
   all_sites
 }
 
-
-# detect all Neanderthal alleles in the non-African population (TRUE/FALSE at
-# each site converted to integers - 1 is Nea-like allele, 0 is an African-like
-# MH allele)
-sim_samples <- map_df(admix_array[, real_eur$name, with=FALSE],
-                      ~ mean(. == admix_array$nea_1)) %>%
-  gather(name, nea) %>% inner_join(select(real_eur, -nea), ., by="name")
-
-sim_samples
