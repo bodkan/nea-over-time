@@ -5,7 +5,7 @@ library(data.table)
 })
 
 gen_time <- 25
-Ne0 <- 10000
+Ne0 <- 20000
 
 scale_t <- function(t) { t / gen_time / (4 * Ne0) }
 scale_Ne <- function(Ne) { Ne / Ne0 }
