@@ -8,3 +8,4 @@ __pycache__/*
 *.swp
 test/*
 .Rhistory
+.Rproj.user
