@@ -35,32 +35,32 @@ load_abc <- function(path, prefix) {
 }
 
 
-real_eur <- load_estimates("data/admixture_array_nea.tsv")
-
-real_lm <- lm(nea ~ t_admix, data=real_eur, weights=snp_count)
-
-MIN_M <- 0.00001; MAX_M <- 0.001
-MIN_T <- 1; MAX_T <- 18000
-
-prior_p0 <- function() { as.vector(coef(real_lm)[1]) }
-prior_m <- function() { runif(1, MIN_M, MAX_M) }
-prior_t <- function() { sample(MIN_T : MAX_T, 1) }
-prior_d <- function(t) { sample(1 : t, 1) }
-
-
-all_sites <- simulate_sites(
-  p0 = prior_p0(), m = 1e-4, t = 15000, d = 15000,
-  n_afr = 200, n_eur = nrow(filter(real_eur, pop != "EMH")),
-  n_nea = 4, n_chimp = 1, n_haps = 10, hap_length = 5001,
-  emh_ages = filter(real_eur, pop == "EMH")$age
-)
-
-admix_array <- archaic_admixture_array(all_sites)
-bigyri_array <- big_yoruba_array(all_sites)
-
-
-real_lm <- lm(nea ~ t_admix, data=real_eur, weights=snp_count)
-sim_lm <- lm(nea ~ t_admix, data=sim_eur)
+# real_eur <- load_estimates("data/admixture_array_nea.tsv")
+# 
+# real_lm <- lm(nea ~ t_admix, data=real_eur, weights=snp_count)
+# 
+# MIN_M <- 0.00001; MAX_M <- 0.001
+# MIN_T <- 1; MAX_T <- 18000
+# 
+# prior_p0 <- function() { as.vector(coef(real_lm)[1]) }
+# prior_m <- function() { runif(1, MIN_M, MAX_M) }
+# prior_t <- function() { sample(MIN_T : MAX_T, 1) }
+# prior_d <- function(t) { sample(1 : t, 1) }
+# 
+# 
+# all_sites <- simulate_sites(
+#   p0 = prior_p0(), m = 1e-4, t = 15000, d = 15000,
+#   n_afr = 200, n_eur = nrow(filter(real_eur, pop != "EMH")),
+#   n_nea = 4, n_chimp = 1, n_haps = 10, hap_length = 5001,
+#   emh_ages = filter(real_eur, pop == "EMH")$age
+# )
+# 
+# admix_array <- archaic_admixture_array(all_sites)
+# bigyri_array <- big_yoruba_array(all_sites)
+# 
+# 
+# real_lm <- lm(nea ~ t_admix, data=real_eur, weights=snp_count)
+# sim_lm <- lm(nea ~ t_admix, data=sim_eur)
 
 
 
