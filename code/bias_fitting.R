@@ -24,6 +24,10 @@ load_estimates <- function(path) {
     ungroup
 }
 
+nea_lm <- function(df) {
+  lm(nea ~ t_admix, data=df)
+}
+
 # Calculate the ratio between magnitudes of slopes in real vs simulated data.
 slope_ratio <- function(real_lm, sim_lm) {
   as.vector(coef(real_lm)[2] / coef(sim_lm)[2])
