@@ -2,27 +2,31 @@ suppressPackageStartupMessages({
 library(tidyverse)
 library(glue)
 library(data.table)
+library(purrr)
 })
 
 gen_time <- 25
-Ne0 <- 20000
 
-scale_t <- function(t) { t / gen_time / (4 * Ne0) }
-scale_Ne <- function(Ne) { Ne / Ne0 }
-scale_m <- function(m) { 4 * m * Ne0 }
+scale_t <- function(t, Ne0) { t / gen_time / (4 * Ne0) }
+scale_Ne <- function(Ne, Ne0) { Ne / Ne0 }
+scale_m <- function(m, Ne0) { 4 * m * Ne0 }
 
 make_names <- function(prefix, num) {
   if (!num) return(NULL)
   paste0(prefix, "_", 1 : num)
 }
 
-simulate_sites <- function(p0, m, t, d,
+simulate_sites <- function(p0, m, t, d, Ne0,
                            n_afr=0, n_nea=0, n_eur=0, n_asn=0, n_chimp=0,
                            n_haps=20000, hap_length=5001,
                            emh_ages=NULL)  {
   if (n_afr + n_nea + n_eur + n_asn + n_chimp == 0)
     stop("No haplotypes sampled")
   
+  scale_t <- partial(scale_t, Ne0 = Ne0)
+  scale_Ne <- partial(scale_t, Ne0 = Ne0)
+  scale_m <- partial(scale_t, Ne0 = Ne0)
+
   # mutation rate per site per generation
   mut_rate <- 2.5e-8
   # probability of cross-over between adjacent bases per generation 
