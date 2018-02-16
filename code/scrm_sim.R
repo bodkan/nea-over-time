@@ -7,9 +7,9 @@ library(purrr)
 
 gen_time <- 25
 
-scale_t <- function(t, Ne0) { t / gen_time / (4 * Ne0) }
-scale_Ne <- function(Ne, Ne0) { Ne / Ne0 }
-scale_m <- function(m, Ne0) { 4 * m * Ne0 }
+scale_t_fun <- function(t, Ne0) { t / gen_time / (4 * Ne0) }
+scale_Ne_fun <- function(Ne, Ne0) { Ne / Ne0 }
+scale_m_fun <- function(m, Ne0) { 4 * m * Ne0 }
 
 make_names <- function(prefix, num) {
   if (!num) return(NULL)
@@ -23,9 +23,9 @@ simulate_sites <- function(p0, m, t, d, Ne0,
   if (n_afr + n_nea + n_eur + n_asn + n_chimp == 0)
     stop("No haplotypes sampled")
   
-  scale_t <- partial(scale_t, Ne0 = Ne0)
-  scale_Ne <- partial(scale_t, Ne0 = Ne0)
-  scale_m <- partial(scale_t, Ne0 = Ne0)
+  scale_t <- partial(scale_t_fun, Ne0 = Ne0)
+  scale_Ne <- partial(scale_Ne_fun, Ne0 = Ne0)
+  scale_m <- partial(scale_m_fun, Ne0 = Ne0)
 
   # mutation rate per site per generation
   mut_rate <- 2.5e-8
