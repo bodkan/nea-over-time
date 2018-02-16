@@ -28,7 +28,7 @@ done
 # ----------------------------------------------------------------------
 # simulations for analysis of frequency derivatives over time
 
-# constant model
+# constant model of exonic selection
 region="exon"; h=0.5
 for rep in `seq 1 3`; do
     python3 code/run_introgression.py \
@@ -44,7 +44,7 @@ for rep in `seq 1 3`; do
         --vcf-sample 500 &
 done
 
-# gravel model
+# gravel model of exonic selection
 region="exon"; h=0.5
 for rep in `seq 1 3`; do
     python3 code/run_introgression.py \
