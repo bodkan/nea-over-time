@@ -89,6 +89,11 @@ seq 1 22 | xargs -P 22 -I {} bash -c "bcftools view -R ../../bed/2.2M.bed -M 2 /
 cat altai_chr{1..22}.tmp > altai.tmp
 rm altai_chr*.tmp
 
+# Denisova
+seq 1 22 | xargs -P 22 -I {} bash -c "bcftools view -R ../../bed/2.2M.bed -M 2 /mnt/454/Vindija/high_cov/genotypes/Denisova/chr{}_mq25_mapab100.vcf.gz | bcftools query -f '%CHROM\t%POS\t[%GT]\n' | sed 's/0\/0/2/g; s/0\/1/1/g; s/1\/1/0/g' > denisova_chr{}.tmp"
+cat denisova_chr{1..22}.tmp > denisova.tmp
+rm denisova_chr*.tmp
+
 # ------------------------------
 # conversion to EIGENSTRAT
 
