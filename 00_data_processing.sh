@@ -119,6 +119,17 @@ write_tsv(select(merged, -geno), "altai.snp", col_names=FALSE)
 write_tsv(select(merged, geno), "altai.geno", col_names=FALSE)
 ')
 
+# Denisova
+R --no-save < <(echo '
+library(tidyverse)
+all <- read_table2("UPA_all.snp", col_names=c("id", "chrom", "gen", "pos", "alt", "ref"))
+denisova <- read_tsv("denisova.tmp", col_names=c("chrom", "pos", "geno"))
+merged <- left_join(all, denisova)
+merged$geno[is.na(merged$geno)] <- 9
+write_tsv(select(merged, -geno), "denisova.snp", col_names=FALSE)
+write_tsv(select(merged, geno), "denisova.geno", col_names=FALSE)
+')
+
 # ------------------------------
 # mergeit runs
 
@@ -151,10 +162,27 @@ ind1: UPA_Vindija.ind
 geno2: altai.geno
 snp2: altai.snp
 ind2: altai.ind
+genooutfilename: UPA_Altai.geno
+snpoutfilename: UPA_Altai.snp
+indoutfilename: UPA_Altai.ind" > mergeit_Altai.par
+mergeit -p mergeit_Altai.par
+
+# merging Denisova
+
+# create 'ind' EIGENSTRAT file
+echo "new_Denisova F new_Denisova" > denisova.ind
+# generate a mergit parameter file
+echo "outputformat: EIGENSTRAT
+geno1: UPA_Altai.geno
+snp1: UPA_Altai.snp
+ind1: UPA_Altai.ind
+geno2: denisova.geno
+snp2: denisova.snp
+ind2: denisova.ind
 genooutfilename: all.geno
 snpoutfilename: all.snp
-indoutfilename: all.ind" > mergeit_Altai.par
-mergeit -p mergeit_Altai.par
+indoutfilename: all.ind" > mergeit_Denisova.par
+mergeit -p mergeit_Denisova.par
 
 # ------------------------------
 chmod -w all.{ind,geno,snp}
