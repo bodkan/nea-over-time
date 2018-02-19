@@ -148,10 +148,9 @@ if __name__ == "__main__":
 
     if args.terminate_after:
         terminate_after = args.terminate_after + 1
-    elif args.sampling_times:
-        terminate_after = min(out_of_africa, (sampling_times[-1] + admixture_time)
     else:
-        terminate_after = 1e9
+        end = sampling_times[-1] + admixture_time if args.sampling_times else 1e9
+        terminate_after = min(out_of_africa, end)
 
     # values to fill in the SLiM template file
     mapping = {
