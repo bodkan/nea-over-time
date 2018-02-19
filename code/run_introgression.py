@@ -146,6 +146,13 @@ if __name__ == "__main__":
     else:
         modifier = "NULL"
 
+    if args.terminate_after:
+        terminate_after = args.terminate_after + 1
+    elif args.sampling_times:
+        terminate_after = min(out_of_africa, (sampling_times[-1] + admixture_time)
+    else:
+        terminate_after = 1e9
+
     # values to fill in the SLiM template file
     mapping = {
         "population_file"   : args.population_file,
@@ -175,7 +182,7 @@ if __name__ == "__main__":
         "after_admixture"   : admixture_end + 1,
         "exp_growth"        : exp_growth,
         "sim_length"        : out_of_africa,
-        "terminate_after"   : args.terminate_after + 1 if args.terminate_after else min(out_of_africa, (sampling_times[-1] + admixture_time) if args.sampling_times else 1e9),
+        "terminate_after"   : terminate_after,
         "sampling_times"    : slim_vector(sampling_times),
         "sim_length"        : out_of_africa,
         "simulate_dilution" : "T" if args.dilution else "F",
