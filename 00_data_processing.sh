@@ -185,7 +185,7 @@ indoutfilename: all.ind" > mergeit_Denisova.par
 mergeit -p mergeit_Denisova.par
 
 # ------------------------------
-chmod -w all.{ind,geno,snp}
+chmod -w *
 
 # ---------------------------------------------------------------------- 
 # download the McVicker B values
