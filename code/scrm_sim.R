@@ -16,7 +16,7 @@ make_names <- function(prefix, num) {
   paste0(prefix, "_", 1 : num)
 }
 
-simulate_sites <- function(p0, m, t, d, Ne0,
+simulate_sites <- function(p0, m_afr_eur, m_eur_afr, t, d, Ne0,
                            n_afr=0, n_nea=0, n_eur=0, n_asn=0, n_chimp=0,
                            n_haps=20000, hap_length=5001,
                            emh_ages=NULL)  {
@@ -52,7 +52,6 @@ simulate_sites <- function(p0, m, t, d, Ne0,
   Ne_anc <- 10000
   
   # EUR <-> AFR migration rates
-  m_afr_eur <- m
   T_m_afr_eur_start <- t - d
   T_m_afr_eur_end <- t
   
@@ -93,8 +92,11 @@ simulate_sites <- function(p0, m, t, d, Ne0,
   -em {scale_t(T_nea_admix_start)} 2 4 0 \\
   -en {scale_t(T_nea_admix_start)} 2 {scale_Ne(Ne_bottleneck)} \\
   
-  -em {scale_t(T_m_afr_eur_start)} 1 2 {scale_m(m_afr_eur)} \\
+  -em {scale_t(T_m_afr_eur_start)} 1 2 {scale_m(m_eur_afr)} \\
   -em {scale_t(T_m_afr_eur_end)} 1 2 0 \\
+
+  -em {scale_t(T_m_afr_eur_start)} 2 1 {scale_m(m_afr_eur)} \\
+  -em {scale_t(T_m_afr_eur_end)} 2 1 0 \\
   
   -ej {scale_t(30000)} 3 2 \\
   -ej {scale_t(T_afr_nonafr_split)} 2 1 \\
