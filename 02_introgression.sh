@@ -127,7 +127,7 @@ for rep in `seq 1 3`; do
         --model constant \
         --admixture-rate 0.0025 \
         --admixture-end 54000 \
-        --output-prefix data/simulations/continuous_deserts_${region}_h_${h}_rep_${rep} \
+        --output-prefix data/simulations/deserts_continuous_${region}_h_${h}_rep_${rep} \
         --population-file data/burnins/${region}_h_${h}.txt \
         --vcf-times 2200 \
         --vcf-sample 500 &
@@ -151,7 +151,7 @@ for rep in `seq 1 3`; do
         --founder-size $Ne \
         --admixture-rate 0.0025 \
         --admixture-end 54000 \
-        --output-prefix data/simulations/continuous_deserts_neutral_Ne_${Ne}_h_${h}_rep_${rep} \
+        --output-prefix data/simulations/deserts_continuous_neutral_Ne_${Ne}_h_${h}_rep_${rep} \
         --population-file data/burnins/${region}_h_${h}.txt \
         --vcf-sample 500 \
         --vcf-times 2200 &
