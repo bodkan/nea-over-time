@@ -3,7 +3,7 @@ mkdir data/simulations
 
 
 # ----------------------------------------------------------------------
-# simulations for trajectories of different regions over time
+# simulations for trajectories for different regions over time
 
 for model in gravel linear constant; do
 for region in merged exon promoter tf_binding_site protein_coding utr3; do # not all h for merged simulated
@@ -29,6 +29,7 @@ done
 # simulations for analysis of frequency derivatives over time
 
 # constant model of exonic selection
+
 region="exon"; h=0.5
 for rep in `seq 1 3`; do
     python3 code/run_introgression.py \
@@ -44,27 +45,30 @@ for rep in `seq 1 3`; do
         --vcf-sample 500 &
 done
 
-# gravel model of exonic selection
-region="exon"; h=0.5
-for rep in `seq 1 3`; do
+# constant model of protein coding selection
+
+region="protein_coding"; h=0.5
+for rep in `seq 1 5`; do
     python3 code/run_introgression.py \
         --regions data/slim_coords/${region}_regions.bed \
         --sites data/slim_coords/${region}_all_sites.bed \
         --recomb-map data/slim_coords/${region}_recomb_map.bed \
-        --mut-rate 1e-8 \
+        --mut-rate 7e-9 \
         --dominance-coef $h \
-        --model gravel \
-        --output-prefix data/simulations/delta_gravel_${region}_h_${h}_rep_${rep} \
-        --population-file data/burnins/${region}_h_${h}.txt \
-        --vcf-times 1 2 3 4 5 6 7 8 9 10 20 50 100 `seq 200 200 2200` \
+        --admixture-rate 0.05 \
+        --model constant \
+        --output-prefix data/simulations/delta_constant_${region}_h_${h}_rep_${rep} \
+        --population-file data/burnins/nonsyn_${region}_h_${h}.txt \
+        --vcf-times 1 2 3 4 5 6 7 8 9 10 20 50 `seq 100 100 1000` `seq 1200 200 2200` \
         --vcf-sample 500 &
-done
+done > /dev/null
 
 
 
 # ----------------------------------------------------------------------
-# analysis of desert sizes in the present based on different amount of
-# deleterious sequence
+# analysis of desert sizes in the present based
+
+# different amount of deleterious sequence
 
 h=0.5
 for region in merged exon promoter tf_binding_site protein_coding utr3; do
@@ -85,8 +89,7 @@ done
 
 
 
-# ----------------------------------------------------------------------
-# analysis of desert sizes in the present under neutrality
+# under neutrality
 
 region="tf_binding_site" # size of deleterious region doesn't matter here
 h=0.5
@@ -106,6 +109,7 @@ for rep in `seq 1 5`; do
         --vcf-times 2200 &
 done
 done
+
 
 
 # ----------------------------------------------------------------------
