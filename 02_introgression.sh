@@ -31,7 +31,7 @@ done
 # constant model of exonic selection
 
 region="exon"; h=0.5
-for rep in `seq 1 3`; do
+for rep in `seq 4 5`; do
     python3 code/run_introgression.py \
         --regions data/slim_coords/${region}_regions.bed \
         --sites data/slim_coords/${region}_all_sites.bed \
@@ -41,14 +41,14 @@ for rep in `seq 1 3`; do
         --model constant \
         --output-prefix data/simulations/delta_constant_${region}_h_${h}_rep_${rep} \
         --population-file data/burnins/${region}_h_${h}.txt \
-        --vcf-times 1 2 3 4 5 6 7 8 9 10 20 50 100 `seq 200 200 2200` \
+        --vcf-times 1 2 3 4 5 6 7 8 9 10 20 50 `seq 100 100 1000` `seq 1200 200 2200` \
         --vcf-sample 500 &
-done
+done > /dev/null
 
 # constant model of protein coding selection
 
 region="protein_coding"; h=0.5
-for rep in `seq 1 5`; do
+for rep in `seq 1 10`; do
     python3 code/run_introgression.py \
         --regions data/slim_coords/${region}_regions.bed \
         --sites data/slim_coords/${region}_all_sites.bed \
