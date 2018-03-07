@@ -5,7 +5,7 @@
 library(tidyverse)
 library(patchwork)
 
-source("code/my_theme.R")
+source("my_theme.R")
 
 plot_nea_time <- function(df, snp_cutoff = 0, ymax = 0.06, title="") {
   filter(df,
@@ -21,7 +21,7 @@ plot_nea_time <- function(df, snp_cutoff = 0, ymax = 0.06, title="") {
     ggtitle(title)
 }
 
-rdata_dir <- "paper/"
+rdata_dir <- "rds"
 
 # Near East populations to exclude from West Eurasians in plots over time
 near_east <- c("BedouinB", "Druze", "Iranian", "Iraqi_Jew", "Jordanian",
