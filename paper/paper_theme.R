@@ -1,8 +1,7 @@
 library(ggthemes)
-library(viridis)
 
 # Basic elements of a clean ggplot theme
-my_theme <- function(base_size = 12, base_family = "Helvetica", ...) {
+paper_theme <- function(base_size = 22, base_family = "Helvetica", ...) {
   theme_foundation(base_size = base_size, base_family = base_family) + 
     theme(
       # Plot
@@ -18,7 +17,7 @@ my_theme <- function(base_size = 12, base_family = "Helvetica", ...) {
       axis.title = element_text(size = rel(1.1)), 
       axis.title.y = element_text(hjust = 1, margin = unit(c(0, 1.5, 0, 0), "lines")),
       axis.title.x = element_text(hjust = 1, margin = unit(c(1.5, 0, 0, 0), "lines")), 
-      axis.text = element_text(size = rel(1)), 
+      axis.text = element_text(size = rel(0.8)), 
       
       # Gridlines
       panel.grid.major.y = element_blank(), 

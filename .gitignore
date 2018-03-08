@@ -10,3 +10,5 @@ __pycache__/*
 test/*
 .Rhistory
 .Rproj.user
+paper/fig
+paper/rds
