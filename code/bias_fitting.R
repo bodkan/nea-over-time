@@ -41,7 +41,7 @@ f4_ratios <- function(sites, sample_names) {
            o = "chimp_1") %>% inner_join(select(real_est, -nea), by = "name")
 }
 
-real_est <- load_estimates("~/projects/nea-over-time/data/admixture_array_nea.tsv")
+real_est <- load_estimates("data/admixture_array_nea.tsv")
 
 library(parallel)
 sims_df <- data.frame()
