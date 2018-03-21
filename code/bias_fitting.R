@@ -49,7 +49,7 @@ for (Ne in c(10000, 20000, 30000, 40000, 50000)) {
   for (m in c(0, 0.0001, 0.001)) {
     for (t in c(20000, 15000, 10000, 5000)) {
 
-reps <- mclapply(1:20, mc.cores = 20, function(rep_i) {
+reps <- mclapply(1:20, mc.cores = 10, function(rep_i) {
 
 sites <- nea_admix_scrm(0.03, 0, m, t, t, Ne_eur = Ne,
                         n_afr = 200,
