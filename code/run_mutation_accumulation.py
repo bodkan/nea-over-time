@@ -50,6 +50,8 @@ if __name__ == "__main__":
 
     parser.add_argument("--hum-nea-split", type=int, default=500000,
                         help="Split time between modern humans and Neanderthals [years ago]")
+    parser.add_argument("--nea-den-split", type=int, default=None,
+                        help="Split time between modern humans and Neanderthals [years ago]")
     parser.add_argument("--out-of-africa", type=int, default=55000,
                         help="Out of Africa migration [years ago]")
 
@@ -60,13 +62,18 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    slim_template = Template(open("code/slim/mut_accum.slim", "r").read())
+    slim_template = Template(
+        open("code/slim/mut_accum.slim", "r").read() +
+        (open("code/slim/denisovans.slim", "r").read() if args.nea_den_split else "")
+    )
 
     # convert arguments specified in years BP to generations since the
     # start of the simulation
     burnin          = 7 * args.anc_size  # SLiM 1.8 manual recommends 5xNe
     hum_nea_split   = years_to_gen(args.hum_nea_split)
     out_of_africa   = burnin + hum_nea_split - years_to_gen(args.out_of_africa)
+    if args.nea_den_split:
+        nea_den_split = burnin + hum_nea_split - years_to_gen(args.nea_den_split)
 
     # load the SLiM 0-based coordinates of regions to simulate
     region_coords = pd.read_table(args.regions, sep="\t")
@@ -91,6 +98,7 @@ if __name__ == "__main__":
         "anc_size"         : args.anc_size,
         "nea_size"         : args.nea_size,
         "burnin"           : burnin,
+        "nea_den_split"    : nea_den_split if args.nea_den_split else -1,
         "out_of_africa"    : out_of_africa,
         "output"           : args.output
     }

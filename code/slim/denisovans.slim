@@ -1,0 +1,11 @@
+$nea_den_split {
+    sim.addSubpopSplit("p4", $nea_size, p2);
+}
+
+$out_of_africa {
+    // place neutral markers on all Denisovan haplotypes
+    cat(time() + " :: Placing neutral Denisovan markers ($output).\n");
+    for (pos in positions) {
+        p4.genomes.addNewDrawnMutation(m1, pos);
+    }
+}

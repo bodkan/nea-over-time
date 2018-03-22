@@ -27,7 +27,7 @@ $burnin {
 }
 
 // dump all populations and mutations at the end of the simulation
-$out_of_africa late() {
+$out_of_africa {
     // split between non-Africans and Africans
     sim.addSubpopSplit("p3", $founder_size, p1);
 
@@ -36,7 +36,9 @@ $out_of_africa late() {
     for (pos in positions) {
         p2.genomes.addNewDrawnMutation(m1, pos);
     }
+}
 
+$out_of_africa late() {
     sim.outputFull("$output");
     sim.simulationFinished();
 }
