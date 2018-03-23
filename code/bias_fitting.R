@@ -31,7 +31,7 @@ nea_lm <- function(df) {
 }
 
 direct_props <- function(sites, sample_names) {
-  direct_prop(sites, sample_names) %>% inner_join(select(real_est, -nea), by = "name")
+  direct_prop(sites, sample_names, "nea_1") %>% rename(nea=prop) %>% inner_join(select(real_est, -nea), by = "name")
 }
 
 f4_ratios <- function(sites, sample_names) {
@@ -79,7 +79,7 @@ sims_df <- bind_rows(sims_df, reps)
   }
 }
 
-
+saveRDS(sims_df, "paper/rds/grid_scrm.rds")
 
 
 
