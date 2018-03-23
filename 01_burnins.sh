@@ -81,3 +81,18 @@ python3 code/run_mutation_accumulation.py \
     --mut-rate 7e-9 \
     --dominance-coef $h \
     --output data/burnins/nonsyn_uniform_${region}_h_${h}.txt &
+
+
+# Neanderthal and Denisovan deserts
+for region in exon protein_coding; do
+seq 1 25 | xargs -I {} -P 25 bash -c "
+  python3 code/run_mutation_accumulation.py \
+      --regions data/slim_coords/${region}_regions.bed \
+      --sites data/slim_coords/${region}_all_sites.bed \
+      --recomb-map data/slim_coords/${region}_recomb_map.bed \
+      --mut-rate 7e-9 \
+      --dominance-coef 0.5 \
+      --nea-den-split 400000 \
+      --output data/burnins/nea_den_exon_rep_{}.txt
+"
+done
