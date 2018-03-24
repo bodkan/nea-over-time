@@ -44,6 +44,12 @@ f4_ratios <- function(sites, sample_names) {
 real_est <- load_estimates("data/admixture_array_nea.tsv")
 
 library(parallel)
+
+
+
+
+
+
 sims_df <- data.frame()
 for (Ne in c(10000, 20000, 30000, 40000, 50000)) {
   for (m in c(0, 0.0001, 0.001)) {
@@ -78,8 +84,98 @@ sims_df <- bind_rows(sims_df, reps)
     }
   }
 }
+saveRDS(sims_df, "paper/rds/grid_scrm_eur-afr.rds")
 
-saveRDS(sims_df, "paper/rds/grid_scrm.rds")
+
+
+
+
+
+
+sims_df <- data.frame()
+for (Ne in c(10000, 20000)) {
+  for (m in c(0, 0.0001, 0.001)) {
+    for (t in c(20000, 15000, 10000, 5000)) {
+      
+      reps <- mclapply(1:20, mc.cores = 20, function(rep_i) {
+        
+        sites <- nea_admix_scrm(0.03, m, 0, t, t, Ne_eur = Ne,
+                                n_afr = 200,
+                                n_eur = nrow(filter(real_est, pop != "EMH")),
+                                n_asn = 2, n_nea = 4, n_chimp = 1,
+                                n_haps = 100000, hap_length = 5001,
+                                emh_ages = filter(real_est, pop == "EMH")$age)
+        
+        admix_array <- archaic_admixture_array(sites)
+        bigyri_array <- big_yoruba_array(sites)
+        ho_array <- human_origins_array(sites)
+        
+        sample_names <- filter(real_est, !name %in% c("eur_1", "eur_2", "asn_1", "asn_2"))$name
+        
+        admix <- direct_props(admix_array, sample_names) %>% mutate(sites = "admix")
+        bigyri <- f4_ratios(bigyri_array, sample_names) %>% mutate(sites = "bigyri")
+        ho <- f4_ratios(ho_array, sample_names) %>% mutate(sites = "ho")
+        all <- f4_ratios(sites, sample_names) %>% mutate(sites = "all")
+        
+        bind_rows(admix, bigyri, ho, all) %>% mutate(Ne = Ne, m = m, t = t, rep = rep_i)
+        
+      }) %>% bind_rows
+      
+      sims_df <- bind_rows(sims_df, reps)
+      
+    }
+  }
+}
+saveRDS(sims_df, "paper/rds/grid_scrm_afr-eur.rds")
+
+
+
+
+
+
+
+
+sims_df <- data.frame()
+for (Ne in c(10000, 20000)) {
+  for (m in c(0, 0.0001, 0.001)) {
+    for (t in c(20000, 15000, 10000, 5000)) {
+      
+      reps <- mclapply(1:20, mc.cores = 20, function(rep_i) {
+        
+        sites <- nea_admix_scrm(0.03, m, m, t, t, Ne_eur = Ne,
+                                n_afr = 200,
+                                n_eur = nrow(filter(real_est, pop != "EMH")),
+                                n_asn = 2, n_nea = 4, n_chimp = 1,
+                                n_haps = 100000, hap_length = 5001,
+                                emh_ages = filter(real_est, pop == "EMH")$age)
+        
+        admix_array <- archaic_admixture_array(sites)
+        bigyri_array <- big_yoruba_array(sites)
+        ho_array <- human_origins_array(sites)
+        
+        sample_names <- filter(real_est, !name %in% c("eur_1", "eur_2", "asn_1", "asn_2"))$name
+        
+        admix <- direct_props(admix_array, sample_names) %>% mutate(sites = "admix")
+        bigyri <- f4_ratios(bigyri_array, sample_names) %>% mutate(sites = "bigyri")
+        ho <- f4_ratios(ho_array, sample_names) %>% mutate(sites = "ho")
+        all <- f4_ratios(sites, sample_names) %>% mutate(sites = "all")
+        
+        bind_rows(admix, bigyri, ho, all) %>% mutate(Ne = Ne, m = m, t = t, rep = rep_i)
+        
+      }) %>% bind_rows
+      
+      sims_df <- bind_rows(sims_df, reps)
+      
+    }
+  }
+}
+saveRDS(sims_df, "paper/rds/grid_scrm_bidirect.rds")
+
+
+
+
+
+
 
 
 
