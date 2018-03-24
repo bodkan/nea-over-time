@@ -196,3 +196,29 @@ get_european_ids <- function(metadata_path) {
         dplyr::select(-c(Country, Latitude, Longitude)) %>%
         .[["name"]]
 }
+
+
+plot_nea_vs_time <- function(m, snp_cutoff=0, oldest=Inf, youngest=-Inf, ylim=c(0, 0.1), plot_ci=TRUE) {
+    filter(eur_nea,
+           setup == m,
+           age >= youngest,
+           age < oldest,
+           snp_count >= snp_cutoff) %>% {(
+    ggplot(., aes(age, alpha)) +
+        geom_point(aes(size=snp_count), alpha=3/4) +
+        geom_errorbar(aes(ymin=alpha - 2 * stderr, ymax=alpha + 2 * stderr)) +
+        geom_smooth(aes(weight=snp_count), data=., method="lm", linetype=2, fullrange=TRUE, size=0.5) +
+        xlab("age [years before present]") + ylab("Neanderthal ancestry proportion") +
+        xlim(47000, 0) + ylim(ylim[1], ylim[2]) #+
+        #ggtitle(paste0("analysis setup: ", m))
+    )}
+}
+
+run_lm <- function(m, snp_cutoff=0, oldest=Inf, youngest=0) {
+    filter(eur_nea,
+           setup == m,
+           age >= youngest,
+           age < oldest,
+           snp_count >= snp_cutoff) %>%
+    { lm(.[["age"]] ~ .[["alpha"]], weights = .[["snp_count"]]) }
+}
