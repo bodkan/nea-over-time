@@ -85,14 +85,16 @@ python3 code/run_mutation_accumulation.py \
 
 # Neanderthal and Denisovan deserts
 for region in exon protein_coding; do
-seq 1 25 | xargs -I {} -P 25 bash -c "
-  python3 code/run_mutation_accumulation.py \
+for rep in `seq 1 25`; do
+  N="${region}_${rep}"
+  qsub -V -cwd -j y -l virtual_free=40G,h_vmem=40G -N $N -o tmp/${N}.txt \
+  ./code/run_mutation_accumulation.py \
       --regions data/slim_coords/${region}_regions.bed \
       --sites data/slim_coords/${region}_all_sites.bed \
       --recomb-map data/slim_coords/${region}_recomb_map.bed \
       --mut-rate 7e-9 \
       --dominance-coef 0.5 \
       --nea-den-split 400000 \
-      --output data/burnins/nea_den_exon_rep_{}.txt
-"
+      --output data/burnins/sge_nea_den_exon_rep_${rep}.txt
+done
 done
