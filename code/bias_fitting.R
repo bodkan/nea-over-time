@@ -94,7 +94,7 @@ saveRDS(sims_df, "paper/rds/grid_scrm_eur-afr.rds")
 
 sims_df <- data.frame()
 for (Ne in c(10000, 20000)) {
-  for (m in c(0, 0.0001, 0.001)) {
+  for (m in c(0.0001, 0.001)) {
     for (t in c(20000, 15000, 10000, 5000)) {
       
       reps <- mclapply(1:20, mc.cores = 20, function(rep_i) {
@@ -137,7 +137,7 @@ saveRDS(sims_df, "paper/rds/grid_scrm_afr-eur.rds")
 
 sims_df <- data.frame()
 for (Ne in c(10000, 20000)) {
-  for (m in c(0, 0.0001, 0.001)) {
+  for (m in c(0.0001, 0.001)) {
     for (t in c(20000, 15000, 10000, 5000)) {
       
       reps <- mclapply(1:20, mc.cores = 20, function(rep_i) {
