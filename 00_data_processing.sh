@@ -1,4 +1,24 @@
 # ---------------------------------------------------------------------- 
+# process merged SGDP VCF files
+vcf_dir=data/vcf
+mkdir -p $vcf_dir
+
+sample_ids="panTro4,Ust_Ishim,Loschbour,`cut -f1-4 data/10_24_2014_SGDP_metainformation_update.txt | egrep "Africa|WestEurasia" | grep "^C" | cut -f2 | tr '\n' ',' | sed 's/,$//'`"
+bcftools view -h -s $sample_ids /mnt/sequencedb/gendivdata/2_genotypes/mergedArchModernApes/merged_high_low_apes_sgdp1_chr1.vcf.gz | sed 's/panTro4/Chimp/; s/Ust_Ishim/UstIshim/' \
+    > ${vcf_dir}/combined.vcf
+
+for chrom in `seq 1 22`; do
+    bcftools view -m2 -M2 -v snps -s $sample_ids /mnt/sequencedb/gendivdata/2_genotypes/mergedArchModernApes/merged_high_low_apes_sgdp1_chr${chrom}.vcf.gz | awk '$5 != "-"' >> ${vcf_dir}/combined.vcf
+done
+
+bgzip ${vcf_dir}/combined.vcf
+tabix ${vcf_dir}/combined.vcf.gz
+
+
+
+
+
+# ---------------------------------------------------------------------- 
 # convert the Ice Age genotypes from EIGENSTRAT into a normal genotype table
 # and do the same with the SGDP VCF files and with archaic VCF files
 
@@ -23,6 +43,8 @@ mkdir -p $gt_dir
 # process Fu et al. data into a simple 0/1/2 table
 Rscript code/process_eigenstrat.R ${eigenstrat_dir}/iceage/archaic.geno ${eigenstrat_dir}/iceage/archaic.snp ${eigenstrat_dir}/iceage/archaic.ind ${gt_dir}/ice_age.tsv
 chmod -w ${gt_dir}/ice_age.tsv
+
+
 
 
 
@@ -56,12 +78,15 @@ chmod -w ${gt_dir}/archaics.tsv
 
 
 
+
+
 # ---------------------------------------------------------------------- 
 #  get the coordinates of the Big Yoruba array sites
 cp /r1/people/public/AncientDNA/probe_designs/AA77-81_bigYoruba/big_yoruba_and_altai_filtN_printed_probes_with_annotation.txt data/
-awk -v OFS="\t" '{print $1, $2 - 1, $2}' data/big_yoruba_and_altai_filtN_printed_probes_with_annotation.txt > data/bed/bigyri_array.bed
 
-
+cat data/big_yoruba_and_altai_filtN_printed_probes_with_annotation.txt | awk '$12 == "0/1"' | awk '{print $1, $2 - 1, $2}' > data/bed/bigyri_Altai.bed
+cat data/big_yoruba_and_altai_filtN_printed_probes_with_annotation.txt | awk '$6 == "0/1" || $9 == "0/1"' | awk '{print $1, $2 - 1, $2}' > data/bed/bigyri_YRI.bed
+cat data/big_yoruba_and_altai_filtN_printed_probes_with_annotation.txt | awk -v OFS="\t" '{print $1, $2 - 1, $2}' data/big_yoruba_and_altai_filtN_printed_probes_with_annotation.txt > data/bed/bigyri_both.bed
 
 # ---------------------------------------------------------------------- 
 # generate updated EIGENSTRAT 2.2 M sites data that include the new
