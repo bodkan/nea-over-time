@@ -87,7 +87,7 @@ python3 code/run_mutation_accumulation.py \
 for region in exon protein_coding; do
 for rep in `seq 1 25`; do
   N="${region}_${rep}"
-  qsub -V -cwd -j y -l virtual_free=40G,h_vmem=40G -N $N -o tmp/${N}.txt \
+  qsub -V -cwd -j y -l virtual_free=60G,h_vmem=60G -N $N -o tmp/${N}.txt \
   ./code/run_mutation_accumulation.py \
       --regions data/slim_coords/${region}_regions.bed \
       --sites data/slim_coords/${region}_all_sites.bed \
@@ -95,6 +95,6 @@ for rep in `seq 1 25`; do
       --mut-rate 7e-9 \
       --dominance-coef 0.5 \
       --nea-den-split 400000 \
-      --output data/burnins/sge_nea_den_exon_rep_${rep}.txt
+      --output data/burnins/sge_nea_den_${region}_${rep}.txt
 done
 done
