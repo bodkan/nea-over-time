@@ -3,7 +3,7 @@
 vcf_dir=data/vcf
 mkdir -p $vcf_dir
 
-sample_ids="panTro4,Ust_Ishim,Loschbour,`cut -f1-4 data/10_24_2014_SGDP_metainformation_update.txt | egrep "Africa|WestEurasia" | grep "^C" | cut -f2 | tr '\n' ',' | sed 's/,$//'`"
+sample_ids="panTro4,AltaiNeandertal,Vindija33.19,Denisova,Ust_Ishim,Loschbour,`cut -f1-4 data/10_24_2014_SGDP_metainformation_update.txt | egrep "Africa|WestEurasia" | grep "^C" | cut -f2 | tr '\n' ',' | sed 's/,$//'`"
 bcftools view -h -s $sample_ids /mnt/sequencedb/gendivdata/2_genotypes/mergedArchModernApes/merged_high_low_apes_sgdp1_chr1.vcf.gz | sed 's/panTro4/Chimp/; s/Ust_Ishim/UstIshim/' \
     > ${vcf_dir}/combined.vcf
 
