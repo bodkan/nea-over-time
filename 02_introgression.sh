@@ -30,7 +30,8 @@ done
 
 # constant model of exonic selection
 
-region="exon"; h=0.5
+region="exon";
+for h in 0.0 0.5; do
 for rep in `seq 1 10`; do
     python3 code/run_introgression.py \
         --regions data/slim_coords/${region}_regions.bed \
@@ -44,6 +45,7 @@ for rep in `seq 1 10`; do
         --vcf-times 1 2 3 4 5 6 7 8 9 10 20 50 100 `seq 200 200 2200` \
         --vcf-sample 500 &
 done > /dev/null
+done
 
 # constant model of protein coding selection
 
