@@ -66,9 +66,8 @@ done > /dev/null
 
 
 # ----------------------------------------------------------------------
-# analysis of desert sizes in the present based
-
-# different amount of deleterious sequence
+# analysis of desert sizes in the present based on different amounts
+# of deleterious sequence
 
 h=0.5
 for region in merged exon promoter tf_binding_site protein_coding utr3; do
@@ -103,7 +102,7 @@ for rep in `seq 1 5`; do
         --dominance-coef $h \
         --model constant \
         --founder-size $Ne \
-        --output-prefix data/simulations/deserts_neutral_Ne_${Ne}_h_${h}_rep_${rep} \
+        --output-prefix data/simulations/deserts_neutral_h_${h}_rep_${rep} \
         --population-file data/burnins/${region}_h_${h}.txt \
         --vcf-sample 500 \
         --vcf-times 2200 &
@@ -155,7 +154,7 @@ for rep in `seq 1 3`; do
         --founder-size $Ne \
         --admixture-rate 0.0025 \
         --admixture-end 54000 \
-        --output-prefix data/simulations/deserts_continuous_neutral_Ne_${Ne}_h_${h}_rep_${rep} \
+        --output-prefix data/simulations/deserts_continuous_neutral_h_${h}_rep_${rep} \
         --population-file data/burnins/${region}_h_${h}.txt \
         --vcf-sample 500 \
         --vcf-times 2200 &
