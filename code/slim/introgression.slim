@@ -57,7 +57,7 @@ initialize() {
 $before_admixture late() {
     if ($neutral_sim) {
         del_muts = sim.mutations[sim.mutations.mutationType == m0];
-        apply(del_muts, "applyValue.setSelectionCoeff(0.0);");
+        sapply(del_muts, "applyValue.setSelectionCoeff(0.0);");
     }
 
     if (single_pulse) {
@@ -116,9 +116,9 @@ $modify_at late() {
 
     // crank up s of selected Nea. fixed mutations
     if ($multiply_s) {
-        apply(mut_sample, "s = applyValue.selectionCoeff; applyValue.setSelectionCoeff(s * $modifier);");
+        sapply(mut_sample, "s = applyValue.selectionCoeff; applyValue.setSelectionCoeff(s * $modifier);");
     } else if ($fix_s) { // simulate fixed selective effect of Nea. mutations
-        apply(mut_sample, "applyValue.setSelectionCoeff($modifier);");
+        sapply(mut_sample, "applyValue.setSelectionCoeff($modifier);");
     }
 }
 
@@ -128,7 +128,7 @@ $admixture_time:$sim_length late() {
 
     if (any(sim.generation == output_gen)) {
         cat(time() + " :: INFO :: " + sim.generation + "/$sim_length generations - calculating Nea%\n");
-        nea_per_ind = apply(seq(0, p3.individualCount - 1),
+        nea_per_ind = sapply(seq(0, p3.individualCount - 1),
                             "sum(p3.genomes[c(2 * applyValue, 2 * applyValue + 1)].countOfMutationsOfType(m1));") / (2 * size(positions));
 
         if (sim.generation == $admixture_time)
