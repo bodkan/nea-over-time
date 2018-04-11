@@ -52,7 +52,7 @@ plot_nea_time <- function(df, statistic, array, snp_cutoff = 0, ymax = 0.06, tit
 # Near East populations to exclude from West Eurasians in plots over time
 near_east <- c("BedouinB", "Druze", "Iranian", "Iraqi_Jew", "Jordanian",
                "Palestinian", "Samaritan", "Turkish", "Yemenite_Jew")
-ignore_samples <- c(near_east, "UstIshim")
+ignore_samples <- c(near_east)
 
 # load the estimates
 admix_array <- readRDS("rds/admixture_array_prop.rds") %>% filter(!X %in% ignore_samples) %>% mutate(stat = "admix_prop")
@@ -183,8 +183,34 @@ bin_props %>% filter(gen == 2200) %>%
 deltas <- readRDS("rds/deltas.rds")
 
 
-# Deleterious delta plots -------------------------------------------------
+mutations <- readRDS("rds/mutations.rds")
 
+mutations %>%
+  filter(mut_type %in% c("gap_marker", "region_marker")) %>% 
+  group_by(gen, rep, mut_type) %>%
+  summarise(avg_nea=mean(freq)) %>%
+  group_by(gen, mut_type) %>%
+  summarise(mean_rep=mean(avg_nea), sd_rep=sd(avg_nea), n_rep=n()) %>%
+  mutate(se_rep=sd_rep / sqrt(n_rep),
+         lower_ci=mean_rep - qt(1 - (0.05 / 2), n_rep - 1) * se_rep,
+         upper_ci=mean_rep + qt(1 - (0.05 / 2), n_rep - 1) * se_rep,
+         mut_type=ifelse(mut_type == "gap_marker",
+                         "markers outside selected regions",
+                         "markers within selected regions")) %>%
+ggplot(aes(gen, mean_rep, color=mut_type, group=mut_type)) +
+  geom_line() +
+  geom_ribbon(aes(ymin=lower_ci, ymax=upper_ci, fill=mut_type), alpha=1/2, color = NA) +
+  geom_smooth(method = "lm",
+              data=filter(nea_est, stat == "indirect_f4",sites == "all", pop %in% c("EMH", "WestEurasia")) %>%
+                mutate(gen = (55000 - age) / 25),
+              aes(gen, alpha), alpha = 1/5, inherit.aes = FALSE, se = FALSE, linetype = 2, color = "black") +
+  geom_smooth(method = "lm",
+              data=filter(nea_est, stat == "direct_f4",sites == "all", pop %in% c("EMH", "WestEurasia")) %>%
+                mutate(gen = (55000 - age) / 25),
+              aes(gen, alpha), inherit.aes = FALSE, se = FALSE, linetype = 4, color = "black") +
+  xlab("generations after admixture") + ylab("mean frequency") +
+  coord_cartesian(y=c(0, 0.1)) + labs(fill="", color="") +
+  theme(legend.position = "bottom")
 
 
 
