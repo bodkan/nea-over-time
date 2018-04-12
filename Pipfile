@@ -11,6 +11,9 @@ jupyter = "*"
 pandas = "*"
 pybedtools = "*"
 ipython = "*"
+numpy = "*"
+scikit-allel = "*"
+msprime = "*"
 
 
 [dev-packages]
