@@ -1,18 +1,24 @@
+eigenstrat_dir=data/eigenstrat
+mkdir -p $eigenstrat_dir
+
 # ---------------------------------------------------------------------- 
 # process merged SGDP VCF files
 vcf_dir=data/vcf
 mkdir -p $vcf_dir
 
-sample_ids="panTro4,AltaiNeandertal,Vindija33.19,Denisova,Ust_Ishim,Loschbour,`cut -f1-4 data/10_24_2014_SGDP_metainformation_update.txt | egrep "Africa|WestEurasia" | grep "^C" | cut -f2 | tr '\n' ',' | sed 's/,$//'`"
+sample_ids="panTro4,AltaiNeandertal,Vindija33.19,Denisova,Ust_Ishim,Loschbour,`cut -f1-4 data/10_24_2014_SGDP_metainformation_update.txt | egrep "Africa|WestEurasia|EastAsia" | grep "^C" | cut -f2 | tr '\n' ',' | sed 's/,$//'`"
 bcftools view -h -s $sample_ids /mnt/sequencedb/gendivdata/2_genotypes/mergedArchModernApes/merged_high_low_apes_sgdp1_chr1.vcf.gz | sed 's/panTro4/Chimp/; s/Ust_Ishim/UstIshim/' \
     > ${vcf_dir}/combined.vcf
 
 for chrom in `seq 1 22`; do
-    bcftools view -m2 -M2 -v snps -s $sample_ids /mnt/sequencedb/gendivdata/2_genotypes/mergedArchModernApes/merged_high_low_apes_sgdp1_chr${chrom}.vcf.gz | awk '$5 != "-"' >> ${vcf_dir}/combined.vcf
+    bcftools view -H -m2 -M2 -v snps -s $sample_ids /mnt/sequencedb/gendivdata/2_genotypes/mergedArchModernApes/merged_high_low_apes_sgdp1_chr${chrom}.vcf.gz | awk '$5 != "-"' >> ${vcf_dir}/combined.vcf
 done
 
 bgzip ${vcf_dir}/combined.vcf
 tabix ${vcf_dir}/combined.vcf.gz
+
+mkdir -p ${eigenstrat_dir}/combined
+bcftools query -H -f '%CHROM\t%POS\t[%GT]\n' ${vcf_dir}/combined.vcf.gz | grep -v "^#" |  sed 's/\.\/\./9/g; s/0\/0/2/g; s/0\/1/1/g; s/1\/1/0/g' > ${eigenstrat_dir}/combined/combined.tmp
 
 
 
@@ -22,8 +28,6 @@ tabix ${vcf_dir}/combined.vcf.gz
 # convert the Ice Age genotypes from EIGENSTRAT into a normal genotype table
 # and do the same with the SGDP VCF files and with archaic VCF files
 
-eigenstrat_dir=data/eigenstrat
-mkdir -p $eigenstrat_dir
 cd $eigenstrat_dir
 
 # download Fu et al. data
