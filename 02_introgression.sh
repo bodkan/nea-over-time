@@ -31,8 +31,8 @@ done
 # constant model of exonic selection
 
 region="exon";
-for h in 0.0 0.5; do
-for rep in `seq 1 10`; do
+for h in 0.5; do
+for rep in `seq 1 20`; do
     python3 code/run_introgression.py \
         --regions data/slim_coords/${region}_regions.bed \
         --sites data/slim_coords/${region}_all_sites.bed \
