@@ -126,6 +126,16 @@ seq 1 22 | xargs -P 22 -I {} bash -c "bcftools view -R ../../bed/2.2M.bed -M 2 /
 cat denisova_chr{1..22}.tmp > denisova.tmp
 rm denisova_chr*.tmp
 
+# UstIshim
+seq 1 22 | xargs -P 22 -I {} bash -c "bcftools view -R ../../bed/2.2M.bed -M 2 /mnt/454/Vindija/high_cov/genotypes/Ust_Ishim/chr{}_mq25_mapab100.vcf.gz | bcftools query -f '%CHROM\t%POS\t[%GT]\n' | sed 's/0\/0/2/g; s/0\/1/1/g; s/1\/1/0/g' > ustishim_chr{}.tmp"
+cat ustishim_chr{1..22}.tmp > ustishim.tmp
+rm ustishim_chr*.tmp
+
+# Loschbour
+seq 1 22 | xargs -P 22 -I {} bash -c "bcftools view -R ../../bed/2.2M.bed -M 2 /mnt/454/Vindija/high_cov/genotypes/Loschbour/chr{}_mq25_mapab100.vcf.gz | bcftools query -f '%CHROM\t%POS\t[%GT]\n' | sed 's/0\/0/2/g; s/0\/1/1/g; s/1\/1/0/g' > loschbour_chr{}.tmp"
+cat loschbour_chr{1..22}.tmp > loschbour.tmp
+rm loschbour_chr*.tmp
+
 # ------------------------------
 # conversion to EIGENSTRAT
 
@@ -160,6 +170,28 @@ merged <- left_join(all, denisova)
 merged$geno[is.na(merged$geno)] <- 9
 write_tsv(select(merged, -geno), "denisova.snp", col_names=FALSE)
 write_tsv(select(merged, geno), "denisova.geno", col_names=FALSE)
+')
+
+# UstIshim
+R --no-save < <(echo '
+library(tidyverse)
+all <- read_table2("UPA_all.snp", col_names=c("id", "chrom", "gen", "pos", "alt", "ref"))
+tmp <- read_tsv("ustishim.tmp", col_names=c("chrom", "pos", "geno"))
+merged <- left_join(all, tmp)
+merged$geno[is.na(merged$geno)] <- 9
+write_tsv(select(merged, -geno), "ustishim.snp", col_names=FALSE)
+write_tsv(select(merged, geno), "ustishim.geno", col_names=FALSE)
+')
+
+# Loschbour
+R --no-save < <(echo '
+library(tidyverse)
+all <- read_table2("UPA_all.snp", col_names=c("id", "chrom", "gen", "pos", "alt", "ref"))
+tmp <- read_tsv("loschbour.tmp", col_names=c("chrom", "pos", "geno"))
+merged <- left_join(all, tmp)
+merged$geno[is.na(merged$geno)] <- 9
+write_tsv(select(merged, -geno), "loschbour.snp", col_names=FALSE)
+write_tsv(select(merged, geno), "loschbour.geno", col_names=FALSE)
 ')
 
 # ------------------------------
@@ -211,13 +243,47 @@ ind1: UPA_Altai.ind
 geno2: denisova.geno
 snp2: denisova.snp
 ind2: denisova.ind
-genooutfilename: all.geno
-snpoutfilename: all.snp
-indoutfilename: all.ind" > mergeit_Denisova.par
+genooutfilename: UPA_Denisova.geno
+snpoutfilename: UPA_Denisova.snp
+indoutfilename: UPA_Denisova.ind" > mergeit_Denisova.par
 mergeit -p mergeit_Denisova.par
 
-# ------------------------------
-chmod -w *
+# merging UstIshim
+
+# create 'ind' EIGENSTRAT file
+echo "new_UstIshim F new_UstIshim" > ustishim.ind
+# generate a mergit parameter file
+echo "outputformat: EIGENSTRAT
+geno1: UPA_Denisova.geno
+snp1: UPA_Denisova.snp
+ind1: UPA_Denisova.ind
+geno2: ustishim.geno
+snp2: ustishim.snp
+ind2: ustishim.ind
+genooutfilename: UPA_UstIshim.geno
+snpoutfilename: UPA_UstIshim.snp
+indoutfilename: UPA_UstIshim.ind" > mergeit_UstIshim.par
+mergeit -p mergeit_UstIshim.par
+
+# merging Loschbour
+
+# create 'ind' EIGENSTRAT file
+echo "new_Loschbour F new_Loschbour" > loschbour.ind
+# generate a mergit parameter file
+echo "outputformat: EIGENSTRAT
+geno1: UPA_UstIshim.geno
+snp1: UPA_UstIshim.snp
+ind1: UPA_UstIshim.ind
+geno2: loschbour.geno
+snp2: loschbour.snp
+ind2: loschbour.ind
+genooutfilename: all.geno
+snpoutfilename: all.snp
+indoutfilename: all.ind" > mergeit_Loschbour.par
+mergeit -p mergeit_Loschbour.par
+
+
+
 
 # ---------------------------------------------------------------------- 
 # download the McVicker B values
@@ -228,6 +294,8 @@ rm bkgd.tar.gz
 
 
 
+
+
 # ---------------------------------------------------------------------- 
 # download the hg18-to-hg19 liftover chain
 wget http://hgdownload.cse.ucsc.edu/goldenPath/hg18/liftOver/hg18ToHg19.over.chain.gz
@@ -235,21 +303,10 @@ gunzip hg18ToHg19.over.chain.gz
 
 
 
+
+
 # ---------------------------------------------------------------------- 
-# GT archaics and africans table
-echo -e "chrom\tstart\tend\tref\talt\tAltai\tVindija\tDenisova\tChimp\tMbuti\tYoruba" > data/genotypes/genload.bed
-for chr in `seq 1 22`; do
-    tabix /mnt/scratch/steffi/D/Vcfs/mergedArchaics/merged_archaics_manifesto_chr${chr}.vcf.gz \
-        -R <( sed 's/chr//' data/bed/admixture_array.bed | cut -f 1,3) \
-        | cut -f 1,2,4,5,10,11,12,13,196,302 \
-        | grep -v "," \
-        | sed 's/0\/0/0/g; s/0\/1/1/g; s/1\/1/2/g; s#\./\.# #g'
-done \
-    | awk -v OFS="\t" '{ $2=$2-1"\t"$2; print $0 }' \
-    >> data/genotypes/genload.bed
-
-
-
+# YRI admixture array frequencies from Ben's table
 less /mnt/expressions/benjamin_vernot/martin_neand_over_time_emh/1kg_p3_allele_freqs/YRI.freq \
     | tr -s ' ' | tr '\t' ' ' | awk -v OFS="\t" '{print $4, $1, $8}' | sort -k1,1n -k2,2n | bgzip \
     > data/YRI.freq.gz

@@ -19,7 +19,10 @@ load_samples <- function() {
         ungroup
     emhs <- read_delim("../data/emh_ages.txt", delim=" ", col_names=c("name", "age")) %>%
         mutate(pop="EMH", Latitude=NA, Longitude=NA) %>%
-        filter(name != "Oase1")
+        filter(name != "Oase1") %>%
+        mutate(name = case_when(name == "UstIshim" ~ "new_UstIshim",
+                                name == "Loschbour" ~ "new_Loschbour",
+                                TRUE ~ name))
     })
     samples <- bind_rows(emhs, sgdp) %>% select(-Latitude, -Longitude)
 
