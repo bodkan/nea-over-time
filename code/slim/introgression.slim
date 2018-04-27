@@ -45,11 +45,6 @@ initialize() {
     sim.readFromPopulationFile("$population_file");
     sim.recalculateFitness();
     sim.generation = 1;
-
-    // delete the African population when not simulating dilution
-    if (!simulate_dilution) {
-        p1.setSubpopulationSize(0);
-    }
 }
 
 // save the simulation state right before the admixture in case it is
@@ -69,7 +64,7 @@ $before_admixture late() {
 // Neanderthal admixture
 $admixture_time {
     cat(time() + " :: INFO :: Starting the admixture.\n");
-    p3.setMigrationRates(p2, $admixture_rate);
+    p3.setMigrationRates($admixture_source, $admixture_rate);
 }
 
 // make sure the simulated population received enough Neanderthal gene flow
@@ -96,8 +91,14 @@ $admixture_time late() {
 
 // end the Neanderthal admixture by deleting the Neanderthal population
 $after_admixture {
-    cat(time() + " :: INFO :: Ending the admixture, removing Neanderthals.\n");
+    cat(time() + " :: INFO :: Ending the admixture, removing population $admixture_source.\n");
     p2.setSubpopulationSize(0);
+
+    // delete the Denisovan lineage (p4), if present
+    cat(sim.subpopulations.id);
+    if (size(setIntersection("p4", "p" + asString(sim.subpopulations.id)))) {
+        p4.setSubpopulationSize(0);
+    }
 }
 
 // modify the DFE of Nea. introgressed mutations

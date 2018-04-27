@@ -57,6 +57,8 @@ if __name__ == "__main__":
     group.add_argument("--force-neutral", action="store_true", help="Simulate neutrality "
                        "(set all deleterious mutations to s=0)")
 
+    parser.add_argument("--admixture-source", type=str, default="p2",
+                        help="SLiM ID of an admixture source population (p2 = Nea, p4 = Den)")
     parser.add_argument("--admixture-rate", type=float, default=0.1,
                         help="Neanderthal migration rate")
     parser.add_argument("--admixture-time", type=int, default=55000,
@@ -174,6 +176,7 @@ if __name__ == "__main__":
         "neutral_sim"       : "T" if args.force_neutral else "F",
 
         "founder_size"      : founder_size,
+        "admixture_source"  : args.admixture_source,
         "admixture_rate"    : args.admixture_rate,
         "admixture_time"    : admixture_time,
         "admixture_end"     : admixture_end,
