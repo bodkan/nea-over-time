@@ -44,7 +44,6 @@ with gzip.open(sys.argv[1], "rt") as vcf_file, \
             if chimp_gt != "./.":
                 chimp_allele = chimp_gt[0]
                 hum_alleles = set(chain.from_iterable(gt.split("/") for gt in (hum_gts.keys())))
-                hum_alleles.discard('9')
 
                 if chimp_allele not in hum_alleles:
                     continue
