@@ -47,24 +47,6 @@ for rep in `seq 1 20`; do
 done > /dev/null
 done
 
-# constant model of protein coding selection
-
-region="protein_coding"; h=0.5
-for rep in `seq 1 10`; do
-    python3 code/run_introgression.py \
-        --regions data/slim_coords/${region}_regions.bed \
-        --sites data/slim_coords/${region}_all_sites.bed \
-        --recomb-map data/slim_coords/${region}_recomb_map.bed \
-        --mut-rate 7e-9 \
-        --dominance-coef $h \
-        --admixture-rate 0.05 \
-        --model constant \
-        --output-prefix data/simulations/delta_constant_${region}_h_${h}_rep_${rep} \
-        --population-file data/burnins/nonsyn_${region}_h_${h}.txt \
-        --vcf-times 1 2 3 4 5 6 7 8 9 10 20 50 `seq 100 100 1000` `seq 1200 200 2200` \
-        --vcf-sample 500 &
-done > /dev/null
-
 
 
 # ----------------------------------------------------------------------
@@ -114,54 +96,33 @@ done
 
 
 # ----------------------------------------------------------------------
-# influence of continuous admixture (as opposed to a "single pulse")
-# on the distribution of desert sizes
+# simulate Neanderthal and Denisovan deserts
 
-#
-# analysis of desert sizes under weak negative selection model
-#
-h=0.5
-for region in exon promoter tf_binding_site protein_coding utr3; do
-for rep in `seq 1 3`; do
-    python3 code/run_introgression.py \
+for region in exon protein_coding; do
+for source in p2 p4; do
+for rep in `seq 1 20`; do
+for run in `seq 1 5`; do
+    N="${region}_${source}_${rep}_${run}"
+    qsub -V -cwd -j y -l virtual_free=50G,h_vmem=50G -N $N -o tmp/${N}.txt \
+    ./code/run_introgression.py \
         --regions data/slim_coords/${region}_regions.bed \
         --sites data/slim_coords/${region}_all_sites.bed \
         --recomb-map data/slim_coords/${region}_recomb_map.bed \
-        --mut-rate 1e-8 \
-        --dominance-coef $h \
+        --mut-rate 7e-9 \
         --model constant \
-        --admixture-rate 0.0025 \
-        --admixture-end 54000 \
-        --output-prefix data/simulations/deserts_continuous_${region}_h_${h}_rep_${rep} \
-        --population-file data/burnins/${region}_h_${h}.txt \
+        --admixture-source ${source} \
+        --output-prefix data/simulations/deserts_source_${source}_${region}_rep_${rep}_run_${run} \
+        --population-file data/burnins/nea_den_exon_rep_${rep}.txt \
         --vcf-times 2200 \
-        --vcf-sample 500 &
+        --vcf-sample 500
+done
+done
 done
 done
 
-#
-# analysis of desert sizes in the present under neutrality
-#
-region="tf_binding_site" # size of deleterious region doesn't matter here
-h=0.5
-for Ne in 10000; do
-for rep in `seq 1 3`; do
-    python3 code/run_introgression.py \
-        --regions data/slim_coords/${region}_regions.bed \
-        --sites data/slim_coords/${region}_all_sites.bed \
-        --recomb-map data/slim_coords/${region}_recomb_map.bed \
-        --force-neutral \
-        --dominance-coef $h \
-        --model constant \
-        --founder-size $Ne \
-        --admixture-rate 0.0025 \
-        --admixture-end 54000 \
-        --output-prefix data/simulations/deserts_continuous_neutral_h_${h}_rep_${rep} \
-        --population-file data/burnins/${region}_h_${h}.txt \
-        --vcf-sample 500 \
-        --vcf-times 2200 &
-done
-done
+
+
+
 
 
 # cd ../slim-neanderthal

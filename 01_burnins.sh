@@ -15,26 +15,6 @@ for h in 0.0 0.5 1.0; do
 done
 done
 
-# non-synonymous protein coding mutations
-region="protein_coding"; h=0.5
-python3 code/run_mutation_accumulation.py \
-    --regions data/slim_coords/${region}_regions.bed \
-    --sites data/slim_coords/${region}_all_sites.bed \
-    --recomb-map data/slim_coords/${region}_recomb_map.bed \
-    --mut-rate 7e-9 \
-    --dominance-coef $h \
-    --output data/burnins/nonsyn_${region}_h_${h}.txt &
-
-# non-synonymous protein coding mutations uniform recombination rate
-region="protein_coding"; h=0.5
-python3 code/run_mutation_accumulation.py \
-    --regions data/slim_coords/${region}_regions.bed \
-    --sites data/slim_coords/${region}_all_sites.bed \
-    --recomb-map data/slim_coords/uniform_${region}_recomb_map.bed \
-    --mut-rate 7e-9 \
-    --dominance-coef $h \
-    --output data/burnins/nonsyn_uniform_${region}_h_${h}.txt &
-
 # burnin of a merge of regions showing functional significance
 region="merged"; h="0.5"
 python3 code/run_mutation_accumulation.py \
@@ -59,30 +39,6 @@ for Ne in 100 500 10000; do
 done
 cp data/burnins/exon_h_0.5.txt data/burnins/nea_Ne_1000_exon_h_0.5.txt
 
-# uniform recombination rate test
-for region in exon protein_coding promoter utr3 tf_binding_site; do
-for h in 0.5; do
-    python3 code/run_mutation_accumulation.py \
-        --regions data/slim_coords/${region}_regions.bed \
-        --sites data/slim_coords/${region}_all_sites.bed \
-        --recomb-map data/slim_coords/uniform_${region}_recomb_map.bed \
-        --mut-rate 1e-8 \
-        --dominance-coef $h \
-        --output data/burnins/uniform_${region}_h_${h}.txt &
-done
-done
-
-# "regression test" - uniform recombination rate and lower mutation rate (7e-9)
-region="exon"; h=0.5
-python3 code/run_mutation_accumulation.py \
-    --regions data/slim_coords/${region}_regions.bed \
-    --sites data/slim_coords/${region}_all_sites.bed \
-    --recomb-map data/slim_coords/uniform_${region}_recomb_map.bed \
-    --mut-rate 7e-9 \
-    --dominance-coef $h \
-    --output data/burnins/nonsyn_uniform_${region}_h_${h}.txt &
-
-
 # Neanderthal and Denisovan deserts
 for region in exon protein_coding; do
 for rep in `seq 1 25`; do
@@ -96,5 +52,18 @@ for rep in `seq 1 25`; do
       --dominance-coef 0.5 \
       --nea-den-split 400000 \
       --output data/burnins/sge_nea_den_${region}_${rep}.txt
+done
+done
+
+# uniform recombination rate test
+for region in exon protein_coding promoter utr3 tf_binding_site; do
+for h in 0.5; do
+    python3 code/run_mutation_accumulation.py \
+        --regions data/slim_coords/${region}_regions.bed \
+        --sites data/slim_coords/${region}_all_sites.bed \
+        --recomb-map data/slim_coords/uniform_${region}_recomb_map.bed \
+        --mut-rate 1e-8 \
+        --dominance-coef $h \
+        --output data/burnins/uniform_${region}_h_${h}.txt &
 done
 done
