@@ -9,6 +9,7 @@ dependencies:
   - bioconductor-genomicranges=1.30.3
   - bioconductor-iranges=2.12.0
   - bioconductor-rtracklayer=1.38.3
+  - bioconductor-ggbio=1.26.0
   - pybedtools=0.7.10
   - pysam=0.14.1
   - r-data.table=1.10.4
