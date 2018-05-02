@@ -109,7 +109,9 @@ for run in `seq 1 5`; do
         --sites data/slim_coords/${region}_all_sites.bed \
         --recomb-map data/slim_coords/${region}_recomb_map.bed \
         --mut-rate 7e-9 \
+        --dominance-coef 0.5 \
         --model constant \
+        --admixture-rate 0.05 \
         --admixture-source ${source} \
         --output-prefix data/simulations/deserts_source_${source}_${region}_rep_${rep}_run_${run} \
         --population-file data/burnins/nea_den_exon_rep_${rep}.txt \
