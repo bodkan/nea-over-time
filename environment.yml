@@ -21,3 +21,4 @@ dependencies:
   - r-devtools=1.13.5
   - r-essentials=3.4.1
   - r-ggbeeswarm=0.6.0
+  - r-future=1.8.1
