@@ -22,3 +22,4 @@ dependencies:
   - r-essentials=3.4.1
   - r-ggbeeswarm=0.6.0
   - r-future=1.8.1
+  - r-ggrepel=0.7.0
