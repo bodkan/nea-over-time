@@ -124,6 +124,31 @@ done
 
 
 
+# ----------------------------------------------------------------------
+# simulate Neanderthal deserts from independent burnins
+
+for region in exon; do
+for rep in `seq 1 20`; do
+    N="neutral_${rep}"
+    qsub -V -cwd -j y -l virtual_free=50G,h_vmem=50G -N $N -o tmp/${N}.txt \
+    ./code/run_introgression.py \
+        --regions data/slim_coords/${region}_regions.bed \
+        --sites data/slim_coords/${region}_all_sites.bed \
+        --recomb-map data/slim_coords/${region}_recomb_map.bed \
+        --mut-rate 0.0 \
+        --force-neutral \
+        --dominance-coef 0.5 \
+        --model constant \
+        --admixture-rate 0.05 \
+        --output-prefix data/simulations/deserts_indep_neutral_rep_${rep} \
+        #--admixture-rate 0.02 \
+        #--output-prefix data/simulations/deserts_indep_neutral2p_rep_${rep} \
+        --population-file data/burnins/nea_den_exon_rep_${rep}.txt \
+        --vcf-times 1 5 10 20 50 100 `seq 200 200 2200` \
+        --vcf-sample 500
+done
+done
+
 
 
 
