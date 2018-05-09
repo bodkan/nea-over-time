@@ -139,10 +139,10 @@ for rep in `seq 1 20`; do
         --force-neutral \
         --dominance-coef 0.5 \
         --model constant \
-        --admixture-rate 0.05 \
-        --output-prefix data/simulations/deserts_indep_neutral_rep_${rep} \
-        #--admixture-rate 0.02 \
-        #--output-prefix data/simulations/deserts_indep_neutral2p_rep_${rep} \
+        # --admixture-rate 0.05 \
+        # --output-prefix data/simulations/deserts_indep_neutral_rep_${rep} \
+        --admixture-rate 0.017 \
+        --output-prefix data/simulations/deserts_indep_neutral2p_rep_${rep} \
         --population-file data/burnins/nea_den_exon_rep_${rep}.txt \
         --vcf-times 1 5 10 20 50 100 `seq 200 200 2200` \
         --vcf-sample 500
