@@ -1,7 +1,7 @@
 ## Replicating the environment on another machine
 
 1. Download Miniconda for Python 3 and install it.
-2. CLone this repository:
+2. Clone this repository:
 
 ```
 git clone https://github.com/bodkan/nea-over-time
@@ -28,20 +28,20 @@ biocLite(c("BSgenome.Hsapiens.UCSC.hg19", "VariantAnnotation", "rtracklayer",
 "GenomicRanges", "IRanges"))
 
 devtools::install_github("bodkan/slimr")
+devtools::install_github("bodkan/admixr", ref = "v0.1")
 ```
 
 ## Creating Python environment
 ```
 conda create --name nea-over-time python=3.6
-source activate rubber-ducks
+source activate nea-over-time
 ```
 
 ### Setting up Python environment
 
 ```
-conda install numpy pandas jupyter jupyterlab
-conda install -c bioconda snakemake
-conda install -c conda-forge msprime altair vega_datasets
+conda install pandas jupyter jupyterlab matplotlib
+conda install -c bioconda pysam pybedtools
 ```
 
 Then export the dependency file `environment.yml` using (appnope is a weird
@@ -49,19 +49,4 @@ macOS-specific package that does not exist on Linux and is not needed there):
 
 ```
 conda env export --no-builds | grep -v appnope > environment.yml
-```
-```
-conda install numpy pandas jupyter jupyterlab
-conda install -c conda-forge pysam pybedtools
-```
-
-```
-install.packages("devtools", "tidyverse", "magrittr"))
-
-source("https://bioconductor.org/biocLite.R")
-biocLite(c("BSgenome.Hsapiens.UCSC.hg19", "VariantAnnotation", "rtracklayer",
-"GenomicRanges", "IRanges"))
-
-devtools::install_github("bodkan/admixr")
-devtools::install_github("bodkan/slimr")
 ```
