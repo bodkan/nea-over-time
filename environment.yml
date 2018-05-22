@@ -43,11 +43,8 @@ dependencies:
   - jupyterlab_launcher=0.10.5
   - kiwisolver=1.0.1
   - libcurl=7.59.0
-  - libcxx=4.0.1
-  - libcxxabi=4.0.1
   - libedit=3.1.20170329
   - libffi=3.2.1
-  - libgfortran=3.0.1
   - libiconv=1.15
   - libpng=1.6.34
   - libsodium=1.0.16
@@ -80,7 +77,6 @@ dependencies:
   - pyqt=5.9.2
   - python=3.6.5
   - python-dateutil=2.7.3
-  - python.app=2
   - pytz=2018.4
   - pyzmq=17.0.0
   - qt=5.9.5
