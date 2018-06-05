@@ -29,6 +29,10 @@ biocLite(c("BSgenome.Hsapiens.UCSC.hg19", "VariantAnnotation", "rtracklayer",
 
 devtools::install_github("bodkan/slimr")
 devtools::install_github("bodkan/admixr", ref = "v0.1")
+
+install.packages(c('repr', 'IRdisplay', 'evaluate', 'crayon', 'pbdZMQ', 'devtools', 'uuid', 'digest'))
+devtools::install_github('IRkernel/IRkernel')
+IRkernel::installspec()
 ```
 
 ## Creating Python environment
