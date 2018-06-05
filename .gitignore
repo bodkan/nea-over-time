@@ -5,6 +5,7 @@ tmp/*
 data/*
 simulations/*
 __pycache__/*
+code/__pycache__/*
 .DS_Store
 *.swp
 test/*

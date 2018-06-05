@@ -15,14 +15,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s :: %(levelname)s :: 
 logger = logging.getLogger()
 
 
-def years_to_gen(years, years_per_gen=25):
-    """Convert years to generations."""
-    return int(years / years_per_gen)
-
-
-def slim_vector(xs):
-    """Convert a list of numbers to a SLiM code creating the same list."""
-    return "c(" + ",".join(str(x) for x in xs) + ")"
+from run_mutation_accumulation import years_to_gen, slim_vector, chrom_subset
 
 
 if __name__ == "__main__":
@@ -139,7 +132,12 @@ if __name__ == "__main__":
     recomb_map = pd.read_table(args.recomb_map)
 
     # read coordinates of sites from the archaic admixture array
-    sites_coords = pd.read_table(args.sites).slim_start
+    sites_coords = pd.read_table(args.sites)
+
+    if args.chrom:
+        region_coords = chrom_subset(region_coords, args.chrom)
+        recomb_map = chrom_subset(recomb_map, args.chrom)
+        sites_coords = chrom_subset(sites_coords, args.chrom)
 
     if args.multiply_s is not None:
         modifier = args.multiply_s
@@ -164,7 +162,7 @@ if __name__ == "__main__":
                                                         region_coords.slim_end)),
         "mut_rate"          : args.mut_rate,
         "dominance_coef"    : args.dominance_coef,
-        "positions"         : slim_vector(sites_coords),
+        "positions"         : slim_vector(sites_coords.slim_start),
 
         "modify_at"         : args.modify_at if args.modify_at else admixture_time + 1,
         "modify_what"       : args.modify_what,
