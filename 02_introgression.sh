@@ -50,71 +50,27 @@ done
 
 
 # ----------------------------------------------------------------------
-# analysis of desert sizes in the present based on different amounts
-# of deleterious sequence
-
-h=0.5
-for region in merged exon promoter tf_binding_site protein_coding utr3; do
-for rep in `seq 1 5`; do
-    python3 code/run_introgression.py \
-        --regions data/slim_coords/${region}_regions.bed \
-        --sites data/slim_coords/${region}_all_sites.bed \
-        --recomb-map data/slim_coords/${region}_recomb_map.bed \
-        --mut-rate 1e-8 \
-        --dominance-coef $h \
-        --model constant \
-        --output-prefix data/simulations/deserts_${region}_h_${h}_rep_${rep} \
-        --population-file data/burnins/${region}_h_${h}.txt \
-        --vcf-times 2200 \
-        --vcf-sample 500 &
-done
-done
-
-
-
-# under neutrality
-
-region="tf_binding_site" # size of deleterious region doesn't matter here
-h=0.5
-for Ne in 10000; do
-for rep in `seq 1 5`; do
-    python3 code/run_introgression.py \
-        --regions data/slim_coords/${region}_regions.bed \
-        --sites data/slim_coords/${region}_all_sites.bed \
-        --recomb-map data/slim_coords/${region}_recomb_map.bed \
-        --force-neutral \
-        --dominance-coef $h \
-        --model constant \
-        --founder-size $Ne \
-        --output-prefix data/simulations/deserts_neutral_h_${h}_rep_${rep} \
-        --population-file data/burnins/${region}_h_${h}.txt \
-        --vcf-sample 500 \
-        --vcf-times 2200 &
-done
-done
-
-
-
-# ----------------------------------------------------------------------
 # simulate Neanderthal and Denisovan deserts
 
-for region in exon protein_coding; do
+mkdir -p data/deserts
+for region in exon; do
+for chrom in chr1 chr7; do
 for source in p2 p4; do
-for rep in `seq 1 20`; do
-for run in `seq 1 5`; do
-    N="${region}_${source}_${rep}_${run}"
-    qsub -V -cwd -j y -l virtual_free=50G,h_vmem=50G -N $N -o tmp/${N}.txt \
+for rep in `seq 1 100`; do
+    N="${chrom}_${source}_${region}_${rep}"
+    qsub -V -cwd -j y -l virtual_free=30G,h_vmem=30G -N $N -o tmp/${N}.txt \
     ./code/run_introgression.py \
-        --regions data/slim_coords/${region}_regions.bed \
-        --sites data/slim_coords/${region}_all_sites.bed \
-        --recomb-map data/slim_coords/${region}_recomb_map.bed \
+        --chrom $chrom \
+        --regions data/slim_coords/${region}_unif_regions.bed \
+        --sites data/slim_coords/${region}_unif_all_sites.bed \
+        --recomb-map data/slim_coords/${region}_unif_recomb_map.bed \
         --mut-rate 7e-9 \
         --dominance-coef 0.5 \
         --model constant \
-        --admixture-rate 0.05 \
+        --admixture-rate 0.025 \
         --admixture-source ${source} \
-        --output-prefix data/simulations/deserts_source_${source}_${region}_rep_${rep}_run_${run} \
-        --population-file data/burnins/nea_den_exon_rep_${rep}.txt \
+        --output-prefix data/deserts/selection_${chrom}_source_${source}_${region}_rep_${rep} \
+        --population-file data/burnins/${chrom}_${region}_${rep}.txt \
         --vcf-times 2200 \
         --vcf-sample 500
 done
@@ -122,33 +78,31 @@ done
 done
 done
 
-
-
-# ----------------------------------------------------------------------
-# simulate Neanderthal deserts from independent burnins
-
 for region in exon; do
-for rep in `seq 1 20`; do
-    N="neutral_${rep}"
-    qsub -V -cwd -j y -l virtual_free=50G,h_vmem=50G -N $N -o tmp/${N}.txt \
+for chrom in chr1 chr7; do
+for source in p2 p4; do
+for rep in `seq 1 100`; do
+    N="neutral_${chrom}_${source}_${region}_${rep}"
+    qsub -V -cwd -j y -l virtual_free=30G,h_vmem=30G -N $N -o tmp/${N}.txt \
     ./code/run_introgression.py \
-        --regions data/slim_coords/${region}_regions.bed \
-        --sites data/slim_coords/${region}_all_sites.bed \
-        --recomb-map data/slim_coords/${region}_recomb_map.bed \
-        --mut-rate 0.0 \
-        --force-neutral \
+        --chrom $chrom \
+        --regions data/slim_coords/${region}_unif_regions.bed \
+        --sites data/slim_coords/${region}_unif_all_sites.bed \
+        --recomb-map data/slim_coords/${region}_unif_recomb_map.bed \
+        --mut-rate 0 \
+	--force-neutral \
         --dominance-coef 0.5 \
         --model constant \
-        # --admixture-rate 0.05 \
-        # --output-prefix data/simulations/deserts_indep_neutral_rep_${rep} \
-        --admixture-rate 0.017 \
-        --output-prefix data/simulations/deserts_indep_neutral2p_rep_${rep} \
-        --population-file data/burnins/nea_den_exon_rep_${rep}.txt \
-        --vcf-times 1 5 10 20 50 100 `seq 200 200 2200` \
+        --admixture-rate 0.025 \
+        --admixture-source ${source} \
+        --output-prefix data/deserts/neutral_${chrom}_source_${source}_${region}_rep_${rep} \
+        --population-file data/burnins/${chrom}_${region}_${rep}.txt \
+        --vcf-times 2200 \
         --vcf-sample 500
 done
 done
-
+done
+done
 
 
 
