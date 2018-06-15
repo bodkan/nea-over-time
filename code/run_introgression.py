@@ -15,7 +15,22 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s :: %(levelname)s :: 
 logger = logging.getLogger()
 
 
-from run_mutation_accumulation import years_to_gen, slim_vector, chrom_subset
+def years_to_gen(years, years_per_gen=25):
+    """Convert years to generations."""
+    return int(years / years_per_gen)
+
+
+def slim_vector(xs):
+    """Convert a list of numbers to a SLiM code creating the same list."""
+    return "c(" + ",".join(str(x) for x in xs) + ")"
+
+def chrom_subset(df, chrom):
+    """Subset SLiM coordinates in a dataframe to a single chromosome."""
+    df = df.query("chrom == '" + chrom + "'").reset_index(drop=True).copy()
+    chrom_start = df.slim_start[0]
+    df.slim_start = df.slim_start - chrom_start
+    df.slim_end = df.slim_end - chrom_start
+    return df
 
 
 if __name__ == "__main__":
@@ -32,6 +47,7 @@ if __name__ == "__main__":
     parser.add_argument("--recomb-map", metavar="FILE", required=True,
                         help="Table  with the SLiM recombination map (0-based SLiM end "
                         "position, recombination rate)")
+    parser.add_argument("--chrom", help="Simulate just one chromosome ('chrN')")
 
     parser.add_argument("--mut-rate", metavar="FILE", type=float, default=0.0,
                         help="Mutation rate in the simulated region")
