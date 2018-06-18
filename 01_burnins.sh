@@ -29,6 +29,7 @@ for Ne in 100 500 10000; do
 done
 cp data/burnins/exon_h_0.5.txt data/burnins/nea_Ne_1000_exon_h_0.5.txt
 
+mkdir data/burnins/deserts
 # Neanderthal and Denisovan deserts
 for region in exon protein_coding; do
 for chrom in chr1 chr7; do
@@ -43,7 +44,7 @@ for rep in `seq 1 100`; do
       --mut-rate 7e-9 \
       --dominance-coef 0.5 \
       --nea-den-split 400000 \
-      --output data/burnins/${chrom}_${region}_${rep}.txt
+      --output data/burnins/deserts/${chrom}_${region}_${rep}.txt
 done
 done
 done
