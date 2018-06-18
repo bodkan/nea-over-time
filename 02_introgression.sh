@@ -53,7 +53,7 @@ done
 # simulate Neanderthal and Denisovan deserts
 
 mkdir -p data/deserts
-for region in exon; do
+for region in exon protein_coding; do
 for chrom in chr1 chr7; do
 for source in p2 p4; do
 for rep in `seq 1 100`; do
@@ -78,7 +78,7 @@ done
 done
 done
 
-for region in exon; do
+for region in exon protein_coding; do
 for chrom in chr1 chr7; do
 for source in p2 p4; do
 for rep in `seq 1 100`; do
@@ -93,7 +93,7 @@ for rep in `seq 1 100`; do
 	--force-neutral \
         --dominance-coef 0.5 \
         --model constant \
-        --admixture-rate 0.025 \
+        --admixture-rate 0.022 \
         --admixture-source ${source} \
         --output-prefix data/deserts/neutral_${chrom}_source_${source}_${region}_rep_${rep} \
         --population-file data/burnins/${chrom}_${region}_${rep}.txt \
