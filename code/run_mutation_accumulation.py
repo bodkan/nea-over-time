@@ -23,6 +23,13 @@ def slim_vector(xs):
     """Convert a list of numbers to a SLiM code creating the same list."""
     return "c(" + ",".join(str(x) for x in xs) + ")"
 
+def chrom_subset(df, chrom):
+    """Subset SLiM coordinates in a dataframe to a single chromosome."""
+    df = df.query("chrom == '" + chrom + "'").reset_index(drop=True).copy()
+    chrom_start = df.slim_start[0]
+    df.slim_start = df.slim_start - chrom_start
+    df.slim_end = df.slim_end - chrom_start
+    return df
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Simulate mutations in AMH and Neanderthals")
@@ -35,6 +42,7 @@ if __name__ == "__main__":
     parser.add_argument("--recomb-map", metavar="FILE", required=True,
                         help="Table  with the SLiM recombination map (0-based SLiM end "
                              "position, recombination rate)")
+    parser.add_argument("--chrom", help="Simulate just one chromosome ('chrN')")
 
     parser.add_argument("--mut-rate", metavar="FILE", type=float, required=True,
                         help="Mutation rate in the simulated region")
@@ -82,7 +90,12 @@ if __name__ == "__main__":
     recomb_map = pd.read_table(args.recomb_map)
 
     # read coordinates of sites from the archaic admixture array
-    sites_coords = pd.read_table(args.sites).slim_start
+    sites_coords = pd.read_table(args.sites)
+
+    if args.chrom:
+        region_coords = chrom_subset(region_coords, args.chrom)
+        recomb_map = chrom_subset(recomb_map, args.chrom)
+        sites_coords = chrom_subset(sites_coords, args.chrom)
 
     # values to fill in the SLiM template file
     mapping = {
@@ -93,7 +106,7 @@ if __name__ == "__main__":
                                                        region_coords.slim_end)),
         "mut_rate"         : args.mut_rate,
         "dominance_coef"   : args.dominance_coef,
-        "positions"        : slim_vector(sites_coords),
+        "positions"        : slim_vector(sites_coords.slim_start),
         "founder_size"     : args.founder_size,
         "anc_size"         : args.anc_size,
         "nea_size"         : args.nea_size,

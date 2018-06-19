@@ -15,16 +15,6 @@ for h in 0.0 0.5 1.0; do
 done
 done
 
-# burnin of a merge of regions showing functional significance
-region="merged"; h="0.5"
-python3 code/run_mutation_accumulation.py \
-    --regions data/slim_coords/${region}_regions.bed \
-    --sites data/slim_coords/${region}_all_sites.bed \
-    --recomb-map data/slim_coords/${region}_recomb_map.bed \
-    --mut-rate 1e-8 \
-    --dominance-coef $h \
-    --output data/burnins/${region}_h_${h}.txt &
-
 # testing the effect of different Neanderthal population sizes
 region="exon"; h=0.5
 for Ne in 100 500 10000; do
@@ -39,19 +29,23 @@ for Ne in 100 500 10000; do
 done
 cp data/burnins/exon_h_0.5.txt data/burnins/nea_Ne_1000_exon_h_0.5.txt
 
+mkdir data/burnins/deserts
 # Neanderthal and Denisovan deserts
 for region in exon protein_coding; do
-for rep in `seq 1 25`; do
-  N="${region}_${rep}"
-  qsub -V -cwd -j y -l virtual_free=60G,h_vmem=60G -N $N -o tmp/${N}.txt \
+for chrom in chr1 chr7; do
+for rep in `seq 1 100`; do
+  N="${chrom}_${region}_${rep}"
+  qsub -V -cwd -j y -l virtual_free=20G,h_vmem=20G -N $N -o tmp/${N}.txt \
   ./code/run_mutation_accumulation.py \
-      --regions data/slim_coords/${region}_regions.bed \
-      --sites data/slim_coords/${region}_all_sites.bed \
-      --recomb-map data/slim_coords/${region}_recomb_map.bed \
+      --chrom $chrom \
+      --regions data/slim_coords/${region}_unif_regions.bed \
+      --sites data/slim_coords/${region}_unif_all_sites.bed \
+      --recomb-map data/slim_coords/${region}_unif_recomb_map.bed \
       --mut-rate 7e-9 \
       --dominance-coef 0.5 \
       --nea-den-split 400000 \
-      --output data/burnins/sge_nea_den_${region}_${rep}.txt
+      --output data/burnins/deserts/${chrom}_${region}_${rep}.txt
+done
 done
 done
 

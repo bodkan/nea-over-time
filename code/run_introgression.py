@@ -24,6 +24,14 @@ def slim_vector(xs):
     """Convert a list of numbers to a SLiM code creating the same list."""
     return "c(" + ",".join(str(x) for x in xs) + ")"
 
+def chrom_subset(df, chrom):
+    """Subset SLiM coordinates in a dataframe to a single chromosome."""
+    df = df.query("chrom == '" + chrom + "'").reset_index(drop=True).copy()
+    chrom_start = df.slim_start[0]
+    df.slim_start = df.slim_start - chrom_start
+    df.slim_end = df.slim_end - chrom_start
+    return df
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run SLiM simulation of Neanderthal deserts")
@@ -39,6 +47,7 @@ if __name__ == "__main__":
     parser.add_argument("--recomb-map", metavar="FILE", required=True,
                         help="Table  with the SLiM recombination map (0-based SLiM end "
                         "position, recombination rate)")
+    parser.add_argument("--chrom", help="Simulate just one chromosome ('chrN')")
 
     parser.add_argument("--mut-rate", metavar="FILE", type=float, default=0.0,
                         help="Mutation rate in the simulated region")
@@ -56,6 +65,8 @@ if __name__ == "__main__":
     group.add_argument("--fix-s", type=float, help="Fix a selection coefficient to single value")
     group.add_argument("--force-neutral", action="store_true", help="Simulate neutrality "
                        "(set all deleterious mutations to s=0)")
+    group.add_argument("--gap-trajectories", action="store_true", help="Calculate trajectories only "
+                       "on gap sites (remove other markers at the beginning of a simulation")
 
     parser.add_argument("--admixture-source", type=str, default="p2",
                         help="SLiM ID of an admixture source population (p2 = Nea, p4 = Den)")
@@ -139,7 +150,12 @@ if __name__ == "__main__":
     recomb_map = pd.read_table(args.recomb_map)
 
     # read coordinates of sites from the archaic admixture array
-    sites_coords = pd.read_table(args.sites).slim_start
+    sites_coords = pd.read_table(args.sites)
+
+    if args.chrom:
+        region_coords = chrom_subset(region_coords, args.chrom)
+        recomb_map = chrom_subset(recomb_map, args.chrom)
+        sites_coords = chrom_subset(sites_coords, args.chrom)
 
     if args.multiply_s is not None:
         modifier = args.multiply_s
@@ -164,7 +180,8 @@ if __name__ == "__main__":
                                                         region_coords.slim_end)),
         "mut_rate"          : args.mut_rate,
         "dominance_coef"    : args.dominance_coef,
-        "positions"         : slim_vector(sites_coords),
+        "positions"         : slim_vector(sites_coords.slim_start),
+        "remove_pos"        : slim_vector(sites_coords.query("within == 'region'").slim_start if args.gap_trajectories else []),
 
         "modify_at"         : args.modify_at if args.modify_at else admixture_time + 1,
         "modify_what"       : args.modify_what,
