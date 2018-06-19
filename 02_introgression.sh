@@ -5,21 +5,76 @@ mkdir data/simulations
 # ----------------------------------------------------------------------
 # simulations for trajectories for different regions over time
 
+region="exon"; h=0.5
 for model in gravel linear constant; do
-for region in merged exon promoter tf_binding_site protein_coding utr3; do # not all h for merged simulated
-for h in 0.0 0.5 1.0; do
-for rep in `seq 1 5`; do
-    python3 code/run_introgression.py \
-        --regions data/slim_coords/${region}_regions.bed \
-        --sites data/slim_coords/${region}_all_sites.bed \
-        --recomb-map data/slim_coords/${region}_recomb_map.bed \
-        --mut-rate 1e-8 \
-        --dominance-coef $h \
-        --model $model \
-        --output-prefix data/simulations/traj_${model}_${region}_h_${h}_rep_${rep} \
-        --population-file data/burnins/${region}_h_${h}.txt &
+    for rep in `seq 1 10`; done
+	N="${model}_${rep}"
+        qsub -V -cwd -j y -l virtual_free=20G,h_vmem=20G -N $N -o tmp/${N}.txt \
+        ./code/run_introgression.py \
+	    --regions data/slim_coords/${region}_regions.bed \
+	    --sites data/slim_coords/${region}_all_sites.bed \
+	    --recomb-map data/slim_coords/${region}_recomb_map.bed \
+	    --mut-rate 1e-8 \
+	    --dominance-coef 0.5 \
+	    --model $model \
+	    --output-prefix data/simulations/traj_${model}_${region}__rep_${rep} \
+	    --population-file data/burnins/${region}_h_${h}.txt
+    done
 done
+
+
+h=0.5
+for region in exon promoter tf_binding_site protein_coding utr3; do
+    for rep in `seq 1 10`; do
+	N="${region}_${rep}"
+        qsub -V -cwd -j y -l virtual_free=20G,h_vmem=20G -N $N -o tmp/${N}.txt \
+        ./code/run_introgression.py \
+            --regions data/slim_coords/${region}_regions.bed \
+            --sites data/slim_coords/${region}_all_sites.bed \
+            --recomb-map data/slim_coords/${region}_recomb_map.bed \
+            --mut-rate 1e-8 \
+            --dominance-coef $h \
+            --model constant \
+            --output-prefix data/simulations/traj_${region}_rep_${rep} \
+            --population-file data/burnins/${region}_h_${h}.txt
+    done
 done
+
+
+region="exon"; h=0.5
+for Ne in 100 500 1000 10000; done
+    for rep in `seq 1 10`; done
+	N="${Ne}_${rep}"
+        qsub -V -cwd -j y -l virtual_free=20G,h_vmem=20G -N $N -o tmp/${N}.txt \
+        ./code/run_introgression.py \
+            --regions data/slim_coords/${region}_regions.bed \
+            --sites data/slim_coords/${region}_all_sites.bed \
+            --recomb-map data/slim_coords/${region}_recomb_map.bed \
+            --mut-rate 1e-8 \
+            --dominance-coef 0.5 \
+            --model $model \
+            --output-prefix data/simulations/traj_Ne_${Ne}_rep_${rep} \
+            --population-file data/burnins/nea_Ne_${Ne}_{region}_h_${h}.txt
+    done
+done
+
+
+region="exon"; h=0.5
+for modifier in 1 2.5 5.0 10.0 25.0 50.0; do
+for rep in `seq 1 10`; do
+	N="${modifier}_${rep}"
+        qsub -V -cwd -j y -l virtual_free=20G,h_vmem=20G -N $N -o tmp/${N}.txt \
+        ./code/run_introgression.py \
+            --regions data/slim_coords/${region}_regions.bed \
+            --sites data/slim_coords/${region}_all_sites.bed \
+            --recomb-map data/slim_coords/${region}_recomb_map.bed \
+            --mut-rate 1e-8 \
+            --modify-fraction 1.0 \
+            --multiply-s $modifier \
+            --dominance-coef $h \
+            --model $model \
+            --output-prefix data/simulations/traj_mult_${modifier}_h_${h}_rep_${rep} \
+            --population-file data/burnins/${region}_h_${h}.txt &
 done
 done
 
@@ -50,52 +105,6 @@ done
 
 
 # ----------------------------------------------------------------------
-# analysis of desert sizes in the present based on different amounts
-# of deleterious sequence
-
-h=0.5
-for region in merged exon promoter tf_binding_site protein_coding utr3; do
-for rep in `seq 1 5`; do
-    python3 code/run_introgression.py \
-        --regions data/slim_coords/${region}_regions.bed \
-        --sites data/slim_coords/${region}_all_sites.bed \
-        --recomb-map data/slim_coords/${region}_recomb_map.bed \
-        --mut-rate 1e-8 \
-        --dominance-coef $h \
-        --model constant \
-        --output-prefix data/simulations/deserts_${region}_h_${h}_rep_${rep} \
-        --population-file data/burnins/${region}_h_${h}.txt \
-        --vcf-times 2200 \
-        --vcf-sample 500 &
-done
-done
-
-
-
-# under neutrality
-
-region="tf_binding_site" # size of deleterious region doesn't matter here
-h=0.5
-for Ne in 10000; do
-for rep in `seq 1 5`; do
-    python3 code/run_introgression.py \
-        --regions data/slim_coords/${region}_regions.bed \
-        --sites data/slim_coords/${region}_all_sites.bed \
-        --recomb-map data/slim_coords/${region}_recomb_map.bed \
-        --force-neutral \
-        --dominance-coef $h \
-        --model constant \
-        --founder-size $Ne \
-        --output-prefix data/simulations/deserts_neutral_h_${h}_rep_${rep} \
-        --population-file data/burnins/${region}_h_${h}.txt \
-        --vcf-sample 500 \
-        --vcf-times 2200 &
-done
-done
-
-
-
-# ----------------------------------------------------------------------
 # simulate Neanderthal and Denisovan deserts
 
 for region in exon protein_coding; do
@@ -121,34 +130,6 @@ done
 done
 done
 done
-
-
-
-# ----------------------------------------------------------------------
-# simulate Neanderthal deserts from independent burnins
-
-for region in exon; do
-for rep in `seq 1 20`; do
-    N="neutral_${rep}"
-    qsub -V -cwd -j y -l virtual_free=50G,h_vmem=50G -N $N -o tmp/${N}.txt \
-    ./code/run_introgression.py \
-        --regions data/slim_coords/${region}_regions.bed \
-        --sites data/slim_coords/${region}_all_sites.bed \
-        --recomb-map data/slim_coords/${region}_recomb_map.bed \
-        --mut-rate 0.0 \
-        --force-neutral \
-        --dominance-coef 0.5 \
-        --model constant \
-        # --admixture-rate 0.05 \
-        # --output-prefix data/simulations/deserts_indep_neutral_rep_${rep} \
-        --admixture-rate 0.017 \
-        --output-prefix data/simulations/deserts_indep_neutral2p_rep_${rep} \
-        --population-file data/burnins/nea_den_exon_rep_${rep}.txt \
-        --vcf-times 1 5 10 20 50 100 `seq 200 200 2200` \
-        --vcf-sample 500
-done
-done
-
 
 
 
