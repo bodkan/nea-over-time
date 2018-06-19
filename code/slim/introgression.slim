@@ -15,9 +15,6 @@ initialize() {
 
     $genomic_elements
 
-    // positions of the informative sites
-    defineConstant("positions", $positions);
-
     // if sampling times are specified, output Nea. ancestry metrics only
     // at these generations
     if (size($sampling_times) > 0) {
@@ -54,6 +51,15 @@ $before_admixture late() {
         del_muts = sim.mutations[sim.mutations.mutationType == m0];
         sapply(del_muts, "applyValue.setSelectionCoeff(0.0);");
     }
+
+    // remove region markers if trajectories are supposed to be
+    // calculated only on gap sites
+    del_muts = sapply($remove_pos, "sim.mutations[sim.mutations.position == applyValue];");
+    sim.subpopulations.genomes.removeMutations(del_muts);
+    cat("after " + p2.genomes[0].countOfMutationsOfType(m1) + "\n");
+
+    // positions of informative sites
+    defineConstant("positions", setDifference($positions, $remove_pos));
 
     if (single_pulse) {
         cat(time() + " :: INFO :: Saving the simulation state before the admixture\n");

@@ -65,6 +65,8 @@ if __name__ == "__main__":
     group.add_argument("--fix-s", type=float, help="Fix a selection coefficient to single value")
     group.add_argument("--force-neutral", action="store_true", help="Simulate neutrality "
                        "(set all deleterious mutations to s=0)")
+    group.add_argument("--gap-trajectories", action="store_true", help="Calculate trajectories only "
+                       "on gap sites (remove other markers at the beginning of a simulation")
 
     parser.add_argument("--admixture-source", type=str, default="p2",
                         help="SLiM ID of an admixture source population (p2 = Nea, p4 = Den)")
@@ -179,6 +181,7 @@ if __name__ == "__main__":
         "mut_rate"          : args.mut_rate,
         "dominance_coef"    : args.dominance_coef,
         "positions"         : slim_vector(sites_coords.slim_start),
+        "remove_pos"        : slim_vector(sites_coords.query("within == 'region'").slim_start if args.gap_trajectories else []),
 
         "modify_at"         : args.modify_at if args.modify_at else admixture_time + 1,
         "modify_what"       : args.modify_what,
