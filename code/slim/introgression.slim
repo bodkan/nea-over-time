@@ -54,9 +54,11 @@ $before_admixture late() {
 
     // remove region markers if trajectories are supposed to be
     // calculated only on gap sites
-    del_muts = sapply($remove_pos, "sim.mutations[sim.mutations.position == applyValue];");
-    sim.subpopulations.genomes.removeMutations(del_muts);
-    cat("after " + p2.genomes[0].countOfMutationsOfType(m1) + "\n");
+    if (size($remove_pos) > 0) {
+        del_muts = sapply($remove_pos, "sim.mutations[sim.mutations.position == applyValue];");
+        sim.subpopulations.genomes.removeMutations(del_muts);
+        cat("after " + p2.genomes[0].countOfMutationsOfType(m1) + "\n");
+    }
 
     // positions of informative sites
     defineConstant("positions", setDifference($positions, $remove_pos));
