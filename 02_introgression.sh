@@ -65,7 +65,7 @@ for Ne in 100 500 1000 10000; do
             --model constant \
             --gap-trajectories \
             --output-prefix data/simulations/traj_Ne_${Ne}_${region}_rep_${rep} \
-            --population-file data/burnins/nea_Ne_${Ne}_{region}_h_${h}.txt
+            --population-file data/burnins/nea_Ne_${Ne}_${region}_h_${h}.txt
     done
 done
 
