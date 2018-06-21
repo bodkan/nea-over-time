@@ -55,7 +55,7 @@ region="exon"; h=0.5
 for Ne in 100 500 1000 10000; do
     for rep in `seq 1 10`; do
 	N="Ne_${Ne}_${rep}"
-        qsub -V -cwd -j y -l virtual_free=50G,h_vmem=50G -N $N -o tmp/${N}.txt \
+        qsub -V -cwd -j y -l virtual_free=80G,h_vmem=80G -N $N -o tmp/${N}.txt \
         ./code/run_introgression.py \
             --regions data/slim_coords/${region}_regions.bed \
             --sites data/slim_coords/${region}_all_sites.bed \
