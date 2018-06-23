@@ -5,49 +5,52 @@ from collections import defaultdict
 import msprime as msp
 import pandas as pd
 import numpy as np
-from intervaltree import IntervalTree, Interval
 
 
 def years_to_gen(years, gen_time=25):
     return int(years / gen_time)
 
 
-def nea_snps(snps):
-    samples = snps.columns
+def get_all_snps(ts, samples):
+    if isinstance(ts, msp.TreeSequence):
+        ts = [ts]
 
-    afr_freq = calc_freq(snps, list(samples[samples.str.startswith("yri")]) \
-                             + list(samples[samples.str.startswith("dinka")]))
-    nea_freq = calc_freq(snps, list(samples[samples.str.startswith("nea")]))
+    return pd.concat(
+        pd.DataFrame(
+            t.genotype_matrix(),
+            columns=samples,
+            index=(v.position for v in t.variants())
+        ) for t in ts
+    )
+
+
+def get_nea_snps(snps):
+    sample_names = snps.columns
+
+    yri = list(sample_names[sample_names.str.startswith("yri")])
+    nea = list(sample_names[sample_names.str.startswith("nea")])
+    dinka = list(sample_names[sample_names.str.startswith("dinka")])
+
+    afr_freq = calc_freq(snps, yri + dinka)
+    nea_freq = calc_freq(snps, nea)
 
     return snps.loc[((afr_freq == 0) & (nea_freq == 1)) | ((afr_freq == 1) & (nea_freq == 0))]
 
 
-def get_snps(tree_seq, samples):
-    if isinstance(tree_seq, msp.TreeSequence):
-        tree_seq = [tree_seq]
-    
-    return pd.concat(
-        pd.DataFrame(
-            ts.genotype_matrix(),
-            columns=samples,
-            index = (int(v.position) for v in ts.variants())
-        ) for ts in tree_seq
-    )
-
-
 def generate_names(pop_params):
-    samples = []
+    sample_names = []
     for p in pop_params:
-        samples.extend([p + str(i) for i in range(len(pop_params[p]["t_sample"]))])
-    return samples
+        n_pop = len(pop_params[p]["t_sample"])
+        sample_names.extend([f"{p}{i}" for i in range(n_pop)])
+    return sample_names
 
 
 def define_samples(pop_params):
-    samples = []
+    sample_names = []
     for i, pop in enumerate(pop_params):
         times = [years_to_gen(t) for t in pop_params[pop]["t_sample"]]
-        samples.extend([msp.Sample(population=i, time=t) for t in times])
-    return samples
+        sample_names.extend([msp.Sample(population=i, time=t) for t in times])
+    return sample_names
 
 
 def define_popconfig(pop_params):
@@ -55,15 +58,16 @@ def define_popconfig(pop_params):
         initial_size=pop_params[p]["Ne"]) for p in pop_params]
 
 
-def sample_ages(emh_ages_path, n_eur=20):
+def sample_ages(emh_ages_path):
     emh_ages = pd.read_csv(emh_ages_path, sep=" ", names=["name", "age"]).age
+    emh = pd.DataFrame({"name": [f"eur{i}" for i in range(len(emh_ages))],
+                        "age": emh_ages})
 
-    emh = pd.DataFrame({"name" : ["eur{}".format(i) for i in range(len(emh_ages))],
-                        "age" : emh_ages})
-
-    eur = pd.DataFrame(
-        {"name" : ["eur{}".format(i) for i in range(len(emh), len(emh) + n_eur)],
-                   "age" : list(repeat(0, n_eur))})
+    n_eur = 20
+    eur = pd.DataFrame({
+        "name": [f"eur{i}" for i in range(len(emh), len(emh) + n_eur)],
+        "age": list(repeat(0, n_eur))
+    })
 
     samples = pd.concat([emh, eur]).reset_index(drop=True)
     samples["post_admixture"] = 55000 - samples.age
@@ -73,7 +77,7 @@ def sample_ages(emh_ages_path, n_eur=20):
 
 def get_sfs(freq, n_bins=100):
     freq_bins = pd.cut(freq,
-                       bins = [i / n_bins for i in range(n_bins + 1)],
+                       bins=[i / n_bins for i in range(n_bins + 1)],
                        labels=range(1, n_bins + 1),
                        include_lowest=True) \
         .value_counts()
@@ -82,15 +86,15 @@ def get_sfs(freq, n_bins=100):
                          "prop": freq_bins / sum(freq_bins)}).sort_values("bin")
 
 
-def calc_freq(snps, samples=None):
-    if not samples:
-        samples = list(snps.columns)
+def calc_freq(snps, sample_names=None):
+    if not sample_names:
+        sample_names = list(snps.columns)
 
-    if not isinstance(samples, list):
-        samples = [samples]
+    if not isinstance(sample_names, list):
+        sample_names = [sample_names]
 
-    allele_counts = snps.loc[:, samples].sum(axis = 1)
-    return allele_counts / len(samples)
+    allele_counts = snps.loc[:, sample_names].sum(axis=1)
+    return allele_counts / len(sample_names)
 
 
 def f4(snps, w, x, y, z):
@@ -98,7 +102,7 @@ def f4(snps, w, x, y, z):
     x_freq = calc_freq(snps, x)
     y_freq = calc_freq(snps, y)
     z_freq = calc_freq(snps, z)
-    
+
     return ((w_freq - x_freq) * (y_freq - z_freq)).sum()
 
 
@@ -112,28 +116,24 @@ def d(snps, w, x, y, z):
     y_freq = calc_freq(snps, y)
     z_freq = calc_freq(snps, z)
 
-    nom =  ((w_freq - x_freq) * (y_freq - z_freq)).sum()
+    nom = ((w_freq - x_freq) * (y_freq - z_freq)).sum()
     denom = ((w_freq + x_freq - 2 * w_freq * x_freq) * \
              (y_freq + z_freq - 2 * y_freq * z_freq)).sum()
 
     return nom / denom
 
 
-def run_sim(admix_params, pop_params, migr_params, *, seq_len=10_000, mut_rate=1e-8,
-            debug=False, num_replicates=None):
-    """Generic function for simulating Neandertal introgression."""
+def run_sim(admix_params, pop_params, migr_params, *,
+            seq_len=10_000, num_replicates=None,
+            mut_rate=1e-8, debug=False):
     CHIMP, YRI, DIN, NEA, EUR = [pop_params[p]["id"] for p in pop_params]
-
-    # Neandertal admixture parameters
-    admix_duration = years_to_gen(admix_params["duration"])
-    admix_rate = admix_params["rate"] / admix_duration
-    admix_start = years_to_gen(admix_params["t_admix"])
-    admix_end = admix_start - admix_duration
 
     # population split times
     t_split_eur, t_split_dinka, t_split_nea, t_split_ch = \
         [years_to_gen(pop_params[p]["t_split"])
          for p in ["eur", "dinka", "nea", "chimp"]]
+
+    t_admix = years_to_gen(admix_params["t_admix"])
 
     demography = [
         # EUR-AFR gene-flow
@@ -153,14 +153,12 @@ def run_sim(admix_params, pop_params, migr_params, *, seq_len=10_000, mut_rate=1
                                 matrix_index=(EUR, DIN)),
 
         # Neanderthal admixture
-        msp.MigrationRateChange(time=admix_end, rate=admix_rate,
-                                matrix_index=(EUR, NEA)),
-        msp.MigrationRateChange(time=admix_start, rate=0,
-                                matrix_index=(EUR, NEA)),
+        msp.MassMigration(time=t_admix, source=EUR, dest=NEA,
+                          proportion=admix_params["rate"]),
 
         # population size during the bottleneck
         msp.PopulationParametersChange(
-            time=admix_start,
+            time=t_admix,
             initial_size=pop_params["eur"]["bottle_Ne"],
             population_id=EUR),
 
@@ -207,148 +205,97 @@ def run_sim(admix_params, pop_params, migr_params, *, seq_len=10_000, mut_rate=1
         )
 
 
-samples = sample_ages("data/emh_ages.txt")
-
-admix_params = {
-    "rate"     : 0.03,
-    "t_admix"  : 55000,
-    "duration" : 1000
-}
-
-pop_params = {
-    "chimp" : {"id" : 0, "Ne" : 10000, "t_sample" : 1  * [0],     "t_split" : 6_000_000},
-    "yri"   : {"id" : 1, "Ne" : 10000, "t_sample" : 5 * [0]},
-    "dinka" : {"id" : 2, "Ne" : 10000, "t_sample" : 5 * [0],     "t_split" : 150_000},
-    "nea"   : {"id" : 3, "Ne" : 1000,  "t_sample" : 4  * [70000], "t_split" : 500_000},
-    "eur"   : {"id" : 4, "Ne" : 10000, "t_sample" : samples.age,  "t_split" : 60_000,    "bottle_Ne" : 2000}
-}
-
-migr_params = { "t" : 0, "afr_to_eur" : 0, "eur_to_afr" : 0 }
-
-ts = run_sim(admix_params, pop_params, migr_params, seq_len=100_000_000)
-
-
-
-
-
-def simulate_mutation_times(ts, random_seed=None):
-    rng = random.Random(random_seed)
-    mutation_time = np.zeros(ts.num_mutations)
+def assign_times(ts):
+    """Randomly assign time of origin to each mutation."""
+    rng = random.Random()
+    mut_times = np.zeros(ts.num_mutations)
     for tree in ts.trees():
         for mutation in tree.mutations():
             a = tree.time(mutation.node)
             b = tree.time(tree.parent(mutation.node))
-            mutation_time[mutation.id] = rng.uniform(a, b)
-    return mutation_time
+            mut_times[mutation.id] = rng.uniform(a, b)
+    return mut_times
 
 
-
-def get_mutation_population(ts, mutation_time):
-    node_migrations = collections.defaultdict(list)
-    for migration in ts.migrations():
-        node_migrations[migration.node].append(migration)
-
-    mutation_population = np.zeros(ts.num_mutations, dtype=int)
-    for tree in ts.trees():
-        for site in tree.sites():
-            for mutation in site.mutations:                
-                mutation_population[mutation.id] = tree.population(mutation.node)
-                for mig in node_migrations[mutation.node]:
-                    # Stepping through all migations will be inefficient for large 
-                    # simulations. Should use an interval tree (e.g. 
-                    # https://pypi.python.org/pypi/intervaltree) to find all 
-                    # intervals intersecting with site.position.
-                    if mig.left <= site.position < mig.right:
-                        # Note that we assume that we see the migration records in 
-                        # increasing order of time!
-                        if mig.time < mutation_time[mutation.id]:
-                            assert mutation_population[mutation.id] == mig.source
-                            mutation_population[mutation.id] = mig.dest
-    return mutation_population
-
-mutation_time = simulate_mutation_times(ts)
-mutation_population = get_mutation_population(ts, mutation_time)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-all_snps = get_snps(ts, generate_names(pop_params))
-info_snps = nea_snps(all_snps)
-pd.Series((info_snps[s] == info_snps.nea0).mean() for s in samples.name).mean()
-
-
-tree = IntervalTree().from_tuples([(1, 20, "a"), (30, 40, "b"), (80, 90, "c")])
-sites = [1, 20, 5, 7, 18, 28, 36, 39, 75, 83, 120]
-
-
-
-
-def mut_assign_pops(ts, mutation_time):
+def gather_migrations(ts):
+    """Gather all migrations in each node in a tree."""
     node_migrations = defaultdict(list)
     for migration in ts.migrations():
         node_migrations[migration.node].append(migration)
+    return node_migrations
 
-    mutation_population = np.zeros(ts.num_mutations, dtype=int)
+
+def assign_pops(ts):
+    """Assign population of origin to each mutation."""
+    times = assign_times(ts)
+    node_migrations = gather_migrations(ts)
+
+    pop_assign = np.repeat(-1, ts.num_mutations)
     for tree in ts.trees():
         for site in tree.sites():
-            for mutation in site.mutations:
-                mutation_population[mutation.id] = tree.population(mutation.node)
-                migration_edges = IntervalTree().from_tuples(
-                    (m.left, m.right, m) for m in node_migrations[mutation.node])
-                for _, _, mig in migration_edges[site.position]:
-                    if mig.time < mutation_time[mutation.id]:
-                        if mutation_population[mutation.id] != mig.source:
-                            return tree, site, mutation, migration_edges, node_migrations
-                        mutation_population[mutation.id] = mig.dest
-
-    return pd.Series(mutation_source), pd.Series(mutation_dest)
+            for mut in site.mutations:
+                pop_assign[mut.id] = tree.population(mut.node)
+                for mig in node_migrations[mut.node]:
+                    if mig.left <= site.position < mig.right:
+                        if mig.time < times[mut.id]:
+                            assert pop_assign[mut.id] == mig.source
+                            pop_assign[mut.id] = mig.dest
+    return pop_assign
 
 
+def get_true_snps(ts, all_snps, pop_params):
+    n_nea = len(pop_params["nea"]["t_sample"])
+    nea_names = [f"nea{i}" for i in range(n_nea)]
 
-mutation_time = mut_assign_times(ts)
-tree, site, mutation, migration_edges, node_migrations = mut_assign_pops(ts, mutation_time)
+    mut_pops = assign_pops(ts)
+    nea_snps = all_snps[list(mut_pops == pop_params["nea"]["id"])]
 
-mutation_population = get_mutation_population(ts, mutation_time)
-
-
-
-# true_nea = all_snps[list(mutation_population == pop_params["nea"]["id"])]
-
-for mig in node_migrations[mutation.node]:
-    if mig.left <= site.position < mig.right:
-        print(mig)
+    return nea_snps[nea_snps[nea_names].sum(axis=1) == n_nea]
 
 
-for mig in migration_edges[site.position]:
-    print(mig.data)
+samples = sample_ages("data/emh_ages.txt")
+
+admix_params = {
+    "rate": 0.015,
+    "t_admix": 55000
+}
+
+pop_params = {
+    "chimp": {"id": 0, "Ne": 10000, "t_sample": 1 * [0], "t_split": 6_000_000},
+    "yri": {"id": 1, "Ne": 10000, "t_sample": 5 * [0]},
+    "dinka": {"id": 2, "Ne": 10000, "t_sample": 5 * [0], "t_split": 150_000},
+    "nea": {"id": 3, "Ne": 1000, "t_sample": 4 * [70000], "t_split": 500_000},
+    "eur": {"id": 4, "Ne": 10000, "t_sample": samples.age, "t_split": 60_000,
+            "bottle_Ne": 2000}
+}
+
+migr_params = {"t": 0, "afr_to_eur": 0, "eur_to_afr": 0}
+
+ts = run_sim(admix_params, pop_params, migr_params, seq_len=100_000_000)
+
+all_snps = get_all_snps(ts, generate_names(pop_params))
+fix_snps = get_nea_snps(all_snps)
+true_snps = get_true_snps(ts, pop_params)
+
+fix = set(fix_snps.index)
+true = set(true_snps.index)
+
+mut_pops = assign_pops(ts)
+pops = pd.DataFrame({"pop": mut_pops, "idx": all_snps.index})
+
+
+def get_pop(idx):
+    return pops[pops.idx == idx]["pop"].values[0]
+
+
+fix_pops = pd.Series([get_pop(i) for i in fix])
+true_pops = pd.Series([get_pop(i) for i in true])
+
+# pd.DataFrame((m.source, m.dest) for m in ts.migrations()).drop_duplicates()
+
+pd.Series((fix_snps[s] == fix_snps.nea0).mean() for s in samples.name).mean()
+pd.Series((true_snps[s] == true_snps.nea0).mean() for s in samples.name).mean()
 
 
 
-
-
-for mig in node_migrations[mutation.node]:
-    if mig.left <= site.position < mig.right:
-        if mig.time < mutation_time[mutation.id]:
-            print(mig, mutation_population[mutation.id] == mig.source)
-            assert mutation_population[mutation.id] == mig.source
-
-for _, _, mig in migration_edges[site.position]:
-    if mig.time < mutation_time[mutation.id]:
-
-        print(mig, mutation_population[mutation.id] == mig.source)
 
