@@ -13,3 +13,5 @@ test/*
 .Rproj.user
 paper/fig
 paper/rds
+.idea/
+.python-version
