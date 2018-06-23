@@ -1,3 +1,3 @@
 #!/bin/bash
 
-slim
+slim $1
