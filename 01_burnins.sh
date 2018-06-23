@@ -31,7 +31,7 @@ cp data/burnins/exon_h_0.5.txt data/burnins/nea_Ne_1000_exon_h_0.5.txt
 
 # dominance mix burnins
 for prop_add in `seq 0 0.1 1`; do
-    prop_rec=`echo "1 $prop" | awk '{print $1 - $2}'`
+    prop_rec=`echo "1 $prop_add" | awk '{print $1 - $2}'`
     N="mix_${prop_add}_${prop_rec}"
     qsub -V -cwd -j y -l virtual_free=50G,h_vmem=50G -N $N -o tmp/${N}.txt \
         ./code/run_slim.sh -d prop_add=$prop_add -d prop_rec=$prop_rec code/slim/dominance_mix__mut_accum.slim
