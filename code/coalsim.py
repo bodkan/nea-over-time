@@ -1,3 +1,4 @@
+import argparse
 import random
 from itertools import repeat
 from collections import defaultdict
@@ -227,7 +228,7 @@ def gather_migrations(ts):
 
 def assign_pops(ts):
     """Assign population of origin to each mutation."""
-    times = assign_times(ts)
+    mut_times = assign_times(ts)
     node_migrations = gather_migrations(ts)
 
     pop_assign = np.repeat(-1, ts.num_mutations)
@@ -237,10 +238,14 @@ def assign_pops(ts):
                 pop_assign[mut.id] = tree.population(mut.node)
                 for mig in node_migrations[mut.node]:
                     if mig.left <= site.position < mig.right:
-                        if mig.time < times[mut.id]:
+                        if mig.time < mut_times[mut.id]:
                             assert pop_assign[mut.id] == mig.source
                             pop_assign[mut.id] = mig.dest
     return pop_assign
+
+
+def get_pop(idx, pops):
+    return pops[pops.idx == idx]["pop"].values[0]
 
 
 def get_true_snps(ts, all_snps, pop_params):
@@ -248,54 +253,76 @@ def get_true_snps(ts, all_snps, pop_params):
     nea_names = [f"nea{i}" for i in range(n_nea)]
 
     mut_pops = assign_pops(ts)
-    nea_snps = all_snps[list(mut_pops == pop_params["nea"]["id"])]
+    nea_snps = all_snps[mut_pops == pop_params["nea"]["id"]]
+    fixed_nea_snps = nea_snps[nea_snps[nea_names].sum(axis=1) == n_nea]
 
-    return nea_snps[nea_snps[nea_names].sum(axis=1) == n_nea]
+    pops = pd.DataFrame({"pop": mut_pops, "idx": all_snps.index})
+    print(pd.Series([get_pop(i, pops) for i in fixed_nea_snps.index]).value_counts())
 
-
-samples = sample_ages("data/emh_ages.txt")
-
-admix_params = {
-    "rate": 0.015,
-    "t_admix": 55000
-}
-
-pop_params = {
-    "chimp": {"id": 0, "Ne": 10000, "t_sample": 1 * [0], "t_split": 6_000_000},
-    "yri": {"id": 1, "Ne": 10000, "t_sample": 5 * [0]},
-    "dinka": {"id": 2, "Ne": 10000, "t_sample": 5 * [0], "t_split": 150_000},
-    "nea": {"id": 3, "Ne": 1000, "t_sample": 4 * [70000], "t_split": 500_000},
-    "eur": {"id": 4, "Ne": 10000, "t_sample": samples.age, "t_split": 60_000,
-            "bottle_Ne": 2000}
-}
-
-migr_params = {"t": 0, "afr_to_eur": 0, "eur_to_afr": 0}
-
-ts = run_sim(admix_params, pop_params, migr_params, seq_len=100_000_000)
-
-all_snps = get_all_snps(ts, generate_names(pop_params))
-fix_snps = get_nea_snps(all_snps)
-true_snps = get_true_snps(ts, pop_params)
-
-fix = set(fix_snps.index)
-true = set(true_snps.index)
-
-mut_pops = assign_pops(ts)
-pops = pd.DataFrame({"pop": mut_pops, "idx": all_snps.index})
+    return fixed_nea_snps
 
 
-def get_pop(idx):
-    return pops[pops.idx == idx]["pop"].values[0]
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--t", help="Time of gene-flow", required=True)
+    parser.add_argument("--eur-to-afr", help="EUR -> AFR migration rate", required=True)
+    parser.add_argument("--afr-to-eur", help="AFR -> EUR migration rate", required=True)
+    parser.add_argument("--afr-to-eur", help="AFR -> EUR migration rate", required=True)
+    parser.add_argument("--hap-length", help="Length of simulated haplotypes", required=True)
+    parser.add_argument("--hap-num", help="Number of simulated haplotypes", required=True)
+    parser.parse_args()
 
+    samples = sample_ages("data/emh_ages.txt")
 
-fix_pops = pd.Series([get_pop(i) for i in fix])
-true_pops = pd.Series([get_pop(i) for i in true])
+    admix_params = {
+        "rate": 0.015,
+        "t_admix": 55000
+    }
 
-# pd.DataFrame((m.source, m.dest) for m in ts.migrations()).drop_duplicates()
+    pop_params = {
+        "chimp": {"id": 0, "Ne": 10000, "t_sample": 1 * [0], "t_split": 6_000_000},
+        "yri": {"id": 1, "Ne": 10000, "t_sample": 5 * [0]},
+        "dinka": {"id": 2, "Ne": 10000, "t_sample": 5 * [0], "t_split": 150_000},
+        "nea": {"id": 3, "Ne": 1000, "t_sample": 4 * [70000], "t_split": 500_000},
+        "eur": {"id": 4, "Ne": 10000, "t_sample": samples.age, "t_split": 60_000,
+                "bottle_Ne": 2000}
+    }
 
-pd.Series((fix_snps[s] == fix_snps.nea0).mean() for s in samples.name).mean()
-pd.Series((true_snps[s] == true_snps.nea0).mean() for s in samples.name).mean()
+    migr_params = {"t": 0, "afr_to_eur": 0, "eur_to_afr": 0}
+
+    ts = run_sim(admix_params, pop_params, migr_params, seq_len=100_000_000)
+
+    all_snps = get_all_snps(ts, generate_names(pop_params))
+    fix_snps = get_nea_snps(all_snps)
+    true_snps = get_true_snps(ts, all_snps, pop_params)
+
+    pd.Series((fix_snps[s] == fix_snps.nea0).mean() for s in samples.name).mean()
+    pd.Series((true_snps[s] == true_snps.nea0).mean() for s in samples.name).mean()
 
 
 
+
+
+
+
+#
+#
+#
+#
+# fix = set(fix_snps.index)
+# true = set(true_snps.index)
+#
+# mut_pops = assign_pops(ts)
+#
+#
+#
+#
+# fix_pops = pd.Series([get_pop(i) for i in fix])
+# true_pops = pd.Series([get_pop(i) for i in true])
+#
+# # pd.DataFrame((m.source, m.dest) for m in ts.migrations()).drop_duplicates()
+#
+#
+#
+#
 
