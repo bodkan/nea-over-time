@@ -76,7 +76,7 @@ done
 # artificially making Neandertal mutations more deleterious
 #
 region="exon"; h=0.5
-for modifier in 1 2.5 5.0 10.0 25.0 50.0; do
+for modifier in 1.0 1.1 1.25 1.5 1.75 2.0 5.0 10.0; do
     for rep in `seq 1 10`; do
 	N="modif_${modifier}_${rep}"
         qsub -V -cwd -j y -l virtual_free=50G,h_vmem=50G -N $N -o tmp/${N}.txt \
