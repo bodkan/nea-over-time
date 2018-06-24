@@ -197,7 +197,7 @@ def run_sim(admix_params, pop_params, migr_params, *,
         # EUR-AFR gene-flow
         msp.MigrationRateChange(time=0, rate=migr_params["eur_to_afr"],
                                 matrix_index=(DIN, EUR)),
-        msp.MigrationRateChange(time=0, rate=2 * migr_params["eur_to_afr"],
+        msp.MigrationRateChange(time=0, rate=migr_params["eur_to_afr"],
                                 matrix_index=(YRI, EUR)),
         msp.MigrationRateChange(time=0, rate=migr_params["afr_to_eur"],
                                 matrix_index=(EUR, DIN)),
@@ -273,8 +273,8 @@ if __name__ == "__main__":
     parser.add_argument("--hap-num", help="Number of simulated haplotypes", type=int)
     parser.add_argument("--output-file", metavar="FILE", help="Where to save the table of results", required=True)
     parser.add_argument("--emh-ages", metavar="FILE", help="Where to save the table of results", required=True)
-    args = parser.parse_args("--time 0 --output-file asd.txt --eur-to-afr 0 --afr-to-eur 0 --nea-rate 0.05 --hap-length 100_000_000 --emh-ages data/emh_ages.txt".split())
-    # args = parser.parse_args()
+    # args = parser.parse_args("--time 0 --output-file asd.txt --eur-to-afr 0 --afr-to-eur 0 --nea-rate 0.05 --hap-length 500_000_000 --emh-ages data/emh_ages.txt".split())
+    args = parser.parse_args()
 
     # prepare all simulation parameters
     samples = sample_ages(args.emh_ages)
@@ -286,8 +286,8 @@ if __name__ == "__main__":
 
     pop_params = {
         "chimp": {"id": 0, "Ne": 10000, "t_sample": 1 * [0], "t_split": 6_000_000},
-        "yri": {"id": 1, "Ne": 10000, "t_sample": 5 * [0]},
-        "dinka": {"id": 2, "Ne": 10000, "t_sample": 5 * [0], "t_split": 150_000},
+        "yri": {"id": 1, "Ne": 10000, "t_sample": 50 * [0]},
+        "dinka": {"id": 2, "Ne": 10000, "t_sample": 50 * [0], "t_split": 150_000},
         "nea": {"id": 3, "Ne": 1000, "t_sample": 4 * [80000], "t_split": 500_000},
         "eur": {"id": 4, "Ne": 10000, "t_sample": samples.age, "t_split": 60_000,
                 "bottle_Ne": 2000}
