@@ -13,7 +13,7 @@ mkdir data/simulations
 #
 region="exon"; h=0.5
 for model in gravel linear constant; do
-    for rep in `seq 1 10`; do
+    for rep in `seq 1 30`; do
 	N="${model}_${rep}"
         qsub -V -cwd -j y -l virtual_free=50G,h_vmem=50G -N $N -o tmp/${N}.txt \
         ./code/run_introgression.py \
@@ -34,7 +34,7 @@ done
 #
 h=0.5
 for region in exon promoter tf_binding_site protein_coding utr3; do
-    for rep in `seq 1 10`; do
+    for rep in `seq 1 30`; do
 	N="${region}_${rep}"
         qsub -V -cwd -j y -l virtual_free=50G,h_vmem=50G -N $N -o tmp/${N}.txt \
         ./code/run_introgression.py \
@@ -55,7 +55,7 @@ done
 #
 region="exon"; h=0.5
 for Ne in 100 500 1000 10000; do
-    for rep in `seq 1 10`; do
+    for rep in `seq 1 30`; do
 	N="Ne_${Ne}_${rep}"
         qsub -V -cwd -j y -l virtual_free=80G,h_vmem=80G -N $N -o tmp/${N}.txt \
         ./code/run_introgression.py \
@@ -90,7 +90,7 @@ for modifier in 1 2.5 5.0 10.0 25.0 50.0; do
             --dominance-coef $h \
             --model constant \
             --gap-trajectories \
-            --output-prefix data/simulations/traj_mult_${modifier}_h_${h}_rep_${rep} \
+            --output-prefix data/simulations/traj_mult_${modifier}_rep_${rep} \
             --population-file data/burnins/${region}_h_${h}.txt
     done
 done
