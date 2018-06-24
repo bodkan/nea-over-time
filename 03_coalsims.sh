@@ -38,7 +38,7 @@ done
 
 # EUR <-> AFR migration
 for rep in `seq 1 100`; do
-    N="afr_to_eur_${rep}"
+    N="both_directions_${rep}"
     qsub -V -cwd -j y -l virtual_free=20G,h_vmem=20G -N $N -o tmp/${N}.txt \
         ./code/coalsim.py \
             --time ${t} --eur-to-afr ${m} --afr-to-eur ${m} --nea-rate 0.03 \
