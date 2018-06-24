@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 eigenstrat_dir=data/eigenstrat
 mkdir -p $eigenstrat_dir
 
