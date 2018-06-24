@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse
 import random
 from itertools import repeat
@@ -268,12 +270,12 @@ if __name__ == "__main__":
     parser.add_argument("--nea-rate", help="Neandertal admixture rate", type=float, required=True)
     parser.add_argument("--hap-length", help="Length of simulated haplotypes", type=int, required=True)
     parser.add_argument("--hap-num", help="Number of simulated haplotypes", type=int)
-    parser.add_argument("--output-file", metavar="FILE", help="Where to save the table of results")
+    parser.add_argument("--output-file", metavar="FILE", help="Where to save the table of results", required=True)
     parser.add_argument("--emh-ages", metavar="FILE", help="Where to save the table of results", required=True)
-    args = parser.parse_args("--time 0 --eur-to-afr 0 --afr-to-eur 0 --nea-rate 0.05 --hap-length 100_000_000 --emh-ages data/emh_ages.txt".split())
+    args = parser.parse_args()
 
     # prepare all simulation parameters
-    samples = sample_ages(args.emh_ages_file)
+    samples = sample_ages(args.emh_ages)
 
     admix_params = {
         "rate": args.nea_rate,
@@ -313,14 +315,16 @@ if __name__ == "__main__":
     altai = ["nea0", "nea1"]
     vindija = ["nea2", "nea3"]
 
-    stats_df = defaultdict(list)
+    stats = defaultdict(list)
     for s in samples.name:
-        stats_df["true_prop"].append(true_snps[s].mean())
-        stats_df["admix_prop"].append((fix_snps[s] == fix_snps.nea0).mean())
-        stats_df["direct_f4"].append(f4_ratio(all_snps, s, a=altai, b=vindija, c=yri, o="chimp0"))
-        stats_df["indirect_f4"].append(1 - f4_ratio(all_snps, s, a=yri, b=dinka, c=altai + vindija, o="chimp0"))
-        stats_df["d_stat"].append(d(all_snps, w="eur0", x=s, y="dinka0", z="chimp0") if s != "eur0" else None)
+        stats["true_prop"].append(true_snps[s].mean())
+        stats["admix_prop"].append((fix_snps[s] == fix_snps.nea0).mean())
+        stats["direct_f4"].append(f4_ratio(all_snps, s, a=altai, b=vindija, c=yri, o="chimp0"))
+        stats["indirect_f4"].append(1 - f4_ratio(all_snps, s, a=yri, b=dinka, c=altai + vindija, o="chimp0"))
+        stats["d_stat"].append(d(all_snps, w="eur0", x=s, y=yri + dinka, z="chimp0") if s != "eur0" else None)
     stats_df = pd.DataFrame(stats)
     stats_df["name"] = samples.name
 
     final_df = pd.merge(samples, stats_df, on="name")
+
+    final_df.to_csv(args.output_file, sep="\t", index=False)
