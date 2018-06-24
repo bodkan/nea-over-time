@@ -15,6 +15,7 @@ def years_to_gen(years, gen_time=25):
 
 
 def get_all_snps(ts, samples):
+    """Extract all simulated SNPs from the tree sequence replicates."""
     if isinstance(ts, msp.TreeSequence):
         ts = [ts]
 
@@ -28,11 +29,12 @@ def get_all_snps(ts, samples):
 
 
 def get_nea_snps(snps):
+    """Filter all SNPs to fixed differences between Africans and Neandertals."""
     sample_names = snps.columns
 
     yri = list(sample_names[sample_names.str.startswith("yri")])
-    nea = list(sample_names[sample_names.str.startswith("nea")])
     dinka = list(sample_names[sample_names.str.startswith("dinka")])
+    nea = list(sample_names[sample_names.str.startswith("nea")])
 
     afr_freq = calc_freq(snps, yri + dinka)
     nea_freq = calc_freq(snps, nea)
@@ -40,7 +42,66 @@ def get_nea_snps(snps):
     return snps.loc[((afr_freq == 0) & (nea_freq == 1)) | ((afr_freq == 1) & (nea_freq == 0))]
 
 
+def get_true_snps(ts, all_snps, pop_params):
+    """Examine the coalescent trees and find those SNPs that truly originated in
+    the Neandertals."""
+    n_nea = len(pop_params["nea"]["t_sample"])
+    nea_names = [f"nea{i}" for i in range(n_nea)]
+
+    mut_pops = assign_pops(ts)
+    nea_snps = all_snps[mut_pops == pop_params["nea"]["id"]]
+    fixed_nea_snps = nea_snps[nea_snps[nea_names].sum(axis=1) == n_nea]
+
+    return fixed_nea_snps
+
+
+def assign_times(ts):
+    """Randomly assign time of origin to each mutation."""
+    rng = random.Random()
+    mut_times = np.zeros(ts.num_mutations)
+    for tree in ts.trees():
+        for mutation in tree.mutations():
+            a = tree.time(mutation.node)
+            b = tree.time(tree.parent(mutation.node))
+            mut_times[mutation.id] = rng.uniform(a, b)
+    return mut_times
+
+
+def gather_migrations(ts):
+    """Gather all migrations in each node in a tree."""
+    node_migrations = defaultdict(list)
+    for migration in ts.migrations():
+        node_migrations[migration.node].append(migration)
+    return node_migrations
+
+
+def assign_pops(ts):
+    """Assign population of origin to each mutation."""
+    mut_times = assign_times(ts)
+    node_migrations = gather_migrations(ts)
+
+    pop_assign = np.repeat(-1, ts.num_mutations)
+    for tree in ts.trees():
+        for site in tree.sites():
+            for mut in site.mutations:
+                pop_assign[mut.id] = tree.population(mut.node)
+                for mig in node_migrations[mut.node]:
+                    if mig.left <= site.position < mig.right:
+                        if mig.time < mut_times[mut.id]:
+                            assert pop_assign[mut.id] == mig.source
+                            pop_assign[mut.id] = mig.dest
+    return pop_assign
+
+
+def pop_samples(pop, pop_params):
+    """Generate list of string names of population samples (i.e. ["eur0", "eur1",
+    ..., "eurN"] etc.)"""
+    names = generate_names(pop_params)
+    return [name for name in names if name.startswith(pop)]
+
+
 def generate_names(pop_params):
+    """Generate list of all simulated sample names."""
     sample_names = []
     for p in pop_params:
         n_pop = len(pop_params[p]["t_sample"])
@@ -49,6 +110,7 @@ def generate_names(pop_params):
 
 
 def define_samples(pop_params):
+    """Generate list of sample definitions form msprime."""
     sample_names = []
     for i, pop in enumerate(pop_params):
         times = [years_to_gen(t) for t in pop_params[pop]["t_sample"]]
@@ -57,11 +119,14 @@ def define_samples(pop_params):
 
 
 def define_popconfig(pop_params):
+    """Generate list of population configurations for msprime."""
     return [msp.PopulationConfiguration(
         initial_size=pop_params[p]["Ne"]) for p in pop_params]
 
 
 def sample_ages(emh_ages_path):
+    """Load ages of EMH samples and generate a table of all European
+    samples to be simulated and their ages."""
     emh_ages = pd.read_csv(emh_ages_path, sep=" ", names=["name", "age"]).age
     emh = pd.DataFrame({"name": [f"eur{i}" for i in range(len(emh_ages))],
                         "age": emh_ages})
@@ -78,18 +143,8 @@ def sample_ages(emh_ages_path):
     return samples
 
 
-def get_sfs(freq, n_bins=100):
-    freq_bins = pd.cut(freq,
-                       bins=[i / n_bins for i in range(n_bins + 1)],
-                       labels=range(1, n_bins + 1),
-                       include_lowest=True) \
-        .value_counts()
-    return pd.DataFrame({"bin": freq_bins.index,
-                         "count": freq_bins,
-                         "prop": freq_bins / sum(freq_bins)}).sort_values("bin")
-
-
 def calc_freq(snps, sample_names=None):
+    """Calculate the frequencies of SNPs."""
     if not sample_names:
         sample_names = list(snps.columns)
 
@@ -208,60 +263,6 @@ def run_sim(admix_params, pop_params, migr_params, *,
         )
 
 
-def assign_times(ts):
-    """Randomly assign time of origin to each mutation."""
-    rng = random.Random()
-    mut_times = np.zeros(ts.num_mutations)
-    for tree in ts.trees():
-        for mutation in tree.mutations():
-            a = tree.time(mutation.node)
-            b = tree.time(tree.parent(mutation.node))
-            mut_times[mutation.id] = rng.uniform(a, b)
-    return mut_times
-
-
-def gather_migrations(ts):
-    """Gather all migrations in each node in a tree."""
-    node_migrations = defaultdict(list)
-    for migration in ts.migrations():
-        node_migrations[migration.node].append(migration)
-    return node_migrations
-
-
-def assign_pops(ts):
-    """Assign population of origin to each mutation."""
-    mut_times = assign_times(ts)
-    node_migrations = gather_migrations(ts)
-
-    pop_assign = np.repeat(-1, ts.num_mutations)
-    for tree in ts.trees():
-        for site in tree.sites():
-            for mut in site.mutations:
-                pop_assign[mut.id] = tree.population(mut.node)
-                for mig in node_migrations[mut.node]:
-                    if mig.left <= site.position < mig.right:
-                        if mig.time < mut_times[mut.id]:
-                            assert pop_assign[mut.id] == mig.source
-                            pop_assign[mut.id] = mig.dest
-    return pop_assign
-
-
-def get_true_snps(ts, all_snps, pop_params):
-    n_nea = len(pop_params["nea"]["t_sample"])
-    nea_names = [f"nea{i}" for i in range(n_nea)]
-
-    mut_pops = assign_pops(ts)
-    nea_snps = all_snps[mut_pops == pop_params["nea"]["id"]]
-    fixed_nea_snps = nea_snps[nea_snps[nea_names].sum(axis=1) == n_nea]
-
-    return fixed_nea_snps
-
-
-def pop_samples(pop, pop_params):
-    names = generate_names(pop_params)
-    return [name for name in names if name.startswith(pop)]
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--time", help="Start of EUR-AFR gene-flow [years BP]", type=int, required=True)
@@ -272,7 +273,8 @@ if __name__ == "__main__":
     parser.add_argument("--hap-num", help="Number of simulated haplotypes", type=int)
     parser.add_argument("--output-file", metavar="FILE", help="Where to save the table of results", required=True)
     parser.add_argument("--emh-ages", metavar="FILE", help="Where to save the table of results", required=True)
-    args = parser.parse_args()
+    args = parser.parse_args("--time 0 --output-file asd.txt --eur-to-afr 0 --afr-to-eur 0 --nea-rate 0.05 --hap-length 100_000_000 --emh-ages data/emh_ages.txt".split())
+    # args = parser.parse_args()
 
     # prepare all simulation parameters
     samples = sample_ages(args.emh_ages)
@@ -302,7 +304,7 @@ if __name__ == "__main__":
                  pop_params,
                  migr_params,
                  seq_len=args.hap_length,
-                 num_replicates=args.hap_num)
+                 num_replicates=None)
 
     # process the simulations into different tables of SNPs
     all_snps = get_all_snps(ts, generate_names(pop_params))
