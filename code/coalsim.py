@@ -124,23 +124,14 @@ def define_popconfig(pop_params):
         initial_size=pop_params[p]["Ne"]) for p in pop_params]
 
 
-def sample_ages(emh_ages_path):
-    """Load ages of EMH samples and generate a table of all European
-    samples to be simulated and their ages."""
-    emh_ages = pd.read_csv(emh_ages_path, sep=" ", names=["name", "age"]).age
-    emh = pd.DataFrame({"name": [f"eur{i}" for i in range(len(emh_ages))],
-                        "age": emh_ages})
-
-    n_eur = 20
-    eur = pd.DataFrame({
-        "name": [f"eur{i}" for i in range(len(emh), len(emh) + n_eur)],
-        "age": list(repeat(0, n_eur))
+def sample_ages(ages):
+    """Generate DataFrame with European sample ages."""
+    df = pd.DataFrame({
+        "name": [f"eur{i}" for i in range(len(ages))],
+        "age": ages
     })
-
-    samples = pd.concat([emh, eur]).reset_index(drop=True)
-    samples["post_admixture"] = 55000 - samples.age
-
-    return samples
+    df["post_admixture"] = 55000 - df.age
+    return df
 
 
 def calc_freq(snps, sample_names=None):
@@ -271,13 +262,17 @@ if __name__ == "__main__":
     parser.add_argument("--nea-rate", help="Neandertal admixture rate", type=float, required=True)
     parser.add_argument("--hap-length", help="Length of simulated haplotypes", type=int, required=True)
     parser.add_argument("--hap-num", help="Number of simulated haplotypes", type=int)
+    parser.add_argument("--eur-ages", nargs="+", type=int, help="Ages of non-African samples [years BP]", required=True)
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--dump-snps", action="store_true", help="Save all SNPs into a table")
+    group.add_argument("--calc-stats", action="store_true", help="Calculate the admixture statistics")
     parser.add_argument("--output-file", metavar="FILE", help="Where to save the table of results", required=True)
-    parser.add_argument("--emh-ages", metavar="FILE", help="Where to save the table of results", required=True)
-    # args = parser.parse_args("--time 0 --output-file asd.txt --eur-to-afr 0 --afr-to-eur 0 --nea-rate 0.05 --hap-length 500_000_000 --emh-ages data/emh_ages.txt".split())
+
+    # args = parser.parse_args("--output-file asd.txt --dump-snps --hap-length 5_000_000 --eur-ages 0 0 0 --time 0 --output-file asd.txt --eur-to-afr 0 --afr-to-eur 0 --nea-rate 0.05".split())
     args = parser.parse_args()
 
     # prepare all simulation parameters
-    samples = sample_ages(args.emh_ages)
+    samples = sample_ages(args.eur_ages)
 
     admix_params = {
         "rate": args.nea_rate,
@@ -308,25 +303,29 @@ if __name__ == "__main__":
 
     # process the simulations into different tables of SNPs
     all_snps = get_all_snps(ts, generate_names(pop_params))
-    fix_snps = get_nea_snps(all_snps)
-    true_snps = get_true_snps(ts, all_snps, pop_params)
 
-    # calculate admixture statistics and bind them into a DataFrame
-    dinka = pop_samples("dinka", pop_params)
-    yri = pop_samples("yri", pop_params)
-    altai = ["nea0", "nea1"]
-    vindija = ["nea2", "nea3"]
+    if args.dump_snps:
+        all_snps.to_csv(args.output_file, sep="\t", index=False)
+    else:
+        fix_snps = get_nea_snps(all_snps)
+        true_snps = get_true_snps(ts, all_snps, pop_params)
 
-    stats = defaultdict(list)
-    for s in samples.name:
-        stats["true_prop"].append(true_snps[s].mean())
-        stats["admix_prop"].append((fix_snps[s] == fix_snps.nea0).mean())
-        stats["direct_f4"].append(f4_ratio(all_snps, s, a=altai, b=vindija, c=yri, o="chimp0"))
-        stats["indirect_f4"].append(1 - f4_ratio(all_snps, s, a=yri, b=dinka, c=altai + vindija, o="chimp0"))
-        stats["d_stat"].append(d(all_snps, w="eur0", x=s, y=yri + dinka, z="chimp0") if s != "eur0" else None)
-    stats_df = pd.DataFrame(stats)
-    stats_df["name"] = samples.name
+        # calculate admixture statistics and bind them into a DataFrame
+        dinka = pop_samples("dinka", pop_params)
+        yri = pop_samples("yri", pop_params)
+        altai = ["nea0", "nea1"]
+        vindija = ["nea2", "nea3"]
 
-    final_df = pd.merge(samples, stats_df, on="name")
+        stats = defaultdict(list)
+        for s in samples.name:
+            stats["true_prop"].append(true_snps[s].mean())
+            stats["admix_prop"].append((fix_snps[s] == fix_snps.nea0).mean())
+            stats["direct_f4"].append(f4_ratio(all_snps, s, a=altai, b=vindija, c=yri, o="chimp0"))
+            stats["indirect_f4"].append(1 - f4_ratio(all_snps, s, a=yri, b=dinka, c=altai + vindija, o="chimp0"))
+            stats["d_stat"].append(d(all_snps, w="eur0", x=s, y=yri + dinka, z="chimp0") if s != "eur0" else None)
+        stats_df = pd.DataFrame(stats)
+        stats_df["name"] = samples.name
 
-    final_df.to_csv(args.output_file, sep="\t", index=False)
+        final_df = pd.merge(samples, stats_df, on="name")
+
+        final_df.to_csv(args.output_file, sep="\t", index=False)
