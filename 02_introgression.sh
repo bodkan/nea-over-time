@@ -55,7 +55,7 @@ done
 #
 region="exon"; h=0.5
 for Ne in 100 500 1000 10000; do
-    for rep in `seq 1 30`; do
+    for rep in `seq 1 30`; do # some of these jobs got killed
 	N="Ne_${Ne}_${rep}"
         qsub -V -cwd -j y -l virtual_free=80G,h_vmem=80G -N $N -o tmp/${N}.txt \
         ./code/run_introgression.py \
