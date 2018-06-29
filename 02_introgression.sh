@@ -186,24 +186,3 @@ done
 done
 done
 
-
-# cd ../slim-neanderthal
-# for h in 0.5; do
-# python3 run_introgression.py \
-#     --exon-coordinates /mnt/scratch/mp/slim-neanderthal/clean_data/exome_and_sites_exon_coordinates.txt \
-#     --exonic-sites /mnt/scratch/mp/slim-neanderthal/clean_data/admixture_array_coordinates_exonic.txt \
-#     --nonexonic-sites /mnt/scratch/mp/slim-neanderthal/clean_data/admixture_array_coordinates_nonexonic.txt \
-#     --recomb-map /mnt/scratch/mp/slim-neanderthal/clean_data/exome_and_sites_recombination_map.txt \
-#     --dominance-coef $h \
-#     --model constant \
-#     --terminate-after 210 \
-#     --save-mutations \
-#     --dump-slim asd.txt \
-#     --output-prefix ../nea-over-time/data/simulations/nea_vs_mh_${h} \
-#     --population-file /mnt/scratch/mp/slim-neanderthal/simulations/exome_and_sites__h_${h}__seed_* &
-# done
-# cd ../nea-over-time
-
-# $ 2017-12-01 09:29:29 :: INFO :: Running simulation from SLiM input file "/tmp/tmpzvgjkb93"
-# 2017-12-01 09:29:29 :: INFO :: Running simulation from SLiM input file "/tmp/tmpm77c43ut"
-# 2017-12-01 09:29:29 :: INFO :: Running simulation from SLiM input file "/tmp/tmpzcza_60d"
