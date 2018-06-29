@@ -99,7 +99,7 @@ done
 for prop_add in `seq 0 0.1 1`; do
     prop_rec=`echo "1 $prop_add" | awk '{print $1 - $2}'`
     for rep in `seq 1 20`; do
-        N="mix_add_${prop_add}_rec_${prop_rec}"
+        N="mix_add_${prop_add}_rec_${prop_rec}_rep_${rep}"
         qsub -V -cwd -j y -l virtual_free=50G,h_vmem=50G -N $N -o tmp/${N}.txt \
             ./code/run_slim.sh "-d prop_add=$prop_add -d prop_rec=$prop_rec -d output_file='data/simulations/traj_${N}.txt' code/slim/dominance_mix__introgression.slim"
     done
