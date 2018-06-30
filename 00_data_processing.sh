@@ -30,7 +30,6 @@ python3 code/vcf_to_eigenstrat.py <(bcftools view -R data/bed/2.2M.bed ${vcf_dir
 
 
 
-
 # ---------------------------------------------------------------------- 
 # convert the Ice Age genotypes from EIGENSTRAT into a normal genotype table
 # and do the same with the SGDP VCF files and with archaic VCF files
@@ -54,8 +53,6 @@ mkdir -p $gt_dir
 # process Fu et al. data into a simple 0/1/2 table
 Rscript code/process_eigenstrat.R ${eigenstrat_dir}/iceage/archaic.geno ${eigenstrat_dir}/iceage/archaic.snp ${eigenstrat_dir}/iceage/archaic.ind ${gt_dir}/ice_age.tsv
 chmod -w ${gt_dir}/ice_age.tsv
-
-
 
 
 
@@ -86,8 +83,6 @@ for chrom in `seq 1 22`; do
 	| sed 's/0\/0/0/g; s/0\/1/1/g; s/1\/1/2/g'
 done >> ${gt_dir}/archaics.tsv
 chmod -w ${gt_dir}/archaics.tsv
-
-
 
 
 
@@ -288,7 +283,6 @@ mergeit -p mergeit_Loschbour.par
 
 
 
-
 # ---------------------------------------------------------------------- 
 # download the McVicker B values
 cd data
@@ -298,19 +292,8 @@ rm bkgd.tar.gz
 
 
 
-
-
 # ---------------------------------------------------------------------- 
 # download the hg18-to-hg19 liftover chain
 wget http://hgdownload.cse.ucsc.edu/goldenPath/hg18/liftOver/hg18ToHg19.over.chain.gz
 gunzip hg18ToHg19.over.chain.gz
 
-
-
-
-
-# ---------------------------------------------------------------------- 
-# YRI admixture array frequencies from Ben's table
-less /mnt/expressions/benjamin_vernot/martin_neand_over_time_emh/1kg_p3_allele_freqs/YRI.freq \
-    | tr -s ' ' | tr '\t' ' ' | awk -v OFS="\t" '{print $4, $1, $8}' | sort -k1,1n -k2,2n | bgzip \
-    > data/YRI.freq.gz
