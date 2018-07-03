@@ -6,3 +6,4 @@ code/__pycache__/*
 .DS_Store
 *.swp
 .python-version
+figures/
