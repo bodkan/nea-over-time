@@ -1,25 +1,45 @@
-## Replicating the environment on another machine
+To reproduce absolutely everything from scratch, You'll need to install
+the following dependencies:
 
-4. Install R packages (I used R 3.4.3).
+## Python
 
-I wasted hours trying to get R reproducible environment to work using `packrat`.
-In the end I gave up - it turned out to be impossible to set up a single
-working environment for both Linux and macOS, using both CRAN and Bioconductor
-repositories.
-
-You'll have to install all R dependencies manually like this:
+I used Python version 3.6.5 and the following Python modules:
 
 ```
-install.packages(c("devtools", "tidyverse"))
+pip install numpy pandas msprime pybedtools jupyter
+```
 
+## R
+
+I used R version 3.4.3.
+
+Packages from CRAN:
+```
+install.packages(c("devtools", "broom", "dunn.test", "forcats", "future",
+                   "ggbeeswarm", "ggrepel", "here", "latex2exp", "magrittr",
+                   "Metrics", "modelr", "parallel", "purrr", "stringr",
+                   "tidyverse"))
+```
+
+Packages from Bioconductor:
+```
 source("https://bioconductor.org/biocLite.R")
-biocLite(c("BSgenome.Hsapiens.UCSC.hg19", "VariantAnnotation", "rtracklayer",
-"GenomicRanges", "IRanges"))
-
-devtools::install_github("bodkan/slimr")
-devtools::install_github("bodkan/admixr", ref = "v0.1")
-
-install.packages(c('repr', 'IRdisplay', 'evaluate', 'crayon', 'pbdZMQ', 'devtools', 'uuid', 'digest'))
-devtools::install_github('IRkernel/IRkernel')
-IRkernel::installspec()
+biocLite(c("biomaRt", "VariantAnnotation", "BSgenome.Hsapiens.UCSC.hg19",
+           "GenomicRanges",  "rtracklayer"))
 ```
+
+Packages from GitHub:
+```
+devtools::install_github("thomasp85/patchwork")
+devtools::install_github("bodkan/bdkn")
+devtools::install_github("bodkan/slimr", ref = "v0.1")
+devtools::install_github("bodkan/admixr", ref = "v0.1")
+```
+
+To be able to run Jupyter notebooks that contain all my analses and figures,
+you will also need to install [IRkernel](https://irkernel.github.io).
+
+## SLiM
+
+I used SLiM v2.6. Be aware that SLiM introduced some backwards incompatible
+changes since it's 2.0 release, so make sure to use exactly version 2.6.
