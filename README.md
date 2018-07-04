@@ -1,5 +1,3 @@
-# _"The limits of long-term selection against Neandertal introgression"_
-
 This repository contains source code and Jupyter notebooks for data processing,
 simulations and analyses used in [this](https://www.biorxiv.org/content/early/2018/07/04/362566) paper.
 
