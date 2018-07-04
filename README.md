@@ -1,14 +1,14 @@
 # _"The limits of long-term selection against Neandertal introgression"_
 
 This repository contains source code and Jupyter notebooks for data processing,
-simulations and analyses used in [this]() paper.
+simulations and analyses used in [this](https://www.biorxiv.org/content/early/2018/07/04/362566) paper.
 
 To reproduce everything from scratch, you'll need to install all dependencies
 listed bellow.
 
 Full disclosure: I've been lucky enough to have huge computational
 resources at my disposal (60 core machine with 1 TB RAM and computational
-cluster with hundreds of nodes) and I often used them to their full potential.
+cluster with hundreds of nodes) and I often used them to their [full potential](https://twitter.com/fleventy5/status/801480069034164224).
 Unless you have similar resources, then it's not trivial to truly reproduce
 everything from scratch. At the very least, it would take much longer to run
 all the simulations if you cannot parallelize them effectively. I will do my best
