@@ -51,7 +51,7 @@ for region in exon promoter tf_binding_site protein_coding utr3; do
 done
 
 #
-# different sizes of Neandertal population
+# different sizes of Neandertal population prior to the introgression
 #
 region="exon"; h=0.5
 for Ne in 100 500 1000 10000; do

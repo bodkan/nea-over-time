@@ -4,7 +4,7 @@ eigenstrat_dir=data/eigenstrat
 mkdir -p $eigenstrat_dir
 
 # ---------------------------------------------------------------------- 
-# process merged SGDP VCF files
+# process merged whole-genome SGDP VCF files
 vcf_dir=data/vcf
 mkdir -p $vcf_dir
 
@@ -54,14 +54,8 @@ mkdir -p $gt_dir
 Rscript code/process_eigenstrat.R ${eigenstrat_dir}/iceage/archaic.geno ${eigenstrat_dir}/iceage/archaic.snp ${eigenstrat_dir}/iceage/archaic.ind ${gt_dir}/ice_age.tsv
 chmod -w ${gt_dir}/ice_age.tsv
 
-
-
-########
-# fix this to use the newest merge of archaics & SGDP data from Steffi
-#
-# TODO - now she has proper VCF files so I can use bcftools to subset
-# to the positions from the admixture array (without writing a custom
-# Python script to filter for non-Chimp-unique sites)
+# go through the SGDP VCF data, subset to archaic admixture array sites,
+# and convert into a simple GT table
 
 # get the list of SGDP (C-team)
 sgdp_samples=`bcftools query -l /mnt/sequencedb/SGDP_May2016/combined_vcf/c_team_chr1.vcf.gz | grep "^S_" | tr '\n' ' '`

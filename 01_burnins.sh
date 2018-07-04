@@ -4,7 +4,7 @@ mkdir data/burnins
 
 
 
-# normal burnins for different regions
+# testing the effect of different amounts of potentially deleterious sequence
 for region in exon protein_coding promoter utr3 tf_binding_site; do
 for h in 0.0 0.5 1.0; do
     python3 code/run_mutation_accumulation.py \
