@@ -1,3 +1,8 @@
+# _"The limits of long-term selection against Neandertal introgression"_
+
+This repository contains source code and Jupyter notebooks for data processing,
+simulations and analysis used in [this]() paper:
+
 To reproduce absolutely everything from scratch, You'll need to install
 the following dependencies:
 
