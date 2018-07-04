@@ -10,10 +10,11 @@ Full disclosure: I've been lucky enough to have huge computational
 resources at my disposal (60 core machine with 1 TB RAM and computational
 cluster with hundreds of nodes) and I often used them to their full potential.
 Unless you have similar resources, then it's not trivial to truly reproduce
-everything from scratch. I will do my best to figure out a way to share
-the results of all simulations (a couple of hundreds of gigabytes), to make
-it possible to reproduce the final results and plots without re-running the
-whole simulation pipeline.
+everything from scratch. At the very least, it would take much longer to run
+all the simulations if you cannot parallelize them effectively. I will do my best
+to figure out a way to share the results of all simulations (a couple of hundreds
+of gigabytes), so it's possible to reproduce the final results and plots
+without re-running the whole simulation pipeline.
 
 ## Python
 
