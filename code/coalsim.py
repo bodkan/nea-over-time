@@ -322,7 +322,7 @@ if __name__ == "__main__":
             stats["admix_prop"].append((fix_snps[s] == fix_snps.nea0).mean())
             stats["direct_f4"].append(f4_ratio(all_snps, s, a=altai, b=vindija, c=yri, o="chimp0"))
             stats["indirect_f4"].append(1 - f4_ratio(all_snps, s, a=yri, b=dinka, c=altai + vindija, o="chimp0"))
-            stats["d_stat"].append(d(all_snps, w="eur0", x=s, y=yri + dinka, z="chimp0") if s != "eur0" else None)
+            stats["d_stat"].append(d(all_snps, w="eur0", x=s, y="dinka0", z="chimp0") if s != "eur0" else None)
         stats_df = pd.DataFrame(stats)
         stats_df["name"] = samples.name
 
