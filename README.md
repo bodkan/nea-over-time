@@ -4,8 +4,9 @@ simulations and analyses used in [this](https://www.biorxiv.org/content/early/20
 To reproduce everything from scratch, you'll need to install all dependencies
 listed bellow.
 
-Full disclosure: I've been very lucky enough to have amazing computational
-resources at my disposal and I often used them to their [full potential](https://twitter.com/fleventy5/status/801480069034164224).
+Full disclosure: I've been very lucky to have amazing computational
+resources at my disposal (60 core machines with 1 TB RAM and a cluster with
+hundreds of nodes) and I often used them to their [full potential](https://twitter.com/fleventy5/status/801480069034164224).
 Unless you have similar resources, then it's not trivial to truly reproduce
 everything from scratch. At the very least, it will take much longer to run
 all the simulations if you cannot parallelize them effectively. I will do my best
