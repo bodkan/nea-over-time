@@ -1,7 +1,7 @@
 # _"The limits of long-term selection against Neandertal introgression"_
 
 This repository contains source code and Jupyter notebooks for data processing,
-simulations and analysis used in [this]() paper.
+simulations and analyses used in [this]() paper.
 
 To reproduce everything from scratch, you'll need to install all dependencies
 listed bellow.
@@ -29,10 +29,9 @@ I used R version 3.4.3.
 
 Packages from CRAN:
 ```
-install.packages(c("broom", "dunn.test", "forcats", "future",
-                   "ggbeeswarm", "ggrepel", "here", "latex2exp", "magrittr",
-                   "Metrics", "modelr", "parallel", "purrr", "stringr",
-                   "tidyverse"))
+install.packages(c("broom", "forcats", "future", "ggbeeswarm", "ggrepel",
+                   "here", "latex2exp", "magrittr", "Metrics", "modelr",
+                   "parallel", "purrr", "stringr", "tidyverse"))
 ```
 
 Packages from Bioconductor:
