@@ -5,7 +5,7 @@ mkdir data/msprime_sims
 t=20_000
 m=0.0001
 
-sample_times=`seq 0 1000 50000`
+sample_times=`seq 50000 -1000 0`
 
 # no EUR <-> AFR migration
 for rep in `seq 1 100`; do
