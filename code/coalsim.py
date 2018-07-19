@@ -186,9 +186,9 @@ def run_sim(admix_params, pop_params, migr_params, *,
 
     demography = [
         # EUR-AFR gene-flow
-        msp.MigrationRateChange(time=0, rate=migr_params["eur_to_afr1"],
+        msp.MigrationRateChange(time=0, rate=migr_params["eur_to_afr"],
                                 matrix_index=(DIN, EUR)),
-        msp.MigrationRateChange(time=0, rate=migr_params["eur_to_afr2"],
+        msp.MigrationRateChange(time=0, rate=migr_params["eur_to_afr"],
                                 matrix_index=(YRI, EUR)),
         msp.MigrationRateChange(time=0, rate=migr_params["afr_to_eur"],
                                 matrix_index=(EUR, DIN)),
@@ -257,8 +257,7 @@ def run_sim(admix_params, pop_params, migr_params, *,
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--time", help="Start of EUR-AFR gene-flow [years BP]", type=int, required=True)
-    parser.add_argument("--eur-to-afr1", help="EUR -> AFR1 migration rate", type=float, required=True)
-    parser.add_argument("--eur-to-afr2", help="EUR -> AFR2 migration rate", type=float, required=True)
+    parser.add_argument("--eur-to-afr", help="EUR -> AFR migration rate", type=float, required=True)
     parser.add_argument("--afr-to-eur", help="AFR -> EUR migration rate", type=float, required=True)
     parser.add_argument("--nea-rate", help="Neandertal admixture rate", type=float, required=True)
     parser.add_argument("--hap-length", help="Length of simulated haplotypes", type=int, required=True)
@@ -292,8 +291,7 @@ if __name__ == "__main__":
     migr_params = {
         "t": args.time,
         "afr_to_eur": args.afr_to_eur,
-        "eur_to_afr1": args.eur_to_afr1,
-        "eur_to_afr2": args.eur_to_afr2
+        "eur_to_afr": args.eur_to_afr
     }
 
     # simulate the data
