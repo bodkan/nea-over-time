@@ -307,7 +307,6 @@ if __name__ == "__main__":
     if args.dump_snps:
         all_snps.to_csv(args.output_file, sep="\t", index=False)
     else:
-        ascert_snps = all_snps.query("dinka0 != dinka1")
         fix_snps = get_nea_snps(all_snps)
         true_snps = get_true_snps(ts, all_snps, pop_params)
 
@@ -323,10 +322,7 @@ if __name__ == "__main__":
             stats["admix_prop"].append((fix_snps[s] == fix_snps.nea0).mean())
             stats["direct_f4"].append(f4_ratio(all_snps, s, a=altai, b=vindija, c=yri, o="chimp0"))
             stats["indirect_f4"].append(1 - f4_ratio(all_snps, s, a=yri, b=dinka, c=altai + vindija, o="chimp0"))
-            stats["d"].append(d(all_snps, w="eur0", x=s, y="dinka0", z="chimp0") if s != "eur0" else None)
-            stats["asc_direct_f4"].append(f4_ratio(ascert_snps, s, a=altai, b=vindija, c=yri, o="chimp0"))
-            stats["asc_indirect_f4"].append(1 - f4_ratio(ascert_snps, s, a=yri, b=dinka, c=altai + vindija, o="chimp0"))
-            stats["asc_d"].append(d(ascert_snps, w="eur0", x=s, y="dinka0", z="chimp0") if s != "eur0" else None)
+            stats["d"].append(d(all_snps, w="eur0", x=s, y=dinka, z="chimp0") if s != "eur0" else None)
         stats_df = pd.DataFrame(stats)
         stats_df["name"] = samples.name
 
