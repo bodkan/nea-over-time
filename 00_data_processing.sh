@@ -26,10 +26,6 @@ python3 code/vcf_to_eigenstrat.py ${vcf_dir}/whole_genome.vcf.gz ${eigenstrat_di
 awk '{print $1,$2,$1}' ${eigenstrat_dir}/whole_genome/whole_genome.ind > ${eigenstrat_dir}/whole_genome/whole_genome.ind.individuals
 
 
-# use the whole-genome VCF to create EIGENSTRAT format data of 2.2M sites
-python3 code/vcf_to_eigenstrat.py <(bcftools view -R data/bed/2.2M.bed ${vcf_dir}/whole_genome.vcf.gz -Oz) \
-    ${eigenstrat_dir}/whole_genome/2.2M
-
 
 
 # ---------------------------------------------------------------------- 
