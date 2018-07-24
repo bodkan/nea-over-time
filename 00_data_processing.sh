@@ -8,12 +8,12 @@ mkdir -p $eigenstrat_dir
 vcf_dir=data/vcf
 mkdir -p $vcf_dir
 
-sample_ids="panTro4,AltaiNeandertal,Vindija33.19,Denisova,Ust_Ishim,Loschbour,LBK,`cut -f1-4 data/10_24_2014_SGDP_metainformation_update.txt | egrep "Africa|WestEurasia|EastAsia|Papuan" | grep "^C" | cut -f2 | tr '\n' ',' | sed 's/,$//'`"
-bcftools view -h -s $sample_ids /mnt/sequencedb/gendivdata/2_genotypes/mergedArchModernApes/merged_ancient_apes_sgdp1_chr1.vcf.gz | sed 's/panTro4/Chimp/; s/Ust_Ishim/new_UstIshim/; s/Loschbour/new_Loschbour/; s/LBK/new_Stuttgart/' \
+sample_ids="panTro4,AltaiNeandertal,Vindija33.19,Denisova,Ust_Ishim,Loschbour,LBK,`cut -f1-4 data/10_24_2014_SGDP_metainformation_update.txt | grep "^C" | cut -f2 | tr '\n' ',' | sed 's/,$//'`"
+bcftools view -h --force-samples -s $sample_ids /mnt/sequencedb/gendivdata/2_genotypes/mergedArchModernApes/merged_ancient_apes_sgdp1_chr1.vcf.gz | sed 's/panTro4/Chimp/; s/Ust_Ishim/new_UstIshim/; s/Loschbour/new_Loschbour/; s/LBK/new_Stuttgart/' \
     > ${vcf_dir}/whole_genome.vcf
 
 for chrom in `seq 1 22`; do
-    bcftools view -a -s $sample_ids /mnt/sequencedb/gendivdata/2_genotypes/mergedArchModernApes/merged_ancient_apes_sgdp1_chr${chrom}.vcf.gz \
+    bcftools view -a --force-samples -s $sample_ids /mnt/sequencedb/gendivdata/2_genotypes/mergedArchModernApes/merged_ancient_apes_sgdp1_chr${chrom}.vcf.gz \
         | bcftools view -H -m2 -M2 -v snps \
         | awk '$5 != "-"' >> ${vcf_dir}/whole_genome.vcf
 done
