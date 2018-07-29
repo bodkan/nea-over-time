@@ -35,9 +35,9 @@ install.packages(c("broom", "forcats", "future", "ggbeeswarm", "ggrepel",
 
 Packages from Bioconductor:
 ```
-source("https://bioconductor.org/biocLite.R")
-biocLite(c("biomaRt", "VariantAnnotation", "BSgenome.Hsapiens.UCSC.hg19",
-           "GenomicRanges",  "rtracklayer"))
+install.packages("BiocManager")
+BiocManager::install(c("biomaRt", "VariantAnnotation", "BSgenome.Hsapiens.UCSC.hg19",
+                       "GenomicRanges",  "rtracklayer"))
 ```
 
 Packages from GitHub:
