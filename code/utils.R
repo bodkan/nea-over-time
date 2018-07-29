@@ -201,9 +201,8 @@ get_european_ids <- function(metadata_path) {
 }
 
 
-plot_nea_vs_time <- function(m, snp_cutoff=0, oldest=Inf, youngest=-Inf, ylim=c(0, 0.1), plot_ci=TRUE) {
-    filter(eur_nea,
-           setup == m,
+plot_nea_vs_time <- function(df, snp_cutoff=0, oldest=Inf, youngest=-Inf, ylim=c(0, 0.1), plot_ci=TRUE) {
+    filter(df,
            age >= youngest,
            age < oldest,
            snp_count >= snp_cutoff) %>% {(
@@ -217,9 +216,8 @@ plot_nea_vs_time <- function(m, snp_cutoff=0, oldest=Inf, youngest=-Inf, ylim=c(
     )}
 }
 
-run_lm <- function(m, snp_cutoff=0, oldest=Inf, youngest=0) {
-    filter(eur_nea,
-           setup == m,
+run_lm <- function(df, snp_cutoff=0, oldest=Inf, youngest=0) {
+    filter(df,
            age >= youngest,
            age < oldest,
            snp_count >= snp_cutoff) %>%
