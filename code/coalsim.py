@@ -32,11 +32,11 @@ def get_nea_snps(snps):
     """Filter all SNPs to fixed differences between Africans and Neandertals."""
     sample_names = snps.columns
 
-    yri = list(sample_names[sample_names.str.startswith("yri")])
+    yoruba = list(sample_names[sample_names.str.startswith("yoruba")])
     dinka = list(sample_names[sample_names.str.startswith("dinka")])
     nea = list(sample_names[sample_names.str.startswith("nea")])
 
-    afr_freq = calc_freq(snps, yri + dinka)
+    afr_freq = calc_freq(snps, yoruba + dinka)
     nea_freq = calc_freq(snps, nea)
 
     return snps.loc[((afr_freq == 0) & (nea_freq == 1)) | ((afr_freq == 1) & (nea_freq == 0))]
@@ -56,7 +56,8 @@ def get_true_snps(ts, all_snps, pop_params):
 
 
 def assign_times(ts):
-    """Randomly assign time of origin to each mutation."""
+    """Randomly assign time of origin to each mutation.
+    Inspired by an example from msprime's documentation."""
     rng = random.Random()
     mut_times = np.zeros(ts.num_mutations)
     for tree in ts.trees():
@@ -76,7 +77,8 @@ def gather_migrations(ts):
 
 
 def assign_pops(ts):
-    """Assign population of origin to each mutation."""
+    """Assign population of origin to each mutation.
+    Inspired by an example from msprime's documentation."""
     mut_times = assign_times(ts)
     node_migrations = gather_migrations(ts)
 
@@ -175,35 +177,37 @@ def d(snps, w, x, y, z):
 def run_sim(admix_params, pop_params, migr_params, *,
             seq_len=10_000, num_replicates=None,
             mut_rate=1e-8, debug=False):
-    CHIMP, YRI, DIN, NEA, EUR = [pop_params[p]["id"] for p in pop_params]
+    CHIMP, YORUBA, DIN, NEA, EUR, EAS = [pop_params[p]["id"] for p in pop_params]
 
     # population split times
-    t_split_eur, t_split_dinka, t_split_nea, t_split_ch = \
+    t_split_eur, t_split_eas, t_split_dinka, t_split_nea, t_split_ch = \
         [years_to_gen(pop_params[p]["t_split"])
-         for p in ["eur", "dinka", "nea", "chimp"]]
+         for p in ["eur", "eas", "dinka", "nea", "chimp"]]
 
     t_admix = years_to_gen(admix_params["t_admix"])
 
     demography = [
         # EUR-AFR gene-flow
-        msp.MigrationRateChange(time=0, rate=migr_params["eur_to_afr"],
+        msp.MigrationRateChange(time=0, rate=migr_params["eur_to_dinka"],
                                 matrix_index=(DIN, EUR)),
-        msp.MigrationRateChange(time=0, rate=migr_params["eur_to_afr"],
-                                matrix_index=(YRI, EUR)),
-        msp.MigrationRateChange(time=0, rate=migr_params["afr_to_eur"],
+        msp.MigrationRateChange(time=0, rate=migr_params["eur_to_yoruba"],
+                                matrix_index=(YORUBA, EUR)),
+        msp.MigrationRateChange(time=0, rate=migr_params["dinka_to_eur"],
                                 matrix_index=(EUR, DIN)),
 
         # end of EUR-AFR gene-flow backwards in time
         msp.MigrationRateChange(time=years_to_gen(migr_params["t"]), rate=0.0,
                                 matrix_index=(DIN, EUR)),
         msp.MigrationRateChange(time=years_to_gen(migr_params["t"]), rate=0.0,
-                                matrix_index=(YRI, EUR)),
+                                matrix_index=(YORUBA, EUR)),
         msp.MigrationRateChange(time=years_to_gen(migr_params["t"]), rate=0.0,
                                 matrix_index=(EUR, DIN)),
 
+        # EUR-EAS split
+        msp.MassMigration(time=t_split_eas, source=EAS, destination=EUR, proportion=1.0),
+
         # Neanderthal admixture
-        msp.MassMigration(time=t_admix, source=EUR, dest=NEA,
-                          proportion=admix_params["rate"]),
+        msp.MassMigration(time=t_admix, source=EUR, dest=NEA, proportion=admix_params["rate"]),
 
         # population size during the bottleneck
         msp.PopulationParametersChange(
@@ -212,20 +216,16 @@ def run_sim(admix_params, pop_params, migr_params, *,
             population_id=EUR),
 
         # out of Africa migration
-        msp.MassMigration(time=t_split_eur, source=EUR, destination=DIN,
-                          proportion=1.0),
+        msp.MassMigration(time=t_split_eur, source=EUR, destination=DIN, proportion=1.0),
 
-        # YRI-DIN split
-        msp.MassMigration(time=t_split_dinka, source=DIN, destination=YRI,
-                          proportion=1.0),
+        # YORUBA-DIN split
+        msp.MassMigration(time=t_split_dinka, source=DIN, destination=YORUBA, proportion=1.0),
 
         # Neanderthal split
-        msp.MassMigration(time=t_split_nea, source=NEA, destination=YRI,
-                          proportion=1.0),
+        msp.MassMigration(time=t_split_nea, source=NEA, destination=YORUBA, proportion=1.0),
 
         # chimpanzee split
-        msp.MassMigration(time=t_split_ch, source=YRI, destination=CHIMP,
-                          proportion=1.0),
+        msp.MassMigration(time=t_split_ch, source=YORUBA, destination=CHIMP, proportion=1.0),
     ]
 
     samples = define_samples(pop_params)
@@ -257,12 +257,15 @@ def run_sim(admix_params, pop_params, migr_params, *,
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--time", help="Start of EUR-AFR gene-flow [years BP]", type=int, required=True)
-    parser.add_argument("--eur-to-afr", help="EUR -> AFR migration rate", type=float, required=True)
-    parser.add_argument("--afr-to-eur", help="AFR -> EUR migration rate", type=float, required=True)
+    parser.add_argument("--eur-to-dinka", help="EUR -> Dinka migration rate", type=float, required=True)
+    parser.add_argument("--eur-to-yoruba", help="EUR -> Yoruba migration rate", type=float, required=True)
+    parser.add_argument("--dinka-to-eur", help="Dinka -> EUR migration rate", type=float, required=True)
     parser.add_argument("--nea-rate", help="Neandertal admixture rate", type=float, required=True)
     parser.add_argument("--hap-length", help="Length of simulated haplotypes", type=int, required=True)
     parser.add_argument("--hap-num", help="Number of simulated haplotypes", type=int)
     parser.add_argument("--eur-ages", nargs="+", type=int, help="Ages of non-African samples [years BP]", required=True)
+    parser.add_argument("--ascertainment", help="Ascertainment scheme", choices=["all", "nea", "yoruba", "dinka", "eur", "eas"],
+                        default="all")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--dump-snps", action="store_true", help="Save all SNPs into a table")
     group.add_argument("--calc-stats", action="store_true", help="Calculate the admixture statistics")
@@ -281,17 +284,18 @@ if __name__ == "__main__":
 
     pop_params = {
         "chimp": {"id": 0, "Ne": 10000, "t_sample": 1 * [0], "t_split": 6_000_000},
-        "yri": {"id": 1, "Ne": 10000, "t_sample": 50 * [0]},
-        "dinka": {"id": 2, "Ne": 10000, "t_sample": 50 * [0], "t_split": 150_000},
+        "yoruba": {"id": 1, "Ne": 10000, "t_sample": 100 * [0]},
+        "dinka": {"id": 2, "Ne": 10000, "t_sample": 2 * [0], "t_split": 150_000},
         "nea": {"id": 3, "Ne": 1000, "t_sample": 4 * [80000], "t_split": 500_000},
-        "eur": {"id": 4, "Ne": 10000, "t_sample": samples.age, "t_split": 60_000,
-                "bottle_Ne": 2000}
+        "eur": {"id": 4, "Ne": 10000, "t_sample": list(samples.age) + 2 * [0], "t_split": 60_000, "bottle_Ne": 2000},
+        "eas": {"id": 5, "Ne": 10000, "t_sample": 2 * [0], "t_split": 40_000}
     }
 
     migr_params = {
         "t": args.time,
-        "afr_to_eur": args.afr_to_eur,
-        "eur_to_afr": args.eur_to_afr
+        "dinka_to_eur": args.dinka_to_eur,
+        "eur_to_yoruba": args.eur_to_yoruba,
+        "eur_to_dinka": args.eur_to_dinka
     }
 
     # simulate the data
@@ -307,21 +311,25 @@ if __name__ == "__main__":
     if args.dump_snps:
         all_snps.to_csv(args.output_file, sep="\t", index=False)
     else:
-        fix_snps = get_nea_snps(all_snps)
+        admix_snps = get_nea_snps(all_snps)
         true_snps = get_true_snps(ts, all_snps, pop_params)
 
+        if args.ascertainment != "all":
+            last_index = len(pop_params[args.ascertainment]["t_sample"]) - 1
+            all_snps = all_snps.query(f"{args.ascertainment}{last_index - 1} != {args.ascertainment}{last_index}")
+
         # calculate admixture statistics and bind them into a DataFrame
-        dinka = pop_samples("dinka", pop_params)
-        yri = pop_samples("yri", pop_params)
+        dinka = ["dinka0", "dinka1"]
+        yoruba = ["yoruba0", "yoruba1"]
         altai = ["nea0", "nea1"]
         vindija = ["nea2", "nea3"]
 
         stats = defaultdict(list)
         for s in samples.name:
             stats["true_prop"].append(true_snps[s].mean())
-            stats["admix_prop"].append((fix_snps[s] == fix_snps.nea0).mean())
-            stats["direct_f4"].append(f4_ratio(all_snps, s, a=altai, b=vindija, c=yri, o="chimp0"))
-            stats["indirect_f4"].append(1 - f4_ratio(all_snps, s, a=yri, b=dinka, c=altai + vindija, o="chimp0"))
+            stats["admix_prop"].append((admix_snps[s] == admix_snps.nea0).mean())
+            stats["direct_f4"].append(f4_ratio(all_snps, s, a=altai, b=vindija, c=yoruba, o="chimp0"))
+            stats["indirect_f4"].append(1 - f4_ratio(all_snps, s, a=yoruba, b=dinka, c=altai + vindija, o="chimp0"))
             stats["d"].append(d(all_snps, w="eur0", x=s, y=dinka, z="chimp0") if s != "eur0" else None)
         stats_df = pd.DataFrame(stats)
         stats_df["name"] = samples.name
