@@ -6,7 +6,7 @@ sample_times=`seq 50000 -1000 0`
 
 m=0.0001
 
-for asc in all nea dinka yoruba eur eas; do 
+for asc in all dinka yoruba eur eas; do 
 
 for t in 5000 10000 15000; do
 
