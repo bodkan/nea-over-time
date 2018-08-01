@@ -82,9 +82,8 @@ chmod -w ${gt_dir}/archaics.tsv
 #  get the coordinates of the Big Yoruba array sites
 cp /r1/people/public/AncientDNA/probe_designs/AA77-81_bigYoruba/big_yoruba_and_altai_filtN_printed_probes_with_annotation.txt data/
 
-cat data/big_yoruba_and_altai_filtN_printed_probes_with_annotation.txt | awk '$12 == "0/1"' | awk '{print $1, $2 - 1, $2}' > data/bed/bigyri_Altai.bed
-cat data/big_yoruba_and_altai_filtN_printed_probes_with_annotation.txt | awk '$6 == "0/1" || $9 == "0/1"' | awk '{print $1, $2 - 1, $2}' > data/bed/bigyri_YRI.bed
-cat data/big_yoruba_and_altai_filtN_printed_probes_with_annotation.txt | awk -v OFS="\t" '{print $1, $2 - 1, $2}' data/big_yoruba_and_altai_filtN_printed_probes_with_annotation.txt > data/bed/bigyri_both.bed
+cat data/big_yoruba_and_altai_filtN_printed_probes_with_annotation.txt | awk '$12 == "0/1"' | awk -v OFS="\t" '{print $1, $2 - 1, $2}' > data/bed/bigyri_Altai.bed
+cat data/big_yoruba_and_altai_filtN_printed_probes_with_annotation.txt | awk '$6 == "0/1" || $9 == "0/1"' | awk -v OFS="\t" '{print $1, $2 - 1, $2}' > data/bed/bigyri_YRI.bed
 
 # ---------------------------------------------------------------------- 
 # generate updated EIGENSTRAT 2.2 M sites data that include the new
