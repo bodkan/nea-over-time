@@ -30,7 +30,7 @@ Packages from CRAN:
 ```
 install.packages(c("broom", "forcats", "future", "ggbeeswarm", "ggrepel",
                    "here", "latex2exp", "magrittr", "Metrics", "modelr",
-                   "parallel", "purrr", "stringr", "tidyverse"))
+                   "purrr", "stringr", "tidyverse"))
 ```
 
 Packages from Bioconductor:
