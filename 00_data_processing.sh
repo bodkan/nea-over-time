@@ -193,6 +193,7 @@ write_tsv(select(merged, geno), "loschbour.geno", col_names=FALSE)
 echo "new_Vindija F new_Vindija" > vindija.ind
 # generate a mergit parameter file
 echo "outputformat: EIGENSTRAT
+strandcheck: NO
 geno1: UPA_all.geno
 snp1: UPA_all.snp
 ind1: UPA_all.ind
@@ -210,6 +211,7 @@ mergeit -p mergeit_Vindija.par
 echo "new_Altai F new_Altai" > altai.ind
 # generate a mergit parameter file
 echo "outputformat: EIGENSTRAT
+strandcheck: NO
 geno1: UPA_Vindija.geno
 snp1: UPA_Vindija.snp
 ind1: UPA_Vindija.ind
@@ -227,6 +229,7 @@ mergeit -p mergeit_Altai.par
 echo "new_Denisova F new_Denisova" > denisova.ind
 # generate a mergit parameter file
 echo "outputformat: EIGENSTRAT
+strandcheck: NO
 geno1: UPA_Altai.geno
 snp1: UPA_Altai.snp
 ind1: UPA_Altai.ind
@@ -244,6 +247,7 @@ mergeit -p mergeit_Denisova.par
 echo "new_UstIshim F new_UstIshim" > ustishim.ind
 # generate a mergit parameter file
 echo "outputformat: EIGENSTRAT
+strandcheck: NO
 geno1: UPA_Denisova.geno
 snp1: UPA_Denisova.snp
 ind1: UPA_Denisova.ind
@@ -261,6 +265,7 @@ mergeit -p mergeit_UstIshim.par
 echo "new_Loschbour F new_Loschbour" > loschbour.ind
 # generate a mergit parameter file
 echo "outputformat: EIGENSTRAT
+strandcheck: NO
 geno1: UPA_UstIshim.geno
 snp1: UPA_UstIshim.snp
 ind1: UPA_UstIshim.ind
