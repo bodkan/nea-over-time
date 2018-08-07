@@ -33,10 +33,9 @@ def get_nea_snps(snps):
     sample_names = snps.columns
 
     yoruba = list(sample_names[sample_names.str.startswith("yoruba")])
-    dinka = list(sample_names[sample_names.str.startswith("dinka")])
     nea = list(sample_names[sample_names.str.startswith("nea")])
 
-    afr_freq = calc_freq(snps, yoruba + dinka)
+    afr_freq = calc_freq(snps, yoruba)
     nea_freq = calc_freq(snps, nea)
 
     return snps.loc[((afr_freq == 0) & (nea_freq == 1)) | ((afr_freq == 1) & (nea_freq == 0))]
