@@ -317,8 +317,8 @@ if __name__ == "__main__":
             all_snps = all_snps.query(f"{args.ascertainment}{last_index - 1} != {args.ascertainment}{last_index}")
 
         # calculate admixture statistics and bind them into a DataFrame
-        dinka = ["dinka0", "dinka1"]
-        yoruba = ["yoruba0", "yoruba1"]
+        dinka = pop_samples("dinka", pop_params)
+        yoruba = pop_samples("yoruba", pop_params)
         altai = ["nea0", "nea1"]
         vindija = ["nea2", "nea3"]
 

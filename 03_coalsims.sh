@@ -14,16 +14,6 @@ for t in 5000 10000 15000; do
 
     scenario="ascertainment_${asc}_geneflow_both_afr_${t}"
 
-    # no EUR <-> AFR migration
-    for rep in `seq 1 50`; do
-        N="${scenario}_no_migration_${rep}"
-        qsub -V -cwd -j y -l virtual_free=30G,h_vmem=30G -N $N -o tmp/${N}.txt \
-            ./code/coalsim.py \
-                --time 0 --eur-to-dinka 0 --eur-to-yoruba 0 --dinka-to-eur 0 --nea-rate 0.03 \
-                --hap-length 500_000_000 --eur-ages ${sample_times} \
-                --output-file data/msprime_sims/${N}.tsv --calc-stats --ascertainment $asc
-    done
-    
     # EUR -> AFR migration
     for rep in `seq 1 50`; do
         N="${scenario}_eur_to_afr_${rep}"
@@ -55,5 +45,15 @@ for t in 5000 10000 15000; do
                 --output-file data/msprime_sims/${N}.tsv --calc-stats --ascertainment $asc
     done
 
+    # no EUR <-> AFR migration
+    for rep in `seq 1 50`; do
+        N="${scenario}_no_migration_${rep}"
+        qsub -V -cwd -j y -l virtual_free=30G,h_vmem=30G -N $N -o tmp/${N}.txt \
+            ./code/coalsim.py \
+                --time 0 --eur-to-dinka 0 --eur-to-yoruba 0 --dinka-to-eur 0 --nea-rate 0.03 \
+                --hap-length 500_000_000 --eur-ages ${sample_times} \
+                --output-file data/msprime_sims/${N}.tsv --calc-stats --ascertainment $asc
+    done
+    
 done
 done
