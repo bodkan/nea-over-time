@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-mkdir data/msprime_sims
+mkdir -S data/msprime_sims
 
 sample_times=`seq 50000 -2000 0`
 
@@ -8,7 +8,7 @@ r=0.05
 
 for asc in all dinka yoruba eur eas; do 
 
-for t in 5000 10000 15000; do
+for t in 2000 5000 10000 15000; do
 
     m=`echo "$r / ($t / 25)" | bc -l`
 
