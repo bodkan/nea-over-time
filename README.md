@@ -46,7 +46,7 @@ install.packages("devtools")
 devtools::install_github("thomasp85/patchwork")
 devtools::install_github("bodkan/bdkn")
 devtools::install_github("bodkan/slimr", ref = "v0.1")
-devtools::install_github("bodkan/admixr")
+devtools::install_github("bodkan/admixr", ref = "v0.3")
 ```
 
 To be able to run Jupyter notebooks that contain all my analses and figures,
