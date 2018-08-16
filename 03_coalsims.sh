@@ -6,14 +6,14 @@ sample_times=`seq 50000 -2000 0`
 
 r=0.05
 
-for asc in all yoruba eur eas; do
+for asc in all; do # dinka yoruba eur eas; do
 for t in 2000 5000 10000 15000 20000; do
     scenario="ascertainment_${asc}_geneflow_both_afr_${t}"
 
     m=`echo "$r / ($t / 25)" | bc -l`
 
     # EUR -> AFR migration
-    for rep in `seq 1 50`; do
+    for rep in `seq 51 100`; do
         N="${scenario}_eur_to_afr_${rep}"
         qsub -V -cwd -j y -l virtual_free=30G,h_vmem=30G -N $N -o tmp/${N}.txt \
             ./code/coalsim.py \
@@ -24,7 +24,7 @@ for t in 2000 5000 10000 15000 20000; do
     
     
     # EUR <- AFR migration
-    for rep in `seq 1 50`; do
+    for rep in `seq 51 100`; do
         N="${scenario}_afr_to_eur_${rep}"
         qsub -V -cwd -j y -l virtual_free=30G,h_vmem=30G -N $N -o tmp/${N}.txt \
             ./code/coalsim.py \
@@ -34,7 +34,7 @@ for t in 2000 5000 10000 15000 20000; do
     done
     
     # EUR <-> AFR migration
-    for rep in `seq 1 50`; do
+    for rep in `seq 51 100`; do
         N="${scenario}_both_directions_${rep}"
         qsub -V -cwd -j y -l virtual_free=30G,h_vmem=30G -N $N -o tmp/${N}.txt \
             ./code/coalsim.py \
@@ -44,7 +44,7 @@ for t in 2000 5000 10000 15000 20000; do
     done
 
     # no EUR <-> AFR migration
-    for rep in `seq 1 50`; do
+    for rep in `seq 51 100`; do
         N="${scenario}_no_migration_${rep}"
         qsub -V -cwd -j y -l virtual_free=30G,h_vmem=30G -N $N -o tmp/${N}.txt \
             ./code/coalsim.py \
