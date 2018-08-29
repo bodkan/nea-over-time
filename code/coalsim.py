@@ -285,7 +285,7 @@ if __name__ == "__main__":
 
     pop_params = {
         "chimp": {"id": 0, "Ne": 10000, "t_sample": 1 * [0], "t_split": 6_000_000},
-        "yoruba": {"id": 1, "Ne": 10000, "t_sample": 50 * [0]},
+        "yoruba": {"id": 1, "Ne": 10000, "t_sample": 2 * [0]},
         "dinka": {"id": 2, "Ne": 10000, "t_sample": 2 * [0], "t_split": 150_000},
         "nea": {"id": 3, "Ne": 1000, "t_sample": 4 * [80000], "t_split": 500_000},
         "eur": {"id": 4, "Ne": 10000, "t_sample": list(samples.age) + 2 * [0], "t_split": 60_000, "bottle_Ne": 2000},
