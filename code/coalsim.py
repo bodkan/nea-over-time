@@ -176,12 +176,12 @@ def d(snps, w, x, y, z):
 def run_sim(admix_params, pop_params, migr_params, *,
             seq_len=10_000, num_replicates=None,
             mut_rate=1e-8, debug=False):
-    CHIMP, YORUBA, DIN, NEA, EUR, EAS = [pop_params[p]["id"] for p in pop_params]
+    CHIMP, YORUBA, DIN, NEA, EUR = [pop_params[p]["id"] for p in pop_params]
 
     # population split times
-    t_split_eur, t_split_eas, t_split_dinka, t_split_nea, t_split_ch = \
+    t_split_eur, t_split_dinka, t_split_nea, t_split_ch = \
         [years_to_gen(pop_params[p]["t_split"])
-         for p in ["eur", "eas", "dinka", "nea", "chimp"]]
+         for p in ["eur", "dinka", "nea", "chimp"]]
 
     t_admix = years_to_gen(admix_params["t_admix"])
 
@@ -204,9 +204,6 @@ def run_sim(admix_params, pop_params, migr_params, *,
                                 matrix_index=(YORUBA, EUR)),
         msp.MigrationRateChange(time=years_to_gen(migr_params["t"]), rate=0.0,
                                 matrix_index=(EUR, DIN)),
-
-        # EUR-EAS split
-        msp.MassMigration(time=t_split_eas, source=EAS, destination=EUR, proportion=1.0),
 
         # Neanderthal admixture
         msp.MassMigration(time=t_admix, source=EUR, dest=NEA, proportion=admix_params["rate"]),
@@ -267,11 +264,12 @@ if __name__ == "__main__":
     parser.add_argument("--hap-length", help="Length of simulated haplotypes", type=int, required=True)
     parser.add_argument("--hap-num", help="Number of simulated haplotypes", type=int)
     parser.add_argument("--eur-ages", nargs="+", type=int, help="Ages of non-African samples [years BP]", required=True)
-    parser.add_argument("--ascertainment", help="Ascertainment scheme", choices=["all", "nea", "yoruba", "dinka", "eur", "eas"],
-                        default="all")
+    parser.add_argument("--ascertainment", help="Ascertainment scheme",
+                        choices=["all", "nea", "yoruba", "dinka", "eur"], default="all")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--dump-snps", action="store_true", help="Save all SNPs into a table")
-    group.add_argument("--calc-stats", action="store_true", help="Calculate the admixture statistics")
+    group.add_argument("--calc-stats", nargs="+", choices=["true_prop", "admix_prop", "indirect_f4", "direct_f4", "d"],
+                       help="Which admixture statistics to calculate?")
     parser.add_argument("--output-file", metavar="FILE", help="Where to save the table of results", required=True)
 
     # args = parser.parse_args("--output-file asd.txt --dump-snps --hap-length 5_000_000 --eur-ages 0 0 0 --time 0 --output-file asd.txt --eur-to-afr 0 --afr-to-eur 0 --nea-rate 0.05".split())
@@ -291,7 +289,6 @@ if __name__ == "__main__":
         "dinka": {"id": 2, "Ne": 10000, "t_sample": 2 * [0], "t_split": 150_000},
         "nea": {"id": 3, "Ne": 1000, "t_sample": 4 * [80000], "t_split": 500_000},
         "eur": {"id": 4, "Ne": 10000, "t_sample": list(samples.age) + 2 * [0], "t_split": 60_000, "bottle_Ne": 2000},
-        "eas": {"id": 5, "Ne": 10000, "t_sample": 2 * [0], "t_split": 44_000}
     }
 
     migr_params = {
@@ -315,8 +312,8 @@ if __name__ == "__main__":
     if args.dump_snps:
         all_snps.to_csv(args.output_file, sep="\t", index=False)
     else:
-        admix_snps = get_nea_snps(all_snps)
-        true_snps = get_true_snps(ts, all_snps, pop_params)
+        if "admix_prop" in args.calc_stats: admix_snps = get_nea_snps(all_snps)
+        if "true_prop" in args.calc_stats: true_snps = get_true_snps(ts, all_snps, pop_params)
 
         if args.ascertainment != "all":
             last_index = len(pop_params[args.ascertainment]["t_sample"]) - 1
@@ -330,11 +327,11 @@ if __name__ == "__main__":
 
         stats = defaultdict(list)
         for s in samples.name:
-            stats["true_prop"].append(true_snps[s].mean())
-            stats["admix_prop"].append((admix_snps[s] == admix_snps.nea0).mean())
-            stats["direct_f4"].append(f4_ratio(all_snps, s, a=altai, b=vindija, c=yoruba, o="chimp0"))
-            stats["indirect_f4"].append(1 - f4_ratio(all_snps, s, a=yoruba, b=dinka, c=altai + vindija, o="chimp0"))
-            stats["d"].append(d(all_snps, w="eur0", x=s, y=dinka, z="chimp0") if s != "eur0" else "NA")
+            if "true_prop"   in args.calc_stats: stats["true_prop"].append(true_snps[s].mean())
+            if "admix_prop"  in args.calc_stats: stats["admix_prop"].append((admix_snps[s] == admix_snps.nea0).mean())
+            if "direct_f4"   in args.calc_stats: stats["direct_f4"].append(f4_ratio(all_snps, s, a=altai, b=vindija, c=yoruba, o="chimp0"))
+            if "indirect_f4" in args.calc_stats: stats["indirect_f4"].append(1 - f4_ratio(all_snps, s, a=yoruba, b=dinka, c=altai + vindija, o="chimp0"))
+            if "d"           in args.calc_stats: stats["d"].append(d(all_snps, w="eur0", x=s, y=dinka, z="chimp0") if s != "eur0" else "NA")
         stats_df = pd.DataFrame(stats)
         stats_df["name"] = samples.name
 
