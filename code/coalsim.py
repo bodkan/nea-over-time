@@ -187,11 +187,14 @@ def run_sim(admix_params, pop_params, migr_params, *,
 
     demography = [
         # EUR-AFR gene-flow
-        msp.MigrationRateChange(time=0, rate=migr_params["eur_to_dinka"],
+        msp.MigrationRateChange(time=years_to_gen(migr_params["t"] - migr_params["d"]),
+                                rate=migr_params["eur_to_dinka"],
                                 matrix_index=(DIN, EUR)),
-        msp.MigrationRateChange(time=0, rate=migr_params["eur_to_yoruba"],
+        msp.MigrationRateChange(time=years_to_gen(migr_params["t"] - migr_params["d"]),
+                                rate=migr_params["eur_to_yoruba"],
                                 matrix_index=(YORUBA, EUR)),
-        msp.MigrationRateChange(time=0, rate=migr_params["dinka_to_eur"],
+        msp.MigrationRateChange(time=years_to_gen(migr_params["t"] - migr_params["d"]),
+                                rate=migr_params["dinka_to_eur"],
                                 matrix_index=(EUR, DIN)),
 
         # end of EUR-AFR gene-flow backwards in time
@@ -210,7 +213,7 @@ def run_sim(admix_params, pop_params, migr_params, *,
 
         # population size during the bottleneck
         msp.PopulationParametersChange(
-            time=t_admix,
+            time=t_admix + 1,
             initial_size=pop_params["eur"]["bottle_Ne"],
             population_id=EUR),
 
@@ -256,6 +259,7 @@ def run_sim(admix_params, pop_params, migr_params, *,
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--time", help="Start of EUR-AFR gene-flow [years BP]", type=int, required=True)
+    parser.add_argument("--duration", help="Length of EUR-AFR gene-flow [years BP]", type=int, required=True)
     parser.add_argument("--eur-to-dinka", help="EUR -> Dinka migration rate", type=float, required=True)
     parser.add_argument("--eur-to-yoruba", help="EUR -> Yoruba migration rate", type=float, required=True)
     parser.add_argument("--dinka-to-eur", help="Dinka -> EUR migration rate", type=float, required=True)
@@ -287,11 +291,12 @@ if __name__ == "__main__":
         "dinka": {"id": 2, "Ne": 10000, "t_sample": 2 * [0], "t_split": 150_000},
         "nea": {"id": 3, "Ne": 1000, "t_sample": 4 * [80000], "t_split": 500_000},
         "eur": {"id": 4, "Ne": 10000, "t_sample": list(samples.age) + 2 * [0], "t_split": 60_000, "bottle_Ne": 2000},
-        "eas": {"id": 5, "Ne": 10000, "t_sample": 2 * [0], "t_split": 40_000}
+        "eas": {"id": 5, "Ne": 10000, "t_sample": 2 * [0], "t_split": 44_000}
     }
 
     migr_params = {
         "t": args.time,
+        "d": args.duration,
         "dinka_to_eur": args.dinka_to_eur,
         "eur_to_yoruba": args.eur_to_yoruba,
         "eur_to_dinka": args.eur_to_dinka
@@ -329,7 +334,7 @@ if __name__ == "__main__":
             stats["admix_prop"].append((admix_snps[s] == admix_snps.nea0).mean())
             stats["direct_f4"].append(f4_ratio(all_snps, s, a=altai, b=vindija, c=yoruba, o="chimp0"))
             stats["indirect_f4"].append(1 - f4_ratio(all_snps, s, a=yoruba, b=dinka, c=altai + vindija, o="chimp0"))
-            stats["d"].append(d(all_snps, w="eur0", x=s, y=dinka, z="chimp0") if s != "eur0" else None)
+            stats["d"].append(d(all_snps, w="eur0", x=s, y=dinka, z="chimp0") if s != "eur0" else "NA")
         stats_df = pd.DataFrame(stats)
         stats_df["name"] = samples.name
 
