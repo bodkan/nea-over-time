@@ -14,18 +14,18 @@ mkdir data/simulations
 region="exon"; h=0.5
 for model in gravel linear constant; do
     for rep in `seq 1 30`; do
-	N="${model}_${rep}"
+        N="${model}_${rep}"
         qsub -V -cwd -j y -l virtual_free=50G,h_vmem=50G -N $N -o tmp/${N}.txt \
         ./code/run_introgression.py \
-	    --regions data/slim_coords/${region}_regions.bed \
-	    --sites data/slim_coords/${region}_all_sites.bed \
-	    --recomb-map data/slim_coords/${region}_recomb_map.bed \
-	    --mut-rate 1e-8 \
-	    --dominance-coef 0.5 \
-	    --model $model \
-	    --gap-trajectories \
-	    --output-prefix data/simulations/traj_${model}_${region}_rep_${rep} \
-	    --population-file data/burnins/${region}_h_${h}.txt
+            --regions data/slim_coords/${region}_regions.bed \
+            --sites data/slim_coords/${region}_all_sites.bed \
+            --recomb-map data/slim_coords/${region}_recomb_map.bed \
+            --mut-rate 1e-8 \
+            --dominance-coef 0.5 \
+            --model $model \
+            --gap-trajectories \
+            --output-prefix data/simulations/traj_${model}_${region}_rep_${rep} \
+            --population-file data/burnins/${region}_h_${h}.txt
     done
 done
 
@@ -35,7 +35,7 @@ done
 h=0.5
 for region in exon promoter tf_binding_site protein_coding utr3; do
     for rep in `seq 1 30`; do
-	N="${region}_${rep}"
+        N="${region}_${rep}"
         qsub -V -cwd -j y -l virtual_free=50G,h_vmem=50G -N $N -o tmp/${N}.txt \
         ./code/run_introgression.py \
             --regions data/slim_coords/${region}_regions.bed \
@@ -56,7 +56,7 @@ done
 region="exon"; h=0.5
 for Ne in 100 500 1000 10000; do
     for rep in `seq 1 30`; do # some of these jobs got killed
-	N="Ne_${Ne}_${rep}"
+        N="Ne_${Ne}_${rep}"
         qsub -V -cwd -j y -l virtual_free=80G,h_vmem=80G -N $N -o tmp/${N}.txt \
         ./code/run_introgression.py \
             --regions data/slim_coords/${region}_regions.bed \
@@ -78,7 +78,7 @@ done
 region="exon"; h=0.5
 for modifier in 1.0 1.1 1.25 1.5 1.75 2.0 5.0 10.0; do
     for rep in `seq 1 10`; do
-	N="modif_${modifier}_${rep}"
+        N="modif_${modifier}_${rep}"
         qsub -V -cwd -j y -l virtual_free=50G,h_vmem=50G -N $N -o tmp/${N}.txt \
         ./code/run_introgression.py \
             --regions data/slim_coords/${region}_regions.bed \
@@ -109,10 +109,12 @@ done
 # ----------------------------------------------------------------------
 # simulations for analysis of frequency derivatives over time
 
-region="exon";
+for region in exon promoter tf_binding_site protein_coding utr3; do
 for h in 0.5; do
 for rep in `seq 1 20`; do
-    python3 code/run_introgression.py \
+    N="${region}_${rep}"
+    qsub -V -cwd -j y -l virtual_free=60G,h_vmem=60G -N $N -o tmp/${N}.txt \
+    ./code/run_introgression.py \
         --regions data/slim_coords/${region}_regions.bed \
         --sites data/slim_coords/${region}_all_sites.bed \
         --recomb-map data/slim_coords/${region}_recomb_map.bed \
@@ -122,7 +124,7 @@ for rep in `seq 1 20`; do
         --output-prefix data/simulations/delta_constant_${region}_h_${h}_rep_${rep} \
         --population-file data/burnins/${region}_h_${h}.txt \
         --vcf-times 1 2 3 4 5 6 7 8 9 10 20 50 100 `seq 200 200 2200` \
-        --vcf-sample 500 &
+        --vcf-sample 500
 done > /dev/null
 done
-
+done
