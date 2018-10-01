@@ -128,3 +128,24 @@ for rep in `seq 1 20`; do
 done > /dev/null
 done
 done
+
+region="exon"
+h=0.5
+for mult in 1.0 1.1 1.2 1.3 1.4 1.5; do
+for rep in `seq 1 20`; do
+    N="${region}_${mult}_${rep}"
+    qsub -V -cwd -j y -l virtual_free=60G,h_vmem=60G -N $N -o tmp/${N}.txt \
+    ./code/run_introgression.py \
+        --regions data/slim_coords/${region}_regions.bed \
+        --sites data/slim_coords/${region}_all_sites.bed \
+        --recomb-map data/slim_coords/${region}_recomb_map.bed \
+        --mut-rate 1e-8 \
+        --multiply-s $mult \
+        --dominance-coef $h \
+        --model constant \
+        --output-prefix data/simulations/mult_${mult}_delta_constant_${region}_h_${h}_rep_${rep} \
+        --population-file data/burnins/${region}_h_${h}.txt \
+        --vcf-times 1 2 3 4 5 6 7 8 9 10 20 50 100 `seq 200 200 2200` \
+        --vcf-sample 500
+done > /dev/null
+done
