@@ -109,6 +109,7 @@ done
 # ----------------------------------------------------------------------
 # simulations for analysis of frequency derivatives over time
 
+# different regions
 for region in exon promoter tf_binding_site protein_coding utr3; do
 for h in 0.5; do
 for rep in `seq 1 20`; do
@@ -129,6 +130,7 @@ done > /dev/null
 done
 done
 
+# multiplying selection coefficients
 region="exon"
 h=0.5
 for mult in 1.0 1.2 1.4 1.6 1.8 2.0; do
@@ -144,13 +146,14 @@ for rep in `seq 1 10`; do
         --modify-fraction 1.0 \
         --dominance-coef $h \
         --model constant \
-        --output-prefix data/simulations/mult_${mult}_delta_constant_${region}_h_${h}_rep_${rep} \
+        --output-prefix data/simulations/delta_constant_${region}_mult_${mult}_h_${h}_rep_${rep} \
         --population-file data/burnins/${region}_h_${h}.txt \
         --vcf-times 1 2 3 4 5 6 7 8 9 10 20 50 100 `seq 200 200 2200` \
         --vcf-sample 500
 done > /dev/null
 done
 
+# dominance
 region="exon"
 for h in 0.0 0.5 1.0; do
 for rep in `seq 1 20`; do
@@ -163,7 +166,7 @@ for rep in `seq 1 20`; do
         --mut-rate 1e-8 \
         --dominance-coef $h \
         --model constant \
-        --output-prefix data/simulations/dom_delta_constant_${region}_h_${h}_rep_${rep} \
+        --output-prefix data/simulations/delta_constant_${region}_dom_h_${h}_rep_${rep} \
         --population-file data/burnins/${region}_h_${h}.txt \
         --vcf-times 1 2 3 4 5 6 7 8 9 10 20 50 100 `seq 200 200 2200` \
         --vcf-sample 500
