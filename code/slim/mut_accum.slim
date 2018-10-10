@@ -2,13 +2,8 @@ initialize() {
     initializeRecombinationRate($recomb_rates, $recomb_ends);
     initializeMutationRate($mut_rate);
 
-    // deleterious mutation type
-    initializeMutationType("m0", $dominance_coef, "g", -0.043, 0.23);
-
     // mutation type of neutral marker alleles at informative sites
     initializeMutationType("m1", 0.5, "f", 0.0);
-
-    initializeGenomicElementType("g1", m0, 1.0);
 
     $genomic_elements
 

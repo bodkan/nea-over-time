@@ -31,6 +31,13 @@ def chrom_subset(df, chrom):
     df.slim_end = df.slim_end - chrom_start
     return df
 
+def generate_elements(regions, id, h, mean, shape):
+    mut_type = "initializeMutationType(\"m{}\", {}, \"g\", {}, {});\n\n".format(id, h, mean, shape)
+    elem_type = "initializeGenomicElementType(\"g{}\", m{}, 1.0);\n\n".format(id, id)
+    elements = "\n".join("initializeGenomicElement(g{}, {}, {});".format(id, s, e)
+                        for s, e in zip(regions.slim_start, regions.slim_end))
+    return mut_type + elem_type + elements
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Simulate mutations in AMH and Neanderthals")
 
@@ -96,14 +103,31 @@ if __name__ == "__main__":
         region_coords = chrom_subset(region_coords, args.chrom)
         recomb_map = chrom_subset(recomb_map, args.chrom)
         sites_coords = chrom_subset(sites_coords, args.chrom)
+    
+    # generate only one class of mutation types and genomic elements
+    if not any(c.startswith("bin_") for c in region_coords.columns):
+        genomic_elements = generate_elements(regions = region_coords,
+                                             id = 0, h = args.dominance_coef,
+                                             mean=-0.043, shape=0.23)
+    else: # generate several different classes of mutations/genomic elements
+        # extract the variable name (h_scale or s_scale)
+        var = region_coords.filter(like="bin_", axis="columns").columns[0]
+        # get the list of multipliers
+        multipliers = list(sorted(region_coords[var].unique()))
+        n = len(multipliers)
+        dom, sel = (multipliers, [1] * n) if var == "bin_h" else ([1] * n, multipliers)
+        # generate SLiM code for generation mutations and genomic elements
+        genomic_elements = "\n##########\n".join(
+            generate_elements(regions = region_coords.query("{} == {}".format(var, h if var == "bin_h" else s)),
+                              id=10 + i, h=h * args.dominance_coef, mean=-0.043 * s, shape=0.23)
+            for i, h, s in zip(range(n), dom, sel)
+        )
 
     # values to fill in the SLiM template file
     mapping = {
         "recomb_ends"      : slim_vector(recomb_map.slim_end),
         "recomb_rates"     : slim_vector(recomb_map.recomb_rate),
-        "genomic_elements" : "\n".join("initializeGenomicElement(g1, {}, {});".format(s, e)
-                                       for s, e in zip(region_coords.slim_start,
-                                                       region_coords.slim_end)),
+        "genomic_elements" : genomic_elements,
         "mut_rate"         : args.mut_rate,
         "dominance_coef"   : args.dominance_coef,
         "positions"        : slim_vector(sites_coords.slim_start),
