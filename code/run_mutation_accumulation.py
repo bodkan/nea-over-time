@@ -117,7 +117,7 @@ if __name__ == "__main__":
         n = len(multipliers)
         dom, sel = (multipliers, [1] * n) if var == "bin_h" else ([1] * n, multipliers)
         # generate SLiM code for generation mutations and genomic elements
-        genomic_elements = "\n##########\n".join(
+        genomic_elements = "\n\n".join(
             generate_elements(regions = region_coords.query("{} == {}".format(var, h if var == "bin_h" else s)),
                               id=10 + i, h=h * args.dominance_coef, mean=-0.043 * s, shape=0.23)
             for i, h, s in zip(range(n), dom, sel)
