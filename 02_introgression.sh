@@ -109,7 +109,6 @@ done
 # ----------------------------------------------------------------------
 # simulations for analysis of frequency derivatives over time
 
-# different regions
 for region in exon promoter tf_binding_site protein_coding utr3; do
 for h in 0.5; do
 for rep in `seq 1 20`; do
@@ -130,11 +129,15 @@ done > /dev/null
 done
 done
 
+# ----------------------------------------------------------------------
+# simulations for comparison of real Neandertal ancestry in functional
+# regions with distance-to-genes analysis
+
 # multiplying selection coefficients
 region="exon"
 h=0.5
-for mult in 1.0 1.2 1.4 1.6 1.8 2.0; do
-for rep in `seq 1 10`; do
+for mult in 0.2 0.4 0.6 0.8 1.0 1.2 1.4 1.6 1.8 2.0; do
+for rep in `seq 1 20`; do
     N="${region}_${mult}_${rep}"
     qsub -V -cwd -j y -l virtual_free=60G,h_vmem=60G -N $N -o tmp/${N}.txt \
     ./code/run_introgression.py \
@@ -148,7 +151,7 @@ for rep in `seq 1 10`; do
         --model constant \
         --output-prefix data/simulations/delta_constant_${region}_mult_${mult}_h_${h}_rep_${rep} \
         --population-file data/burnins/${region}_h_${h}.txt \
-        --vcf-times 1 2 3 4 5 6 7 8 9 10 20 50 100 `seq 200 200 2200` \
+        --vcf-times 2200 \
         --vcf-sample 500
 done > /dev/null
 done
