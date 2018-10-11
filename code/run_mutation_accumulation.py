@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--mut-rate", metavar="FILE", type=float, required=True,
                         help="Mutation rate in the simulated region")
-    parser.add_argument("--dominance-coef", type=float, required=True,
+    parser.add_argument("--dominance-coef", type=float, default=0.5,
                         help="Dominance coefficient of deleterious mutations")
 
     parser.add_argument("--anc-size", type=int, default=10000,
@@ -119,7 +119,7 @@ if __name__ == "__main__":
         # generate SLiM code for generation mutations and genomic elements
         genomic_elements = "\n\n".join(
             generate_elements(regions = region_coords.query("{} == {}".format(var, h if var == "bin_h" else s)),
-                              id=10 + i, h=h * args.dominance_coef, mean=-0.043 * s, shape=0.23)
+                              id=10 + i, h=h, mean=-0.043 * s, shape=0.23)
             for i, h, s in zip(range(n), dom, sel)
         )
 
