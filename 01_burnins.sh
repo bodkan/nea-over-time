@@ -47,7 +47,6 @@ python3 code/run_mutation_accumulation.py \
     --sites data/slim_coords/${region}_all_sites.bed \
     --recomb-map data/slim_coords/${region}_recomb_map.bed \
     --mut-rate 1e-8 \
-    --dominance-coef $h \
     --output data/burnins/bin_s_${region}.txt &
 # changing the h of deleterious mutations
 python3 code/run_mutation_accumulation.py \
@@ -55,7 +54,6 @@ python3 code/run_mutation_accumulation.py \
     --sites data/slim_coords/${region}_all_sites.bed \
     --recomb-map data/slim_coords/${region}_recomb_map.bed \
     --mut-rate 1e-8 \
-    --dominance-coef $h \
     --output data/burnins/bin_h_${region}.txt &
 
 
