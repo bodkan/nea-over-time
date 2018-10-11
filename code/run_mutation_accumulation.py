@@ -115,7 +115,7 @@ if __name__ == "__main__":
         # get the list of multipliers
         multipliers = list(sorted(region_coords[var].unique()))
         n = len(multipliers)
-        dom, sel = (multipliers, [1] * n) if var == "bin_h" else ([1] * n, multipliers)
+        dom, sel = (multipliers, [1] * n) if var == "bin_h" else ([args.dominance_coef] * n, multipliers)
         # generate SLiM code for generation mutations and genomic elements
         genomic_elements = "\n\n".join(
             generate_elements(regions = region_coords.query("{} == {}".format(var, h if var == "bin_h" else s)),
