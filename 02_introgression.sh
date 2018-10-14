@@ -176,4 +176,3 @@ for rep in `seq 1 20`; do
         --vcf-sample 500
 done > /dev/null
 done
-done
