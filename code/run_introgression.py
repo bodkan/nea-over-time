@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
 import argparse
-from string import Template
-from tempfile import NamedTemporaryFile
-import subprocess
+import glob
 import logging
 import random
-import glob
+import subprocess
+from string import Template
+from tempfile import NamedTemporaryFile
 
 import pandas as pd
 
@@ -32,6 +32,13 @@ def chrom_subset(df, chrom):
     df.slim_end = df.slim_end - chrom_start
     return df
 
+def generate_elements(regions, id, h, mean, shape):
+    mut_type = "initializeMutationType(\"m{}\", {}, \"g\", {}, {});\n\n".format(id, h, mean, shape)
+    elem_type = "initializeGenomicElementType(\"g{}\", m{}, 1.0);\n\n".format(id, id)
+    elements = "\n".join("initializeGenomicElement(g{}, {}, {});".format(id, s, e)
+                        for s, e in zip(regions.slim_start, regions.slim_end))
+    return mut_type + elem_type + elements
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run SLiM simulation of Neanderthal deserts")
@@ -51,7 +58,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--mut-rate", metavar="FILE", type=float, default=0.0,
                         help="Mutation rate in the simulated region")
-    parser.add_argument("--dominance-coef", type=float, required=True,
+    parser.add_argument("--dominance-coef", type=float, default=0.5,
                         help="Dominance coefficient of deleterious mutations")
 
     group = parser.add_argument_group()
@@ -157,12 +164,29 @@ if __name__ == "__main__":
         recomb_map = chrom_subset(recomb_map, args.chrom)
         sites_coords = chrom_subset(sites_coords, args.chrom)
 
-    if args.multiply_s is not None:
-        modifier = args.multiply_s
-    elif args.fix_s is not None:
-        modifier = args.fix_s
-    else:
-        modifier = "NULL"
+    modifier = "NULL"
+    # generate only one class of mutation types and genomic elements
+    if not any(c.startswith("bin_") for c in region_coords.columns):
+        genomic_elements = generate_elements(regions = region_coords,
+                                             id = 0, h = args.dominance_coef,
+                                             mean=-0.043, shape=0.23)
+        if args.multiply_s is not None:
+            modifier = args.multiply_s
+        elif args.fix_s is not None:
+            modifier = args.fix_s
+    else: # generate several different classes of mutations/genomic elements
+        # extract the variable name (h_scale or s_scale)
+        var = region_coords.filter(like="bin_", axis="columns").columns[0]
+        # get the list of multipliers
+        multipliers = list(sorted(region_coords[var].unique()))
+        n = len(multipliers)
+        dom, sel = (multipliers, [1] * n) if var == "bin_h" else ([args.dominance_coef] * n, multipliers)
+        # generate SLiM code for generation mutations and genomic elements
+        genomic_elements = "\n\n".join(
+            generate_elements(regions = region_coords.query("{} == {}".format(var, h if var == "bin_h" else s)),
+                              id=10 + i, h=h, mean=-0.043 * s, shape=0.23)
+            for i, h, s in zip(range(n), dom, sel)
+        )
 
     if args.terminate_after:
         terminate_after = args.terminate_after + 1
@@ -175,9 +199,7 @@ if __name__ == "__main__":
         "population_file"   : args.population_file,
         "recomb_ends"       : slim_vector(recomb_map.slim_end),
         "recomb_rates"      : slim_vector(recomb_map.recomb_rate),
-        "genomic_elements"  : "\n".join("initializeGenomicElement(g1, {}, {});".format(s, e)
-                                        for s, e in zip(region_coords.slim_start,
-                                                        region_coords.slim_end)),
+        "genomic_elements" : genomic_elements,
         "mut_rate"          : args.mut_rate,
         "dominance_coef"    : args.dominance_coef,
         "positions"         : slim_vector(sites_coords.slim_start),

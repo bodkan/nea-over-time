@@ -108,6 +108,7 @@ done
 
 # ----------------------------------------------------------------------
 # simulations for analysis of frequency derivatives over time
+#
 
 for region in exon promoter tf_binding_site protein_coding utr3; do
 for h in 0.5; do
@@ -149,29 +150,30 @@ for rep in `seq 1 20`; do
         --modify-fraction 1.0 \
         --dominance-coef $h \
         --model constant \
-        --output-prefix data/simulations/delta_constant_${region}_mult_${mult}_h_${h}_rep_${rep} \
+        --output-prefix data/simulations/${region}_mult_${mult}_h_${h}_rep_${rep} \
         --population-file data/burnins/${region}_h_${h}.txt \
         --vcf-times 2200 \
         --vcf-sample 500
 done > /dev/null
 done
 
-# dominance
+# different levels of purifying selection in different classes of exons
+
 region="exon"
-for h in 0.0 0.5 1.0; do
+for bin in bin_s bin_h; do
 for rep in `seq 1 20`; do
-    N="${region}_${h}_${rep}"
+    N="${region}_${rep}"
     qsub -V -cwd -j y -l virtual_free=60G,h_vmem=60G -N $N -o tmp/${N}.txt \
     ./code/run_introgression.py \
-        --regions data/slim_coords/${region}_regions.bed \
+        --regions data/slim_coords/${bin}_${region}_regions.bed \
         --sites data/slim_coords/${region}_all_sites.bed \
         --recomb-map data/slim_coords/${region}_recomb_map.bed \
         --mut-rate 1e-8 \
-        --dominance-coef $h \
         --model constant \
-        --output-prefix data/simulations/delta_constant_${region}_dom_h_${h}_rep_${rep} \
-        --population-file data/burnins/${region}_h_${h}.txt \
-        --vcf-times 1 2 3 4 5 6 7 8 9 10 20 50 100 `seq 200 200 2200` \
+        --output-prefix data/simulations/${region}_${bin}_rep_${rep} \
+        --population-file data/burnins/${bin}_${region}_h_${h}.txt \
+        --vcf-times 2200 \
         --vcf-sample 500
 done > /dev/null
+done
 done
