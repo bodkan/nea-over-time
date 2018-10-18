@@ -64,7 +64,7 @@ if __name__ == "__main__":
     group = parser.add_argument_group()
     group.add_argument("--modify-at", type=int, help="At what time to modify selection"
                        " coefficients [generations]")
-    group.add_argument("--modify-what", type=str, help="Which mutation type to modify?", default="m0")
+    group.add_argument("--modify-what", type=str, help="Which mutation type to modify?")
     group.add_argument("--modify-fraction", type=float, help="What fraction of selection"
                         " coefficients to modify?")
     group.add_argument("--modify-count", type=int, help="What number of mutations to modify?")
@@ -206,7 +206,7 @@ if __name__ == "__main__":
         "remove_pos"        : slim_vector(sites_coords.query("within == 'region'").slim_start if args.gap_trajectories else []),
 
         "modify_at"         : args.modify_at if args.modify_at else admixture_time + 1,
-        "modify_what"       : args.modify_what,
+        "modify_what"       : args.modify_what if args.modify_what else "NULL",
         "modify_fraction"   : args.modify_fraction if args.modify_fraction is not None else "F",
         "modify_count"      : args.modify_count if args.modify_count is not None else "F",
         "multiply_s"        : "T" if args.multiply_s is not None else "F",

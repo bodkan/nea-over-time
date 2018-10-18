@@ -161,8 +161,8 @@ done
 
 region="exon"
 for bin in bin_s bin_h; do
-for rep in `seq 1 20`; do
-    N="${region}_${rep}"
+for rep in `seq 1 50`; do
+    N="${region}_${bin}_${rep}"
     qsub -V -cwd -j y -l virtual_free=60G,h_vmem=60G -N $N -o tmp/${N}.txt \
     ./code/run_introgression.py \
         --regions data/slim_coords/${bin}_${region}_regions.bed \
@@ -171,7 +171,7 @@ for rep in `seq 1 20`; do
         --mut-rate 1e-8 \
         --model constant \
         --output-prefix data/simulations/${region}_${bin}_rep_${rep} \
-        --population-file data/burnins/${bin}_${region}_h_${h}.txt \
+        --population-file data/burnins/${bin}_${region}.txt \
         --vcf-times 2200 \
         --vcf-sample 500
 done > /dev/null
