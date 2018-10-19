@@ -35,12 +35,14 @@ cp data/burnins/exon_h_0.5.txt data/burnins/nea_Ne_1000_exon_h_0.5.txt
 
 
 
+
 # addressing reviewer's comment about different Neandertal ancestry
-# levels in different regions of the genome - simulations with
-# exonic sequence partitioned into different classes of increasing
-# levels of dominance or deleteriousness of mutations
+# levels in different regions of the genome
+
+# simulations with exonic sequence partitioned into different classes of
+# increasing levels of dominance or deleteriousness of mutations
 python3 code/bin_exons.py
-region="exon"; h=0.5
+region="exon"
 # changing the s of deleterious mutations
 python3 code/run_mutation_accumulation.py \
     --regions data/slim_coords/bin_s_${region}_regions.bed \
@@ -55,6 +57,35 @@ python3 code/run_mutation_accumulation.py \
     --recomb-map data/slim_coords/${region}_recomb_map.bed \
     --mut-rate 1e-8 \
     --output data/burnins/bin_h_${region}.txt &
+
+# simulations of promoters and CDS behaving in different ways (CDS always
+# having the same DFE and h = 0.5, but promoters being different - either
+# their dominance or DFE)
+Rscript code/bin_promoters_and_cds.R
+# changing the h of promoter mutations
+region="merged"
+for h in 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0; do
+    N="different_h_${h}"
+    qsub -V -cwd -j y -l virtual_free=80G,h_vmem=80G -N $N -o tmp/${N}.txt \
+        ./code/run_mutation_accumulation.py \
+            --regions data/slim_coords/different_h_${h}_${region}_regions.bed \
+            --sites data/slim_coords/${region}_all_sites.bed \
+            --recomb-map data/slim_coords/${region}_recomb_map.bed \
+            --mut-rate 1e-8 \
+            --output data/burnins/different_h_${h}_${region}.txt
+done
+# changing the s of promoter mutations
+region="merged"
+for s in 0.0 0.25 0.5 0.75 1.0 1.25 1.5 1.75 2.0; do
+    ./code/run_mutation_accumulation.py \
+        --regions data/slim_coords/different_s_${s}_${region}_regions.bed \
+        --sites data/slim_coords/${region}_all_sites.bed \
+        --recomb-map data/slim_coords/${region}_recomb_map.bed \
+        --mut-rate 1e-8 \
+        --output data/burnins/different_s_${s}_${region}.txt &
+done
+
+
 
 
 
