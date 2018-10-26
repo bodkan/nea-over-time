@@ -268,7 +268,7 @@ if __name__ == "__main__":
                         choices=["all", "nea", "yoruba", "dinka", "eur"], default="all")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--dump-snps", action="store_true", help="Save all SNPs into a table")
-    group.add_argument("--calc-stats", nargs="+", choices=["true_prop", "admix_prop", "indirect_f4", "direct_f4", "d"],
+    group.add_argument("--calc-stats", nargs="+", choices=["true_prop", "admix_prop", "indirect_f4", "direct_f4", "d", "f4"],
                        help="Which admixture statistics to calculate?")
     parser.add_argument("--output-file", metavar="FILE", help="Where to save the table of results", required=True)
 
@@ -332,6 +332,7 @@ if __name__ == "__main__":
             if "direct_f4"   in args.calc_stats: stats["direct_f4"].append(f4_ratio(all_snps, s, a=altai, b=vindija, c=yoruba, o="chimp0"))
             if "indirect_f4" in args.calc_stats: stats["indirect_f4"].append(1 - f4_ratio(all_snps, s, a=yoruba, b=dinka, c=altai + vindija, o="chimp0"))
             if "d"           in args.calc_stats: stats["d"].append(d(all_snps, w="eur0", x=s, y=dinka, z="chimp0") if s != "eur0" else "NA")
+            if "f4"          in args.calc_stats: stats["f4"].append((1 / len(all_snps)) * f4(all_snps, w="eur0", x=s, y=dinka, z="chimp0") if s != "eur0" else "NA")
         stats_df = pd.DataFrame(stats)
         stats_df["name"] = samples.name
 
