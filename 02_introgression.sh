@@ -134,7 +134,8 @@ done
 # simulations for comparison of real Neandertal ancestry in functional
 # regions with distance-to-genes analysis
 
-# multiplying selection coefficients
+# multiplying selection coefficients of regions under selection
+# to compare Nea ancestry levels to those in gap regions
 region="exon"
 h=0.5
 for mult in 0.2 0.4 0.6 0.8 1.0 1.2 1.4 1.6 1.8 2.0; do
@@ -158,7 +159,7 @@ done > /dev/null
 done
 
 # different levels of purifying selection in different classes of exons
-
+# (each exon assigned into one of random bins)
 region="exon"
 for bin in bin_s bin_h; do
 for rep in `seq 1 50`; do
@@ -172,6 +173,44 @@ for rep in `seq 1 50`; do
         --model constant \
         --output-prefix data/simulations/${region}_${bin}_rep_${rep} \
         --population-file data/burnins/${bin}_${region}.txt \
+        --vcf-times 2200 \
+        --vcf-sample 500
+done > /dev/null
+done
+
+# different dominance of mutations in promoters and protein-coding regions
+region="merged"
+for h in 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0; do
+for rep in `seq 1 20`; do
+    N="different_h_${h}_${rep}"
+    qsub -V -cwd -j y -l virtual_free=40G,h_vmem=40G -N $N -o tmp/${N}.txt \
+    ./code/run_introgression.py \
+        --regions data/slim_coords/different_h_${h}_${region}_regions.bed \
+        --sites data/slim_coords/${region}_all_sites.bed \
+        --recomb-map data/slim_coords/${region}_recomb_map.bed \
+        --mut-rate 1e-8 \
+        --model constant \
+        --output-prefix data/simulations/${region}_dom_${h}_rep_${rep} \
+        --population-file data/burnins/different_h_${h}_${region}.txt \
+        --vcf-times 2200 \
+        --vcf-sample 500
+done > /dev/null
+done
+
+# different selection coefficients of mutations in promoters and protein-coding regions
+region="merged"
+for s in 0.0 0.25 0.5 0.75 1.0 1.25 1.5 1.75 2.0; do
+for rep in `seq 1 20`; do
+    N="different_s_${s}_${rep}"
+    qsub -V -cwd -j y -l virtual_free=50G,h_vmem=50G -N $N -o tmp/${N}.txt \
+    ./code/run_introgression.py \
+        --regions data/slim_coords/different_s_${s}_${region}_regions.bed \
+        --sites data/slim_coords/${region}_all_sites.bed \
+        --recomb-map data/slim_coords/${region}_recomb_map.bed \
+        --mut-rate 1e-8 \
+        --model constant \
+        --output-prefix data/simulations/${region}_sel_${s}_rep_${rep} \
+        --population-file data/burnins/different_s_${s}_${region}.txt \
         --vcf-times 2200 \
         --vcf-sample 500
 done > /dev/null
