@@ -110,6 +110,7 @@ done
 # simulations for analysis of frequency derivatives over time
 #
 
+# (ran 50 reps for exons, in fact)
 for region in exon promoter tf_binding_site protein_coding utr3; do
 for h in 0.5; do
 for rep in `seq 1 20`; do
