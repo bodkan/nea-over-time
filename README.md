@@ -25,6 +25,9 @@ I used Python version 3.6.5 and the following Python modules:
 pip install numpy pandas msprime pybedtools jupyter
 ```
 
+The full list of Python modules installed in the project environment can be
+found in the `requirement.txt` file.
+
 ## R
 
 I used R version 3.4.3.
