@@ -7,12 +7,15 @@ listed bellow.
 Full disclosure: I've been very lucky to have access to amazing computational
 resources (60 core machines with 1 TB RAM and a cluster with
 hundreds of nodes) and I often used them to their [full potential](https://twitter.com/fleventy5/status/801480069034164224).
-Unless you have similar resources, then it's not trivial to truly reproduce
-everything from scratch. At the very least, it will take much longer to run
-all the simulations if you cannot parallelize them effectively. I will do my best
-to figure out a way to share the results of all simulations (a couple of hundreds
-of gigabytes), so it's possible to reproduce the final results and plots
-without re-running the whole simulation pipeline.
+Unless you have similar resources, it's not going to be trivial to reproduce
+all results from scratch. At the very least, it will take much longer to run
+all the simulations if you cannot parallelize them effectively.
+
+If you don't want to re-run the whole simulation and analysis pipeline but
+still want to play around with results and plots, you can use the `rds` and
+`RData` files in the `data/` subdirectory. The `notebooks/figures_for_paper.ipynb`
+notebook is a good start, as it loads those processed R data files and uses them
+to generate plots for the paper.
 
 ## Python
 
